@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 LABEL Description="Ambiente Oficial de Co-Simulacao Smart Grid - Laiza"
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Instalar dependencias do sistema e Python 3.8
 RUN apt-get update && apt-get install -qq -y \
@@ -12,13 +12,16 @@ RUN apt-get update && apt-get install -qq -y \
     libosgearth-dev openmpi-bin libopenmpi-dev \
     xvfb libprotobuf-dev protobuf-compiler clang cmake
 
+# CORREÇÃO: Criar um link para que 'python' aponte para 'python3.8'
+RUN ln -s /usr/bin/python3.8 /usr/bin/python
+
 # 1. Instalar OMNeT++ 5.6.2
 WORKDIR /usr/omnetpp
 RUN wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omnetpp-5.6.2-src-linux.tgz \
     && tar -xf omnetpp-5.6.2-src-linux.tgz \
     && rm omnetpp-5.6.2-src-linux.tgz
-ENV PATH $PATH:/usr/omnetpp/omnetpp-5.6.2/bin
-RUN cd omnetpp-5.6.2 && xvfb-run ./configure PREFERCLANG=yes CXXFLAGS=-std=c++14 && make -j$(nproc)
+ENV PATH="/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}"
+RUN cd omnetpp-5.6.2 && xvfb-run ./configure PREFER_CLANG=yes CXXFLAGS=-std=c++14 && make -j$(nproc)
 
 # 2. Instalar INET 4.2.2
 WORKDIR /root/models
