@@ -38,9 +38,9 @@ RUN python3.8 -m pip install -r requirements-docker.txt
 
 # 4. Compilar a ponte C++ (CoSima)
 WORKDIR /root/models/cosima_omnetpp_project
-# Adicionamos o caminho /src no include (-I) e no library path (-L)
 RUN opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4
-RUN make -j$(nproc)
+# Adicionamos o caminho da biblioteca INET diretamente no comando make
+RUN make -j$(nproc) LDFLAGS="-L../inet4/src"
 
 WORKDIR /root/models
 CMD ["/bin/bash"]
