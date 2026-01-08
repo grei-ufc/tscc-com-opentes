@@ -12,7 +12,7 @@ from cosima_core.util.util_functions import start_omnet, \
 import cosima_core.util.general_config as cfg
 
 SIMULATION_END = 2000
-START_MODE = 'cmd'
+START_MODE = 'gui'
 NETWORK = 'SimpleNetworkTCP'
 CONTENT_PATH = cfg.ROOT_PATH / 'simulators' / 'tic_toc_example' / 'content.csv'
 
