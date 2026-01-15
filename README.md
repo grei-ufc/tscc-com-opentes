@@ -1,64 +1,101 @@
 # tscc-com-opentes
 
-Repositório de código para armazenar as soluções desenvolvidas para simulação de comunicação.
+Repositório para armazenar soluções de **simulação de comunicação**.
 
-Foi decidido que o simulador de comunicação será o **OMNeT++** e, para integrá-lo ao **Mosaik**, é utilizada a ferramenta **CoSima**. Abaixo está um passo a passo de como clonar o repositório do CoSima e executar o **tutorial 01** via Docker.
+Neste projeto, o simulador de comunicação adotado é o **OMNeT++** e a integração com o **Mosaik** é feita via **CoSima**. Este README documenta um fluxo **reprodutível** para clonar o CoSima e executar o **Tutorial 01** usando **Docker** (modo `cmd`) e, opcionalmente, com **interface gráfica** (`gui`) no **WSL/Windows**.
 
 ---
 
-# Tutorial CoSima no Docker
+## Sumário
 
-Primeiro, é necessário clonar o repositório do CoSima disponível no GitHub:
+- [Visão geral](#visão-geral)
+- [Pré-requisitos](#pré-requisitos)
+- [Quickstart (modo cmd)](#quickstart-modo-cmd)
+- [Executar o Tutorial 01](#executar-o-tutorial-01)
+- [Troubleshooting](#troubleshooting)
+- [Rodar com interface gráfica no WSL (modo gui)](#rodar-com-interface-gráfica-no-wsl-modo-gui)
+
+---
+
+## Visão geral
+
+O fluxo abaixo utiliza:
+- **Docker** para construir e executar um ambiente isolado com CoSima;
+- **OMNeT++** como simulador de rede;
+- **Mosaik** como orquestrador de co-simulação (via CoSima).
+
+O exemplo usado é o arquivo:
+`01_simulators_and_connection_to_omnet.py`
+
+---
+
+## Pré-requisitos
+
+### Recomendado
+- Git
+- Docker instalado e funcionando
+
+### Se estiver no Windows com WSL/WSL2
+- **Docker Desktop** instalado e **aberto** (o daemon precisa estar rodando)
+- Para modo GUI: um X Server (ex.: **VcXsrv**) e utilitários X11 no WSL
+
+---
+
+## Quickstart (modo cmd)
+
+1) Clone o repositório do CoSima:
 
 ```bash
 git clone https://github.com/OFFIS-DAI/cosima
+cd cosima
 ````
 
-Para confirmar que o repositório foi clonado, execute:
+2. (Opcional) Crie e ative um ambiente virtual local (no host):
 
-```bash
-ls
-```
-
-Deve aparecer a pasta `cosima`.
-
-Em seguida, crie e ative um ambiente virtual antes de gerar a imagem Docker:
+> Isso não é obrigatório para rodar via Docker, mas pode ser útil para tarefas auxiliares no host.
 
 ```bash
 python -m venv venv
 source venv/bin/activate
 ```
 
-Com isso, seu ambiente virtual de nome `venv` estará criado e ativo.
-
-Para criar a imagem Docker, entre na pasta `cosima` e execute:
+3. Construa a imagem Docker:
 
 ```bash
-cd cosima
 docker build -t cosima_i .
 ```
 
-> **Observação (WSL/WSL2):** se você estiver usando WSL/WSL2, certifique-se de que o **Docker Desktop** esteja aberto e em execução. Caso contrário, o Docker pode retornar erro de conexão.
-
-Após finalizar o build, entre no container com:
+4. Inicie um container interativo:
 
 ```bash
 docker run -it --name cosima_c cosima_i /bin/bash
 ```
 
-Agora, copie o arquivo do tutorial **01** para o diretório atual (no container), para executá-lo “no centro do container”:
+---
+
+## Executar o Tutorial 01
+
+Já dentro do container, copie o Tutorial 01 para o diretório atual:
 
 ```bash
 cp ~/models/cosima_core/scenarios/tutorial/01_simulators_and_connection_to_omnet.py .
 ```
 
-Por fim, execute o tutorial:
+Execute:
 
 ```bash
 python3 01_simulators_and_connection_to_omnet.py
 ```
 
-Se aparecer um erro de `NotFound` ao final, execute:
+Se tudo estiver correto, o tutorial inicia a integração CoSima ↔ Mosaik ↔ OMNeT++ no modo `cmd`.
+
+---
+
+## Troubleshooting
+
+### 1) Erro `NotFound` ao final da execução
+
+Crie a pasta de resultados e instale utilitários necessários:
 
 ```bash
 mkdir -p ../results
@@ -66,56 +103,70 @@ sudo apt-get update
 sudo apt-get install -y psmisc
 ```
 
-Com isso você já terá o exemplo 01 do CoSima rodando em modo **cmd**. Para rodar com a interface gráfica do **OMNeT++**, siga os passos abaixo.
+### 2) Docker no WSL não conecta
+
+Verifique:
+
+* **Docker Desktop aberto** e em execução
+* Integração WSL habilitada no Docker Desktop (Settings → Resources/WSL Integration)
 
 ---
 
-# Executar OMNeT++ com interface gráfica (WSL + X Server)
+## Rodar com interface gráfica no WSL (modo gui)
 
-Primeiro, descubra o IP do Windows (gateway padrão):
+> Esta seção é **apenas para Windows + WSL/WSL2**. Em Linux nativo, o fluxo pode ser diferente (normalmente o display já está disponível).
+
+### Passo 1 — Instalar e configurar um X Server (Windows)
+
+Instale o **VcXsrv**:
+[https://sourceforge.net/projects/vcxsrv/](https://sourceforge.net/projects/vcxsrv/)
+
+Configuração sugerida no VcXsrv:
+
+1. **Multiple windows** e **Display number: 0**
+2. Próxima tela: *Next* sem marcar nada
+3. **Start no client**
+4. Marque **Disable access control** e finalize
+
+### Passo 2 — Preparar o WSL para X11
+
+No WSL, descubra o gateway do Windows (IP usado no DISPLAY):
 
 ```bash
 ip route | grep default
 ```
 
-O terminal retornará algo parecido com:
+Exemplo de saída:
 
 ```text
 default via 172.29.64.1 dev eth0
 ```
 
-Agora configure o display:
+Configure o `DISPLAY` (substitua pelo IP mostrado no seu terminal):
 
 ```bash
 export DISPLAY=172.29.64.1:0
 echo $DISPLAY
 ```
 
-Como neste cenário está sendo utilizado **WSL no Windows**, é necessário instalar um software que permita ao WSL abrir janelas gráficas. Uma opção é o **VcXsrv**:
-
-[https://sourceforge.net/projects/vcxsrv/](https://sourceforge.net/projects/vcxsrv/)
-
-Após instalar e abrir o VcXsrv, configure assim:
-
-1. **Multiple windows**, **Display Number: 0** → *Next*
-2. Segunda tela → *Next* (sem marcar nada)
-3. **Start no client** → *Next*
-4. **Disable access control** → *Finish*
-
-Para um teste mínimo no terminal WSL, execute:
-
-```bash
-xclock
-```
-
-Se o comando não existir, instale:
+Instale apps X11 para teste (se necessário):
 
 ```bash
 sudo apt update
 sudo apt install -y x11-apps
 ```
 
-Agora rode o container com o display correto:
+Teste:
+
+```bash
+xclock
+```
+
+Se abrir uma janela com relógio, o X11 está OK.
+
+### Passo 3 — Subir o container com suporte a display
+
+Rode o container repassando o DISPLAY e montando o socket X11:
 
 ```bash
 docker run -it \
@@ -124,29 +175,43 @@ docker run -it \
   cosima_i /bin/bash
 ```
 
-Dentro do container, será necessária apenas uma adaptação no código do tutorial 01. Procure a linha:
+### Passo 4 — Trocar o tutorial para modo GUI
+
+Dentro do container, edite o arquivo do tutorial (após copiá-lo como mostrado antes) e altere:
+
+De:
 
 ```python
 START_MODE = 'cmd'
 ```
 
-E altere para:
+Para:
 
 ```python
 START_MODE = 'gui'
 ```
 
-Então execute novamente:
+Execute novamente:
 
 ```bash
 python3 01_simulators_and_connection_to_omnet.py
 ```
 
-Agora, quando o código iniciar, uma janela do OMNeT++ deverá abrir, permitindo visualizar o exemplo funcionando na interface gráfica.
+Se estiver tudo configurado corretamente, o **OMNeT++ abrirá uma janela** permitindo visualizar o exemplo na interface gráfica.
 
-```
+---
 
-Se você quiser, eu também posso:
-- transformar esse tutorial em **README mais “profissional”** (com pré-requisitos, troubleshooting e notas para Linux nativo vs WSL);
-- ajustar para **Docker Compose** (melhor repetibilidade e menos comandos manuais).
-```
+## Notas de manutenção
+
+* Se você for repetir o fluxo várias vezes, considere:
+
+  * usar `docker start -ai cosima_c` para reentrar no mesmo container;
+  * persistir scripts e resultados via `-v $(pwd):/work` para evitar cópias manuais.
+
+---
+
+## Licença e créditos
+
+* CoSima: OFFIS / DAI (repositório original no GitHub)
+* OMNeT++ e Mosaik: conforme licenças oficiais dos respectivos projetos
+
