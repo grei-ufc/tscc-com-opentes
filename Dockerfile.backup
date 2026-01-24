@@ -1,4 +1,3 @@
-
 FROM ubuntu:20.04
 LABEL Description="Ambiente Oficial de Co-Simulacao Smart Grid - Laiza"
 
@@ -22,25 +21,18 @@ WORKDIR /usr/omnetpp
 RUN wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omnetpp-5.6.2-src-linux.tgz \
     && tar -xf omnetpp-5.6.2-src-linux.tgz \
     && rm omnetpp-5.6.2-src-linux.tgz
-
-# Configurar variáveis de ambiente MANUALMENTE (sem setenv)
 ENV OMNETPP_ROOT="/usr/omnetpp/omnetpp-5.6.2"
 ENV PATH="${OMNETPP_ROOT}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${OMNETPP_ROOT}/lib:${LD_LIBRARY_PATH}"
-ENV TCL_LIBRARY="${OMNETPP_ROOT}/tcl"
-ENV TK_LIBRARY="${OMNETPP_ROOT}/tk"
-
-# Compilar OMNeT++
 RUN cd omnetpp-5.6.2 && xvfb-run ./configure PREFER_CLANG=yes CXXFLAGS=-std=c++14 && make -j$(nproc)
 
 # 2. Instalar INET 4.2.2
 WORKDIR /root/models
 RUN wget https://github.com/inet-framework/inet/releases/download/v4.2.2/inet-4.2.2-src.tgz \
     && tar -xzf inet-4.2.2-src.tgz && rm inet-4.2.2-src.tgz
-
 WORKDIR /root/models/inet4
-# Compilar INET SEM usar setenv - usar variáveis já configuradas
-RUN make makefiles && make -j$(nproc)
+# CORREÇÃO: Substituir 'source' por '.' (ponto) - linha 36
+RUN . ${OMNETPP_ROOT}/setenv && make makefiles && make -j$(nproc)
 
 # 3. Configurar seu Repositorio
 WORKDIR /root/models
@@ -50,10 +42,12 @@ RUN python3.8 -m pip install -r requirements-docker.txt
 
 # 4. Compilar a ponte C++ (CoSima)
 WORKDIR /root/models/cosima_omnetpp_project
-# Configurar variáveis do OMNeT SEM setenv
-RUN opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4
+# Configurar variáveis do OMNeT e criar makefile
+RUN . ${OMNETPP_ROOT}/setenv && \
+    opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4
 # Compilar
-RUN make -j$(nproc) MODE=release
+RUN . ${OMNETPP_ROOT}/setenv && \
+    make -j$(nproc) MODE=release
 
 WORKDIR /root/models
 CMD ["/bin/bash"]

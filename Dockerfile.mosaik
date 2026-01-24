@@ -1,0 +1,35 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libgsl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar mosaik e dependências
+COPY requirements.txt .
+RUN pip install --no-cache-dir mosaik==3.0.0
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instalar simulações de power grid
+RUN pip install --no-cache-dir \
+    mosaik-household \
+    mosaik-demo \
+    mosaik-powergrid
+
+# Copiar código do projeto
+COPY . .
+
+# Criar diretório para resultados
+RUN mkdir -p /app/results
+
+# Exemplo de simulação mosaik
+COPY mosaik_simulation.py .
+
+EXPOSE 5000
+
+CMD ["python", "mosaik_simulation.py"]
+

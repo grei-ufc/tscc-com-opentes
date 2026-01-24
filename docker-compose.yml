@@ -1,0 +1,87 @@
+
+services:
+  # Serviço OMNeT++ (Network Simulation) - OBRIGATÓRIO
+  omnet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cosima-omnet
+    volumes:
+      - .:/root/models
+      - ./omnet_results:/root/models/results
+    environment:
+      - OMNETPP_ROOT=/usr/omnetpp/omnetpp-5.6.2
+      - PATH=/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}
+      - INET_PATH=/root/models/inet4
+      - PYTHONPATH=/root/models:/root/models/cosima_core
+    working_dir: /root/models
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Serviço MOSAIK (Power Grid Simulation) - OPCIONAL no início
+  mosaik:
+    build:
+      context: .
+      dockerfile: Dockerfile.mosaik
+    container_name: cosima-mosaik
+    volumes:
+      - .:/app
+      - ./mosaik_results:/app/results
+    environment:
+      - PYTHONPATH=/app:/app/cosima_core
+    ports:
+      - "5000:5000"
+    command: >
+      bash -c "
+        echo '=== MOSAIK Power Grid Simulator ===' &&
+        python mosaik_simulation.py
+      "
+
+  # Serviço COSIMA Core (Coordenação) - OBRIGATÓRIO
+  cosima-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.cosima
+    container_name: cosima-core
+    volumes:
+      - .:/app
+      - ./cosima_results:/app/results
+    environment:
+      - PYTHONPATH=/app:/app/cosima_core
+    working_dir: /app
+    command: >
+      bash -c "
+        echo '=== COSIMA Co-Simulation Coordinator ===' &&
+        echo 'Aguardando serviços...' &&
+        sleep 10 &&
+        echo 'Executando simulação principal...' &&
+        python 01_simulators_and_connection_to_omnet.py ||
+        echo 'Simulação finalizada. Verifique os resultados.'
+      "
+    depends_on:
+      - omnet
+      - mosaik
+
+  # Serviço de Visualização Web - OPCIONAL
+  web-viewer:
+    image: python:3.8-slim
+    container_name: cosima-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./omnet_results:/omnet_results
+      - ./mosaik_results:/mosaik_results
+      - ./cosima_results:/cosima_results
+    working_dir: /
+    command: >
+      bash -c "
+        echo '=== COSIMA Results Viewer ===' &&
+        echo 'Acesse: http://localhost:8000' &&
+        echo '' &&
+        echo 'Resultados disponíveis:' &&
+        ls -la /omnet_results/ /mosaik_results/ /cosima_results/ 2>/dev/null &&
+        python -m http.server 8000
+      "
+    depends_on:
+      - cosima-core
