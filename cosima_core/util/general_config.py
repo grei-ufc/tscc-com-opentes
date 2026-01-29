@@ -25,7 +25,7 @@ INET_INSTALLATION_PATH = '../inet4/src/inet'
 # path to store results to
 RESULTS_FILENAME = str(ROOT_PATH.parent / 'cosima_core' / 'results' / 'result_')
 
-# port for OMNeT++ connection
+# port for OMNeT++ connection  == é a porta que o omnet escuta ne 
 PORT = 4242
 
 # Run simulation in verbose mode or not
