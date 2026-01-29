@@ -2,6 +2,7 @@
     Scenario file for tutorial of cosima.
 """
 from time import sleep
+import os  # Adicionado para variáveis de ambiente
 
 import mosaik
 
@@ -15,6 +16,9 @@ SIMULATION_END = 2000
 START_MODE = 'cmd'
 NETWORK = 'SimpleNetworkTCP'
 CONTENT_PATH = cfg.ROOT_PATH / 'simulators' / 'tic_toc_example' / 'content.csv'
+
+# Get OMNeT++ hostname from environment variable or use default
+OMNET_HOST = os.environ.get('OMNET_HOST', '127.0.0.1')
 
 # Simulation configuration -> tells mosaik where to find the simulators
 SIM_CONFIG = {
@@ -30,7 +34,8 @@ SIM_CONFIG = {
 }
 
 omnet_process = start_omnet(START_MODE, NETWORK)
-check_omnet_connection(cfg.PORT)
+# Use OMNET_HOST environment variable for connection
+check_omnet_connection(cfg.PORT, hostname=OMNET_HOST)
 
 # Create mosaik World
 world = mosaik.World(SIM_CONFIG, time_resolution=0.001, cache=False)
@@ -72,6 +77,7 @@ world.set_initial_event(simple_agent_1.sid, time=0)
 
 # Run simulation
 log(f'run until {SIMULATION_END}')
+log(f'Connecting to OMNeT++ at {OMNET_HOST}:{cfg.PORT}')
 world.run(until=SIMULATION_END)
 log("end of process")
 sleep(5)
