@@ -42,9 +42,11 @@ def stop_omnet(omnet_process):
         os.killpg(os.getpgid(omnet_process.pid), signal.SIGTERM)
 
 
-def check_omnet_connection(port):
-    servername = "127.0.0.1"
-    observer_port = port
+def check_omnet_connection(port, servername=None):
+    if servername is None:
+        servername = os.getenv("OMNET_HOST", "127.0.0.1")
+    observer_port = int(os.getenv("OMNET_PORT", port))
+
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection_possible = False
     while not connection_possible:
@@ -52,13 +54,12 @@ def check_omnet_connection(port):
             client_socket.connect((servername, observer_port))
             # no ConnectionRefusedError
             connection_possible = True
-            log('Connection to OMNeT++ successful!')
+            log(f'Connection to OMNeT++ successful! ({servername}:{observer_port})', log_type='info')
             # shutdown connection to not keep it open
             client_socket.shutdown(socket.SHUT_RDWR)
             client_socket.close()
         except ConnectionRefusedError:
-            log('Connection to OMNeT++ failed! Please make sure, that OMNeT++ has startet and the Qtenv window is '
-                'running, when not using cmd mode')
+            log(f'Connection to OMNeT++ failed! ({servername}:{observer_port})', log_type='warning')
             time.sleep(1)
             continue
 
