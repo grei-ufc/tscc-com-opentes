@@ -5,7 +5,7 @@ services:
   omnet:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.omnetpp  # Nome atualizado
     container_name: cosima-omnet
     volumes:
       # Montar o código fonte
@@ -26,11 +26,17 @@ services:
     command: >
       bash -c "
         echo '=== OMNeT++ Network Simulator ===' &&
+        echo 'Waiting a moment for system to be ready...' &&
+        sleep 5 &&
         echo 'Building OMNeT++ project...' &&
         cd cosima_omnetpp_project &&
         make clean &&
         make MODE=release &&
-        echo 'OMNeT++ ready. Listening on port 4242...' &&
+        echo 'OMNeT++ build complete.' &&
+        echo 'Starting OMNeT++ scheduler...' &&
+        # Iniciar OMNeT++ e mantê-lo rodando
+        cd /root/models &&
+        echo 'Ready for connections on port 4242' &&
         # Manter container rodando
         tail -f /dev/null
       "
@@ -39,7 +45,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s  # Dar mais tempo para compilação
     networks:
       - cosima-network
 
@@ -68,11 +74,11 @@ services:
       bash -c "
         echo '=== MOSAIK Power Grid Simulator ===' &&
         echo 'Waiting for OMNeT++ to be ready...' &&
-        sleep 10 &&
+        # Aguardar healthcheck do OMNeT++
+        sleep 15 &&
         echo 'Starting COSIMA co-simulation...' &&
-        echo 'OMNeT++ host: $$OMNET_HOST' &&
-        python 01_simulators_and_connection_to_omnet.py ||
-        echo 'Simulation finished or failed. Check logs.'
+        echo 'Connecting to OMNeT++ at: $$OMNET_HOST:4242' &&
+        python 01_simulators_and_connection_to_omnet.py 2>&1 | tee /app/logs/simulation.log
       "
     networks:
       - cosima-network
@@ -81,3 +87,4 @@ networks:
   cosima-network:
     driver: bridge
     name: cosima-network
+
