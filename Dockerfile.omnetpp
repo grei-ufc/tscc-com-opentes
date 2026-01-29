@@ -39,18 +39,13 @@ ENV LD_LIBRARY_PATH="/usr/omnetpp/omnetpp-5.6.2/lib:${LD_LIBRARY_PATH}"
 
 # 2. Instalar e compilar INET 4.2.2
 WORKDIR /root/models
-# Baixar e extrair INET - CORREÇÃO: Ver o nome real do diretório extraído
+# Baixar e extrair INET - O tar já extrai para 'inet4' diretamente
 RUN wget https://github.com/inet-framework/inet/releases/download/v4.2.2/inet-4.2.2-src.tgz \
     && tar -xzf inet-4.2.2-src.tgz \
     && rm inet-4.2.2-src.tgz \
-    && ls -la  # Verificar o nome do diretório extraído
+    && echo "Diretório extraído:" && ls -la | grep inet
 
-# O problema: o tar extrai para um diretório diferente. Vamos descobrir o nome real
-RUN mv inet-4.2.2 inet4 2>/dev/null || mv inet4.2.2 inet4 2>/dev/null || \
-    (echo "Tentando encontrar diretório INET..." && \
-     find . -maxdepth 1 -type d -name "*inet*" | head -5 && \
-     mv $(find . -maxdepth 1 -type d -name "*inet*" | head -1) inet4)
-
+# Não precisa renomear - já está como inet4
 WORKDIR /root/models/inet4
 # Configurar e compilar INET
 RUN /usr/omnetpp/omnetpp-5.6.2/bin/opp_makemake -f && \
@@ -58,9 +53,7 @@ RUN /usr/omnetpp/omnetpp-5.6.2/bin/opp_makemake -f && \
 
 # Verificar se a biblioteca foi criada
 RUN echo "=== Verificando bibliotecas INET ===" && \
-    find . -name "*.so" -o -name "*.a" | grep -i inet || \
-    (echo "Bibliotecas INET não encontradas no formato esperado, listando arquivos:" && \
-     find . -name "*.so" -o -name "*.a")
+    find . -name "*.so" -o -name "*.a" 2>/dev/null | head -10
 
 # 3. Configurar seu Repositório
 WORKDIR /root/models
@@ -70,7 +63,10 @@ RUN python3.8 -m pip install -r requirements-docker.txt
 
 # 4. Compilar a ponte C++ (CoSima)
 WORKDIR /root/models/cosima_omnetpp_project
-# Configurar o projeto COSIMA com caminhos corretos
+# Primeiro limpar
+RUN make clean 2>/dev/null || true
+
+# Configurar o projeto COSIMA
 RUN /usr/omnetpp/omnetpp-5.6.2/bin/opp_makemake -f --deep -O out \
     -I/root/models/inet4/src \
     -L/root/models/inet4/src \
@@ -85,9 +81,8 @@ RUN echo "=== Verificando execução ===" && \
     if [ -f "out/clang-release/cosima_omnetpp_project" ]; then \
         echo "✅ Executável criado com sucesso!"; \
         ls -lh out/clang-release/cosima_omnetpp_project; \
-    elif [ -f "out/gcc-release/cosima_omnetpp_project" ]; then \
-        echo "✅ Executável criado com sucesso (gcc)!"; \
-        ls -lh out/gcc-release/cosima_omnetpp_project; \
+        echo "Testando execução:"; \
+        ./out/clang-release/cosima_omnetpp_project -h 2>&1 | head -5; \
     else \
         echo "⚠️  Procurando executável..."; \
         find . -name "cosima_omnetpp_project" -type f; \
@@ -95,3 +90,4 @@ RUN echo "=== Verificando execução ===" && \
 
 WORKDIR /root/models
 CMD ["/bin/bash"]
+
