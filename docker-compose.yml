@@ -1,84 +1,57 @@
 version: '3.8'
 
 services:
-  # Serviço OMNeT++ (Network Simulation)
   omnet:
     build:
       context: .
-      dockerfile: Dockerfile.omnetpp  # Nome atualizado
+      dockerfile: Dockerfile.omnetpp
     container_name: cosima-omnet
     volumes:
-      # Montar o código fonte
-      - .:/root/models
-      # Montar diretório para resultados do OMNeT++
-      - ./omnet_results:/root/models/results
-      - ./omnet_logs:/root/models/logs
+      # PROJETO OMNET++ REAL (CRÍTICO)
+      - /home/laiza/cosima_project/cosima_omnetpp_project:/root/cosima_omnetpp_project
+      # Resultados
+      - ./omnet_results:/root/omnet_results
+      - ./omnet_logs:/root/omnet_logs
     environment:
       - OMNETPP_ROOT=/usr/omnetpp/omnetpp-5.6.2
       - PATH=/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}
-      - INET_PATH=/root/models/inet4
-      - PYTHONPATH=/root/models:/root/models/cosima_core
-    working_dir: /root/models
-    # Expor porta para comunicação com Mosaik
+      - INET_PATH=/root/inet4
     expose:
       - "4242"
-    # Comando para iniciar OMNeT++ em modo servidor
-    command: >
-      bash -c "
-        echo '=== OMNeT++ Network Simulator ===' &&
-        echo 'Waiting a moment for system to be ready...' &&
-        sleep 5 &&
-        echo 'Building OMNeT++ project...' &&
-        cd cosima_omnetpp_project &&
-        make clean &&
-        make MODE=release &&
-        echo 'OMNeT++ build complete.' &&
-        echo 'Starting OMNeT++ scheduler...' &&
-        # Iniciar OMNeT++ e mantê-lo rodando
-        cd /root/models &&
-        echo 'Ready for connections on port 4242' &&
-        # Manter container rodando
-        tail -f /dev/null
-      "
     healthcheck:
-      test: ["CMD", "netstat", "-an", "|", "grep", "4242", "|", "grep", "LISTEN"]
+      test: ["CMD", "netstat", "-an", "|", "grep", "4242"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 60s  # Dar mais tempo para compilação
+      retries: 10
+      start_period: 30s
     networks:
       - cosima-network
 
-  # Serviço MOSAIK (Power Grid Simulation)
   mosaik:
     build:
       context: .
       dockerfile: Dockerfile.mosaik
     container_name: cosima-mosaik
     volumes:
-      # Montar código fonte e dados
       - .:/app
-      # Diretório para resultados do Mosaik
       - ./mosaik_results:/app/results
       - ./mosaik_logs:/app/logs
     environment:
       - PYTHONPATH=/app:/app/cosima_core
-      # Variável de ambiente para conectar ao OMNeT++
+      # Conectar ao container OMNeT++ pelo nome do serviço
       - OMNET_HOST=omnet
     working_dir: /app
     depends_on:
       omnet:
-        condition: service_healthy
-    # Comando para executar a simulação
+        condition: service_started
     command: >
       bash -c "
         echo '=== MOSAIK Power Grid Simulator ===' &&
-        echo 'Waiting for OMNeT++ to be ready...' &&
-        # Aguardar healthcheck do OMNeT++
-        sleep 15 &&
-        echo 'Starting COSIMA co-simulation...' &&
-        echo 'Connecting to OMNeT++ at: $$OMNET_HOST:4242' &&
-        python 01_simulators_and_connection_to_omnet.py 2>&1 | tee /app/logs/simulation.log
+        echo 'Aguardando OMNeT++ iniciar...' &&
+        sleep 30 &&
+        echo 'Conectando ao OMNeT++ em: $$OMNET_HOST:4242' &&
+        echo 'Iniciando simulação COSIMA...' &&
+        python 01_simulators_and_connection_to_omnet.py
       "
     networks:
       - cosima-network
@@ -86,5 +59,3 @@ services:
 networks:
   cosima-network:
     driver: bridge
-    name: cosima-network
-
