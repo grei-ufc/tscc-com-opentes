@@ -28,8 +28,7 @@ def start_omnet(start_mode, network):
                                              preexec_fn=os.setsid, shell=True,
                                              cwd=cwd)
         else:
-            omnet_process = subprocess.Popen("exec " + command,
-                                             stdout=subprocess.PIPE,
+            omnet_process = subprocess.Popen("exec " + command,                                             stdout=subprocess.PIPE,
                                              preexec_fn=os.setsid, shell=True,
                                              cwd=cwd)
     return omnet_process
@@ -42,23 +41,37 @@ def stop_omnet(omnet_process):
         os.killpg(os.getpgid(omnet_process.pid), signal.SIGTERM)
 
 
-def check_omnet_connection(port):
-    servername = "127.0.0.1"
+def check_omnet_connection(port, hostname="127.0.0.1"):
+    """
+    Check connection to OMNeT++ server.
+    
+    Args:
+        port: Port number
+        hostname: Hostname or IP address (default: 127.0.0.1)
+    """
     observer_port = port
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection_possible = False
     while not connection_possible:
         try:
-            client_socket.connect((servername, observer_port))
+            client_socket.connect((hostname, observer_port))
             # no ConnectionRefusedError
             connection_possible = True
-            log('Connection to OMNeT++ successful!')
+            log(f'Connection to OMNeT++ at {hostname}:{port} successful!')
             # shutdown connection to not keep it open
             client_socket.shutdown(socket.SHUT_RDWR)
             client_socket.close()
         except ConnectionRefusedError:
-            log('Connection to OMNeT++ failed! Please make sure, that OMNeT++ has startet and the Qtenv window is '
+            log(f'Connection to OMNeT++ at {hostname}:{port} failed! Please make sure, that OMNeT++ has started and the Qtenv window is '
                 'running, when not using cmd mode')
+            time.sleep(1)
+            continue
+        except socket.gaierror:
+            log(f'Hostname {hostname} could not be resolved!')
+            time.sleep(1)
+            continue
+        except Exception as e:
+            log(f'Connection error: {str(e)}')
             time.sleep(1)
             continue
 
@@ -87,8 +100,7 @@ def make_protobuf_message_for_type(msg_group, message_type, message_dict):
         protobuf_msg = msg_group.info_messages.add()
         if 'content' in message_dict.keys():
             message_dict['size'] = len(JSON().encode(message_dict['content']))
-        elif 'content_bytes' in message_dict.keys():
-            message_dict['size'] = len(message_dict['content_bytes'])
+        elif 'content_bytes' in message_dict.keys():            message_dict['size'] = len(message_dict['content_bytes'])
         else:
             raise ValueError("Message has no content! A Simulator might have tried to send an empty message.")
     elif message_type == InfrastructureMessage:
@@ -115,8 +127,7 @@ def create_protobuf_messages(messages, current_step):
     for index, (message_dict, message_type) in enumerate(messages):
         msg_ids.append(message_dict['msg_id'])
         # fill protobuf message group msg_group
-        msg_group = make_protobuf_message_for_type(msg_group, message_type, message_dict)
-        byte_size = msg_group.ByteSize()
+        msg_group = make_protobuf_message_for_type(msg_group, message_type, message_dict)         byte_size = msg_group.ByteSize()
         # if size of msg_group exceeds max -> make new msg group, add protobuf message to new message group
         # if size of msg_group is within boundaries -> keep msg_group, add current to list
         if byte_size <= cfg.MAX_BYTE_SIZE_PER_MSG_GROUP - 500:
@@ -145,8 +156,7 @@ def set_up_file_logging():
 
 def log(text, log_type='debug'):
     if log_type == 'warning':
-        print(datetime.now(), end='')
-        print(colored('  | WARNING | coupled simulation: ', 'red'), end='')
+        print(datetime.now(), end='')        print(colored('  | WARNING | coupled simulation: ', 'red'), end='')
         print(text)
     elif log_type == 'info' and scenario_config.LOGGING_LEVEL == 'info':
         print(datetime.now(), end='')
@@ -173,8 +183,7 @@ class SynchronizationError(Exception):
     Attributes:
         message_time -- OMNeT++ Time
         time -- time of coupled simulation (mosaik or mango)
-        message -- explanation of the problem
-    """
+        message -- explanation of the problem     """
 
     def __init__(self, omnet_time, mosaik_time, mes):
         self.omnet_time = omnet_time
