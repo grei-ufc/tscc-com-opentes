@@ -1,4 +1,3 @@
-
 FROM ubuntu:20.04
 LABEL Description="Ambiente Oficial de Co-Simulacao Smart Grid - Laiza"
 
@@ -12,6 +11,7 @@ RUN apt-get update && apt-get install -qq -y \
     libwebkit2gtk-4.0-37 qt5-default libqt5core5a \
     libosgearth-dev openmpi-bin libopenmpi-dev \
     xvfb libprotobuf-dev protobuf-compiler clang cmake \
+    netcat-traditional net-tools iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # CORREÇÃO: Criar um link para que 'python' aponte para 'python3.8'
@@ -23,7 +23,7 @@ RUN wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omne
     && tar -xf omnetpp-5.6.2-src-linux.tgz \
     && rm omnetpp-5.6.2-src-linux.tgz
 
-# Configurar variáveis de ambiente MANUALMENTE (sem setenv)
+# Configurar variáveis de ambiente
 ENV OMNETPP_ROOT="/usr/omnetpp/omnetpp-5.6.2"
 ENV PATH="${OMNETPP_ROOT}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${OMNETPP_ROOT}/lib:${LD_LIBRARY_PATH}"
@@ -33,16 +33,25 @@ ENV TK_LIBRARY="${OMNETPP_ROOT}/tk"
 # Compilar OMNeT++
 RUN cd omnetpp-5.6.2 && xvfb-run ./configure PREFER_CLANG=yes CXXFLAGS=-std=c++14 && make -j$(nproc)
 
-# 2. Instalar INET 4.2.2
+# Carregar variáveis de ambiente do OMNeT++ para o restante do build
+ENV PATH="/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/omnetpp/omnetpp-5.6.2/lib:${LD_LIBRARY_PATH}"
+
+# 2. Instalar e compilar INET 4.2.2
 WORKDIR /root/models
 RUN wget https://github.com/inet-framework/inet/releases/download/v4.2.2/inet-4.2.2-src.tgz \
-    && tar -xzf inet-4.2.2-src.tgz && rm inet-4.2.2-src.tgz
+    && tar -xzf inet-4.2.2-src.tgz && rm inet-4.2.2-src.tgz \
+    && mv inet-4.2.2 inet4
 
 WORKDIR /root/models/inet4
-# Compilar INET SEM usar setenv - usar variáveis já configuradas
-RUN make makefiles && make -j$(nproc)
+# Configurar e compilar INET
+RUN /usr/omnetpp/omnetpp-5.6.2/bin/opp_makemake -f && \
+    make -j$(nproc) MODE=release
 
-# 3. Configurar seu Repositorio
+# Verificar se a biblioteca foi criada
+RUN find /root/models/inet4 -name "*.so" -o -name "*.a" | grep -i inet || echo "Bibliotecas INET não encontradas no formato esperado"
+
+# 3. Configurar seu Repositório
 WORKDIR /root/models
 COPY . .
 RUN python3.8 -m pip install --upgrade pip
@@ -50,11 +59,18 @@ RUN python3.8 -m pip install -r requirements-docker.txt
 
 # 4. Compilar a ponte C++ (CoSima)
 WORKDIR /root/models/cosima_omnetpp_project
-# Configurar variáveis do OMNeT SEM setenv
-RUN opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4
+# Configurar o projeto COSIMA com caminhos corretos
+RUN /usr/omnetpp/omnetpp-5.6.2/bin/opp_makemake -f --deep -O out \
+    -I/root/models/inet4/src \
+    -L/root/models/inet4/src \
+    -linet \
+    -KINET_PROJ=/root/models/inet4
+
 # Compilar
 RUN make -j$(nproc) MODE=release
 
+# Verificar se o executável foi criado
+RUN ls -la out/clang-release/ 2>/dev/null || ls -la out/ 2>/dev/null || echo "Verificando diretório de output"
+
 WORKDIR /root/models
 CMD ["/bin/bash"]
-
