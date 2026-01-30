@@ -1,0 +1,128 @@
+FROM ubuntu:20.04
+LABEL Description="Ambiente Oficial de Co-Simulacao Smart Grid - Laiza"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependencias do sistema
+RUN apt-get update && apt-get install -qq -y \
+    python3.8 python3.8-dev python3-pip \
+    wget git build-essential bison flex perl tcl-dev tk-dev \
+    libxml2-dev zlib1g-dev default-jre doxygen graphviz \
+    libwebkit2gtk-4.0-37 qt5-default libqt5core5a \
+    libosgearth-dev openmpi-bin libopenmpi-dev \
+    xvfb libprotobuf-dev protobuf-compiler clang cmake \
+    netcat-traditional net-tools iputils-ping \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Link python3.8 para python
+RUN ln -s /usr/bin/python3.8 /usr/bin/python
+
+# 1. Instalar OMNeT++ 5.6.2
+WORKDIR /usr/omnetpp
+RUN wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omnetpp-5.6.2-src-linux.tgz \
+    && tar -xf omnetpp-5.6.2-src-linux.tgz \
+    && rm omnetpp-5.6.2-src-linux.tgz
+
+# Configurar variáveis de ambiente OMNeT++
+ENV OMNETPP_ROOT="/usr/omnetpp/omnetpp-5.6.2"
+ENV PATH="${OMNETPP_ROOT}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${OMNETPP_ROOT}/lib:${LD_LIBRARY_PATH}"
+
+# Compilar OMNeT++
+RUN cd omnetpp-5.6.2 && \
+    xvfb-run ./configure PREFER_CLANG=yes CXXFLAGS=-std=c++14 && \
+    make -j$(nproc)
+
+# 2. Instalar e compilar INET 4.2.2
+WORKDIR /root
+RUN wget https://github.com/inet-framework/inet/releases/download/v4.2.2/inet-4.2.2-src.tgz \
+    && tar -xzf inet-4.2.2-src.tgz \
+    && rm inet-4.2.2-src.tgz
+
+WORKDIR /root/inet4
+# Configurar e compilar INET
+RUN opp_makemake -f && \
+    make -j$(nproc) MODE=release
+
+# 3. Copiar projeto Python atual
+COPY . /root/cosima-python/
+
+# Instalar dependências Python
+RUN python3.8 -m pip install --upgrade pip && \
+    python3.8 -m pip install -r /root/cosima-python/requirements-docker.txt
+
+# 4. Script de inicialização
+RUN cat > /root/start_omnet.sh << 'EOF'
+#!/bin/bash
+
+echo "========================================"
+echo "  COSIMA OMNeT++ Network Simulator"
+echo "========================================"
+echo ""
+
+# Verificar se projeto OMNeT++ foi montado via volume
+if [ ! -d "/root/cosima_omnetpp_project" ]; then
+    echo "❌ ERRO: Projeto OMNeT++ não montado em /root/cosima_omnetpp_project"
+    echo ""
+    echo "Certifique-se que no docker-compose.yml tem:"
+    echo "volumes:"
+    echo "  - /home/laiza/cosima_project/cosima_omnetpp_project:/root/cosima_omnetpp_project"
+    echo ""
+    tail -f /dev/null
+    exit 1
+fi
+
+cd /root/cosima_omnetpp_project
+
+echo "✅ Projeto OMNeT++ carregado"
+echo "Diretório: $(pwd)"
+echo ""
+
+echo "=== COMPILANDO PROJETO ==="
+
+# Verificar se já está compilado
+if [ -f "out/clang-release/cosima_omnetpp_project" ]; then
+    echo "✅ Já compilado anteriormente"
+else
+    echo "Compilando..."
+    make clean 2>/dev/null || true
+    
+    if [ -f "Makefile" ]; then
+        make -j$(nproc) MODE=release
+    else
+        opp_makemake -f --deep -O out \
+            -I/root/inet4/src \
+            -L/root/inet4/src \
+            -linet \
+            -KINET_PROJ=/root/inet4
+        make -j$(nproc) MODE=release
+    fi
+    
+    if [ -f "out/clang-release/cosima_omnetpp_project" ]; then
+        echo "✅ Compilação bem-sucedida!"
+    else
+        echo "❌ Falha na compilação"
+        exit 1
+    fi
+fi
+
+echo ""
+echo "=== INICIANDO SIMULAÇÃO ==="
+echo "OMNeT++ ouvindo na porta 4242"
+echo ""
+
+# Executar OMNeT++ em background
+./out/clang-release/cosima_omnetpp_project -u Cmdenv -f cosima.ini -c SimpleNetworkTCP &
+
+# Manter container vivo
+echo "✅ OMNeT++ em execução"
+echo "Pronto para conexões do Mosaik"
+echo ""
+tail -f /dev/null
+EOF
+
+RUN chmod +x /root/start_omnet.sh
+
+WORKDIR /root
+CMD ["/root/start_omnet.sh"]

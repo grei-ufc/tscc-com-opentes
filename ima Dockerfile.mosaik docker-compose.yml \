@@ -1,0 +1,50 @@
+[1mdiff --git a/Dockerfile b/Dockerfile[m
+[1mindex 5577905..c08fdce 100644[m
+[1m--- a/Dockerfile[m
+[1m+++ b/Dockerfile[m
+[36m@@ -10,7 +10,8 @@[m [mRUN apt-get update && apt-get install -qq -y \[m
+     libxml2-dev zlib1g-dev default-jre doxygen graphviz \[m
+     libwebkit2gtk-4.0-37 qt5-default libqt5core5a \[m
+     libosgearth-dev openmpi-bin libopenmpi-dev \[m
+[31m-    xvfb libprotobuf-dev protobuf-compiler clang cmake[m
+[32m+[m[32m    xvfb libprotobuf-dev protobuf-compiler clang cmake \[m
+[32m+[m[32m    && rm -rf /var/lib/apt/lists/*[m
+ [m
+ # CORREÇÃO: Criar um link para que 'python' aponte para 'python3.8'[m
+ RUN ln -s /usr/bin/python3.8 /usr/bin/python[m
+[36m@@ -20,7 +21,9 @@[m [mWORKDIR /usr/omnetpp[m
+ RUN wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omnetpp-5.6.2-src-linux.tgz \[m
+     && tar -xf omnetpp-5.6.2-src-linux.tgz \[m
+     && rm omnetpp-5.6.2-src-linux.tgz[m
+[31m-ENV PATH="/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}"[m
+[32m+[m[32mENV OMNETPP_ROOT="/usr/omnetpp/omnetpp-5.6.2"[m
+[32m+[m[32mENV PATH="${OMNETPP_ROOT}/bin:${PATH}"[m
+[32m+[m[32mENV LD_LIBRARY_PATH="${OMNETPP_ROOT}/lib:${LD_LIBRARY_PATH}"[m
+ RUN cd omnetpp-5.6.2 && xvfb-run ./configure PREFER_CLANG=yes CXXFLAGS=-std=c++14 && make -j$(nproc)[m
+ [m
+ # 2. Instalar INET 4.2.2[m
+[36m@@ -28,7 +31,7 @@[m [mWORKDIR /root/models[m
+ RUN wget https://github.com/inet-framework/inet/releases/download/v4.2.2/inet-4.2.2-src.tgz \[m
+     && tar -xzf inet-4.2.2-src.tgz && rm inet-4.2.2-src.tgz[m
+ WORKDIR /root/models/inet4[m
+[31m-RUN make makefiles && make -j$(nproc)[m
+[32m+[m[32mRUN source ${OMNETPP_ROOT}/setenv && make makefiles && make -j$(nproc)[m
+ [m
+ # 3. Configurar seu Repositorio[m
+ WORKDIR /root/models[m
+[36m@@ -38,9 +41,12 @@[m [mRUN python3.8 -m pip install -r requirements-docker.txt[m
+ [m
+ # 4. Compilar a ponte C++ (CoSima)[m
+ WORKDIR /root/models/cosima_omnetpp_project[m
+[31m-RUN opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4[m
+[31m-# Adicionamos o caminho da biblioteca INET diretamente no comando make[m
+[31m-RUN make -j$(nproc) LDFLAGS="-L../inet4/src"[m
+[32m+[m[32m# Configurar variáveis do OMNeT e criar makefile[m
+[32m+[m[32mRUN . ${OMNETPP_ROOT}/setenv && \[m
+[32m+[m[32m    opp_makemake -f --deep -O out -I../inet4/src -L../inet4/src -linet -KINET_PROJ=../inet4[m
+[32m+[m[32m# Compilar[m
+[32m+[m[32mRUN . ${OMNETPP_ROOT}/setenv && \[m
+[32m+[m[32m    make -j$(nproc) MODE=release[m
+ [m
+ WORKDIR /root/models[m
+ CMD ["/bin/bash"][m

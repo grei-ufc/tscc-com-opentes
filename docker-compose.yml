@@ -1,0 +1,60 @@
+
+services:
+  omnet:
+    build:
+      context: .
+      dockerfile: Dockerfile.omnetpp
+    container_name: cosima-omnet
+    volumes:
+      # PROJETO OMNET++ REAL (CRÍTICO)
+      - /home/laiza/cosima_project/cosima_omnetpp_project:/root/cosima_omnetpp_project
+      # Resultados
+      - ./omnet_results:/root/omnet_results
+      - ./omnet_logs:/root/omnet_logs
+    environment:
+      - OMNETPP_ROOT=/usr/omnetpp/omnetpp-5.6.2
+      - PATH=/usr/omnetpp/omnetpp-5.6.2/bin:${PATH}
+      - INET_PATH=/root/inet4
+    expose:
+      - "4242"
+    healthcheck:
+      test: ["CMD", "netstat", "-an", "|", "grep", "4242"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - cosima-network
+
+  mosaik:
+    build:
+      context: .
+      dockerfile: Dockerfile.mosaik
+    container_name: cosima-mosaik
+    volumes:
+      - .:/app
+      - ./mosaik_results:/app/results
+      - ./mosaik_logs:/app/logs
+    environment:
+      - PYTHONPATH=/app:/app/cosima_core
+      # Conectar ao container OMNeT++ pelo nome do serviço
+      - OMNET_HOST=omnet
+    working_dir: /app
+    depends_on:
+      omnet:
+        condition: service_started
+    command: >
+      bash -c "
+        echo '=== MOSAIK Power Grid Simulator ===' &&
+        echo 'Aguardando OMNeT++ iniciar...' &&
+        sleep 30 &&
+        echo 'Conectando ao OMNeT++ em: $$OMNET_HOST:4242' &&
+        echo 'Iniciando simulação COSIMA...' &&
+        python 01_simulators_and_connection_to_omnet.py
+      "
+    networks:
+      - cosima-network
+
+networks:
+  cosima-network:
+    driver: bridge

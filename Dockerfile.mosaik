@@ -1,0 +1,36 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libgsl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements primeiro (para cache de camadas)
+COPY requirements.txt .
+
+# Instalar dependências Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instalar mosaik (usando versão do seu requirements.txt)
+# RUN pip install --no-cache-dir mosaik==3.0.0  # Remover esta linha se já estiver no requirements.txt
+
+# Instalar simulações de power grid (se necessário)
+# RUN pip install --no-cache-dir \
+#     mosaik-household \
+#     mosaik-demo \
+#     mosaik-powergrid
+
+# Copiar código do projeto
+COPY . .
+
+# Criar diretório para resultados
+RUN mkdir -p /app/results
+
+# Não expor porta (comunicação interna apenas)
+# EXPOSE 5000  # Remover se não for usado
+
+CMD ["python", "01_simulators_and_connection_to_omnet.py"]
