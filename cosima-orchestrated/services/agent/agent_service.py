@@ -1,24 +1,29 @@
-import argparse
 import os
+import inspect
 import mosaik_api
 
 from cosima_core.simulators.tutorial.simple_agent_simulator import SimpleAgent
 
 
-def start(sim, port: int):
-    # compatibilidade com versões diferentes do mosaik_api
-    try:
-        mosaik_api.start_simulation(sim, port=port)
-    except TypeError:
-        mosaik_api.start_simulation(sim, ('0.0.0.0', port))
+def start_server(sim, host: str, port: int):
+    fn = mosaik_api.start_simulation
+    params = inspect.signature(fn).parameters
 
+    if 'port' in params:
+        return fn(sim, port=port)
+    if 'address' in params:
+        return fn(sim, address=(host, port))
+    if 'addr' in params:
+        return fn(sim, addr=(host, port))
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=int(os.getenv("MOSAIK_PORT", "5550")))
-    args = parser.parse_args()
-    start(SimpleAgent(), args.port)
+    # fallback: algumas versões usam 'host' e 'port'
+    if 'host' in params and 'port' in params:
+        return fn(sim, host=host, port=port)
+
+    raise RuntimeError(f"mosaik_api.start_simulation signature not supported: {inspect.signature(fn)}")
 
 
 if __name__ == "__main__":
-    main()
+    host = os.getenv("MOSAIK_HOST", "0.0.0.0")
+    port = int(os.getenv("MOSAIK_PORT", "5550"))
+    start_server(SimpleAgent(), host, port)

@@ -2,70 +2,96 @@ services:
   omnet:
     image: cosima_i:latest
     container_name: omnet
-    working_dir: /root/models
+    working_dir: /work/cosima
     environment:
       - OMNET_NETWORK=SimpleNetworkTCP
       - OMNET_MODE=gui
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+      - /tmp/.X11-unix:/tmp/.X11-unix
     ports:
       - "4242:4242"
-    command: ["bash","-lc","chmod +x /root/models/run_omnet.sh && /root/models/run_omnet.sh"]
+    command: ["bash","-lc","chmod +x /work/cosima-orchestrated/docker/run_omnet.sh && /work/cosima-orchestrated/docker/run_omnet.sh"]
 
   commsim:
     image: cosima_i:latest
     container_name: commsim
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - OMNET_HOST=omnet
       - OMNET_PORT=4242
       - MOSAIK_PORT=5560
+      - PYTHONPATH=/work/cosima
     depends_on: [omnet]
-    command: ["bash","-lc","python3 /root/models/commsim_service.py --port 5560"]
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/communication/commsim_service.py"]
 
   agent0:
     image: cosima_i:latest
     container_name: agent0
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - MOSAIK_PORT=5550
-    command: ["bash","-lc","python3 /root/models/agent_service.py --port 5550"]
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/agent/agent_service.py"]
 
   agent1:
     image: cosima_i:latest
     container_name: agent1
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - MOSAIK_PORT=5551
-    command: ["bash","-lc","python3 /root/models/agent_service.py --port 5551"]
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/agent/agent_service.py"]
 
   agent2:
     image: cosima_i:latest
     container_name: agent2
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - MOSAIK_PORT=5552
-    command: ["bash","-lc","python3 /root/models/agent_service.py --port 5552"]
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/agent/agent_service.py"]
 
   agent3:
     image: cosima_i:latest
     container_name: agent3
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - MOSAIK_PORT=5553
-    command: ["bash","-lc","python3 /root/models/agent_service.py --port 5553"]
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/agent/agent_service.py"]
 
   stats:
     image: cosima_i:latest
     container_name: stats
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     environment:
       - MOSAIK_PORT=5570
-    command: ["bash","-lc","python3 /root/models/stats_service.py --port 5570"]
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/services/statistics/stats_service.py"]
 
   mosaik:
     image: cosima_i:latest
     container_name: mosaik
-    working_dir: /root/models
+    working_dir: /work/cosima-orchestrated
     depends_on: [commsim, agent0, agent1, agent2, agent3, stats]
-    command: ["bash","-lc","python3 /root/models/scenario_orchestrator.py"]
+    environment:
+      - PYTHONPATH=/work/cosima
+    volumes:
+      - ../..:/work
+    command: ["bash","-lc","python3 /work/cosima-orchestrated/orchestrator/scenario_orchestrator.py"]
