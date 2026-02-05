@@ -1,5 +1,7 @@
 import mosaik_api
 
+import os
+
 from cosima_core.util.general_config import MAX_BYTE_SIZE_PER_MSG_GROUP
 import scenario_config
 from cosima_core.messages.message_pb2 import InitialMessage, InfoMessage, SynchronisationMessage, \

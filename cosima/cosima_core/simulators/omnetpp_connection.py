@@ -13,7 +13,9 @@ class OmnetppConnection:
 
     def __init__(self, observer_port):
         self.observer_port = observer_port
-        self._servername = "127.0.0.1"
+        servername = os.getenv("OMNET_HOST", "127.0.0.1")
+        port = int(os.getenv("OMNET_PORT", str(self.observer_port)))
+        self._servername = servername
         self._listener_port = 4243
         self.stored_messages = []
         self.expected_messages = 0
