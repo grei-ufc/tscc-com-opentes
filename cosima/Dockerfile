@@ -146,4 +146,14 @@ WORKDIR /root/models/cosima_omnetpp_project
 RUN make -f makemakefiles
 RUN make
 
+# Copiar DelayServer
+COPY delay_server.py /root/models/cosima_omnetpp_project/delay_server.py
 
+# Instalar dependências (se necessário)
+RUN pip3 install --no-cache-dir json5
+
+# Expor porta
+EXPOSE 4242
+
+# CMD opcional apenas para teste (ou iniciar manual via docker exec)
+CMD ["python3", "/root/models/cosima_omnetpp_project/delay_server.py"]
