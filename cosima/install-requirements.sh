@@ -84,7 +84,7 @@ echo "-------------------------------------------------------------"
 echo "Installing protobuf"
 # install protobuf
 sudo apt-get update
-sudo apt-get install -y libprotobuf-dev protobuf-compiler
+sudo apt-get install -y libprotobuf-dev protobuf-compiler==
 
 echo "-------------------------------------------------------------"
 echo "Installing python3.8"

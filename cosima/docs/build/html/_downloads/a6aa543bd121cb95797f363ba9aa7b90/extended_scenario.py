@@ -26,8 +26,8 @@ SIM_CONFIG = {
     }
 }
 
-omnet_process = start_omnet(START_MODE, NETWORK)
-check_omnet_connection(cfg.PORT)
+omnet_process = start_omnet(START_MODE, NETWORK, port=4243)
+check_omnet_connection(4243)
 
 # Create mosaik World
 world = mosaik.World(SIM_CONFIG, time_resolution=0.001, cache=False)

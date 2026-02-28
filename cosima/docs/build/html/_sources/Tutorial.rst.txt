@@ -224,8 +224,8 @@ Now that our simulation parameters are set, we next have to connect our scenario
     from cosima_core.util.util_functions import start_omnet, \
         check_omnet_connection, stop_omnet, \
         log
-    omnet_process = start_omnet(START_MODE, NETWORK)
-    check_omnet_connection(cfg.PORT)
+    omnet_process = start_omnet(START_MODE, NETWORK, port=4243)
+    check_omnet_connection(4243)
 
 Running this file, now should print a statement onto the console, that confirmes a positive connection to OMNeT++ like this:
 
