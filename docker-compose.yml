@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  omnet_sim:
+    build: ./omnet-dir
+    container_name: omnet_sim
+    networks:
+      - sim_net
+    volumes:
+      # Monta a pasta local para não ter de reconstruir a imagem a cada mudança de código C++
+      - ./omnet-dir:/root/models 
+    # Comando de compilação e execução
+    command: /bin/bash -c "source /root/omnetpp/setenv && opp_makemake -f --deep -O out -o sim_exec -lzmq && make && ./sim_exec -u Cmdenv -c General"
+
+  mosaik_master:
+    build: ./mosaik-dir
+    container_name: mosaik_master
+    networks:
+      - sim_net
+    depends_on:
+      - omnet_sim
+    environment:
+      - OMNET_HOST=omnet_sim
+      - OMNET_PORT=5555
+    volumes:
+      - ./mosaik-dir:/app
+
+networks:
+  sim_net:
+    driver: bridge
