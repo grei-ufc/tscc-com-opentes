@@ -44,8 +44,8 @@ The diagram below illustrates the dynamic interaction between the Python (Mosaik
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/yourusername/your-repository-name.git](https://github.com/yourusername/your-repository-name.git)
-    cd your-repository-name
+    git clone https://github.com/grei-ufc/tscc-com-opentes.git
+    cd tscc-com-opentes
     ```
 
 2.  **Build and run the containers:**
@@ -67,6 +67,3 @@ The diagram below illustrates the dynamic interaction between the Python (Mosaik
 6.  **OMNeT++ (C++)** sends the `STEP` response with telemetry.
 7.  **Mosaik (Python)** receives `data_out = 1.0` and writes it to `results.csv`.
 
-## Contributing
-
-Contributions are welcome! If you find any issues or have suggestions for improvements, please feel free to open a pull request.
