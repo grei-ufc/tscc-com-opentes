@@ -9,7 +9,7 @@ The communication is built on ZeroMQ sockets, ensuring synchronized, lock-step e
 The diagram below illustrates the dynamic interaction between the Python (Mosaik) and C++ (OMNeT++) worlds. It visualizes the flow of command execution (CREATE, CONNECT, STEP), parameter injection (`15.0`), internal OMNeT++ network events, and real-time telemetry collection into a CSV file.
 
 ![Architecture Diagram](https://your-repository-url-path/image_0.png)
-*(Note: Replace this placeholder link with the actual path to your image in your repository)*
+
 
 ### Key Architecture Features:
 
