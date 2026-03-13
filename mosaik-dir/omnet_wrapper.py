@@ -1,3 +1,16 @@
+"""
+Adaptador Mosaik para o OMNeT++ (ZMQ Client / REQ).
+
+Esta classe atua como um proxy (ponte) entre o ecossistema Mosaik (Python) e 
+o motor de simulação OMNeT++ (C++). Utiliza sockets ZeroMQ no padrão Request-Reply (REQ-REP)
+para enviar comandos JSON e receber as respostas do simulador remoto.
+
+Responsabilidades:
+    - Traduzir chamadas da API do Mosaik (init, create, step) para JSON.
+    - Sincronizar o relógio do Mosaik com o relógio de eventos discretos do OMNeT++.
+    - Tratar exceções de timeout de rede (ZMQ_RCVTIMEO).
+"""
+
 import mosaik_api
 import zmq
 import json
