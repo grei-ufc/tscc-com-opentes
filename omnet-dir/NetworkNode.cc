@@ -1,3 +1,13 @@
+/**
+ * @file NetworkNode.cc
+ * @brief Implementação da lógica comportamental do NetworkNode.
+ *
+ * Implementa as rotinas de inicialização (initialize) e tratamento de mensagens
+ * (handleMessage) do nó da rede. Responsável por capturar o valor da variável
+ * de entrada (@mutable data_in), gerar instâncias de pacotes e enviá-los via
+ * canais dinâmicos alocados nas portas do vetor 'out[]'.
+ */
+
 #include <omnetpp.h>
 
 using namespace omnetpp;
