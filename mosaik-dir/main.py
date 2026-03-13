@@ -1,3 +1,14 @@
+"""
+Orquestrador Principal da Co-Simulação Mosaik-OMNeT++.
+
+Este script define e executa o cenário de co-simulação. Ele é responsável por:
+1. Instanciar o "World" do Mosaik.
+2. Iniciar os simuladores em seus respectivos containers (Gerador, Coletor e o Wrapper do OMNeT++ via ZMQ).
+3. Criar dinamicamente as entidades e a topologia da rede (comandos CREATE e CONNECT).
+4. Estabelecer o fluxo de dados (Data Flow) entre o Gerador, a Rede C++ e o Coletor.
+5. Executar o loop temporal da simulação (lock-step).
+"""
+
 import mosaik
 import os
 
