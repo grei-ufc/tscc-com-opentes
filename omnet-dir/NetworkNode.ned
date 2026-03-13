@@ -1,3 +1,13 @@
+/**
+ * @file NetworkNode.h
+ * @brief Definição do nó dinâmico da rede OMNeT++.
+ *
+ * Declara a classe NetworkNode, que simula o comportamento físico/lógico
+ * de um dispositivo de rede. É projetado para ser instanciado em tempo de
+ * execução pelo MosaikBridge. Escuta e reage a parâmetros com a anotação @mutable,
+ * lendo injeções de dados e disparando pacotes de rede internos.
+ */
+
 simple NetworkNode
 {
     parameters:
