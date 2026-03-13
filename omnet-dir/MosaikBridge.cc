@@ -1,3 +1,12 @@
+/**
+ * @file MosaikBridge.cc
+ * @brief Ponte de comunicação entre OMNeT++ e Mosaik via ZeroMQ.
+ *
+ * Implementa um servidor TCP que escuta os comandos JSON do Mosaik (CREATE,
+ * CONNECT, STEP), instancia componentes de rede dinamicamente usando a API
+ * do cSimulation e avança o relógio de eventos discretos em lock-step.
+ */
+
 #include <omnetpp.h>
 #include <zmq.hpp>
 #include <nlohmann/json.hpp>
