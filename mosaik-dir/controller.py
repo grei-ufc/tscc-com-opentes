@@ -1,3 +1,14 @@
+"""
+Módulo Controlador (Traffic Generator) para o Mosaik.
+
+Este simulador atua como um injetor de dados *time-based*. A cada passo
+da simulação, ele gera um valor de tráfego constante que será enviado
+para um nó correspondente no OMNeT++ alterar seus parâmetros em tempo real.
+
+Attributes:
+    META (dict): Metadados de configuração do simulador requeridos pela API Mosaik.
+"""
+
 import mosaik_api
 
 META = {
