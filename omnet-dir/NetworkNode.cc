@@ -1,35 +1,27 @@
 /**
  * @file NetworkNode.cc
  * @brief Implementação da lógica comportamental do NetworkNode.
- *
- * Implementa as rotinas de inicialização (initialize) e tratamento de mensagens
- * (handleMessage) do nó da rede. Responsável por capturar o valor da variável
- * de entrada (@mutable data_in), gerar instâncias de pacotes e enviá-los via
- * canais dinâmicos alocados nas portas do vetor 'out[]'.
  */
 
 #include <omnetpp.h>
 
 using namespace omnetpp;
 
-class NetworkNode : public cSimpleModule {
-  private:
-    cMessage *timerEvent = nullptr;
-    int packetCounter = 0;
-
+class NetworkNode : public cSimpleModule
+{
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
-    virtual void finish() override;
 };
 
 Define_Module(NetworkNode);
 
-void NetworkNode::initialize() {
-    // Inicializa um relógio interno para o nó operar de forma independente
-    // Agendamos o primeiro "tick" para 0.1s no futuro
-    timerEvent = new cMessage("check_inputs");
-    scheduleAt(simTime() + 0.1, timerEvent);
+void NetworkNode::initialize()
+{
+    EV << "NetworkNode " << getName() << " inicializado." << std::endl;
+    // Dispara o primeiro pulso
+    cMessage *wakeUpMsg = new cMessage("wakeup");
+    scheduleAt(simTime(), wakeUpMsg);
 }
 
 void NetworkNode::handleMessage(cMessage *msg)
@@ -38,56 +30,49 @@ void NetworkNode::handleMessage(cMessage *msg)
     if (msg->isPacket()) {
         cPacket *pkt = check_and_cast<cPacket *>(msg);
         
-        // 1. Calcula a Latência (Tempo atual - Tempo em que o pacote foi criado)
         double latency = (simTime() - pkt->getCreationTime()).dbl();
-        
-        // 2. Lê o tamanho do pacote
         double size = pkt->getByteLength();
         
-        // 3. Atualiza os contadores para o Python ler
         par("packets_received") = par("packets_received").doubleValue() + 1;
         par("last_latency") = latency;
         par("last_packet_size") = size;
         
-        EV << "NetworkNode " << getName() << " RECEBEU pacote de " << size 
-           << " bytes. Latencia: " << latency << "s" << std::endl;
+        EV << "NetworkNode " << getName() << " RECEBEU pacote. Latencia: " << latency << "s" << std::endl;
            
         delete pkt;
         return;
     }
 
-    // SE FOR O COMANDO DO MOSAIK (A INJEÇÃO DE DADOS)
+    // SE FOR O PULSO INTERNO, VERIFICA SE O MOSAIK INJETOU ALGO
     double current_in = par("data_in").doubleValue();
     
     if (current_in > 0) {
-        EV << "NetworkNode " << getName() << ": O Mosaik injetou dados. A gerar pacote de rede real!" << std::endl;
+        EV << "NetworkNode " << getName() << ": Injetando trafego! Fazendo BROADCAST..." << std::endl;
         
-        // Em vez de cMessage, usamos cPacket para ter tamanho em bytes
-        cPacket *pkt = new cPacket("Pacote_Mosaik");
-        pkt->setByteLength(1024); // Exemplo: Pacote de 1024 Bytes (1 KB)
+        int numGates = gateSize("out");
+        int pacotesEnviadosNesteCiclo = 0;
         
-        if (gateSize("out") > 0 && gate("out", 0)->isConnected()) {
-            send(pkt, "out", 0);
+        for (int i = 0; i < numGates; i++) {
+            cGate *outGate = gate("out", i);
             
-            // Atualiza os contadores de envio
-            par("packets_sent") = par("packets_sent").doubleValue() + 1;
-            par("data_out") = par("packets_sent").doubleValue(); // Mantemos o data_out a crescer para legado
-            
-        } else {
-            delete pkt; 
+            if (outGate != nullptr && outGate->isConnected()) {
+                cPacket *pkt = new cPacket("Pacote_Mosaik_Broadcast");
+                pkt->setByteLength(1024); 
+                send(pkt, outGate);
+                pacotesEnviadosNesteCiclo++;
+            }
         }
         
-        // Zera o input para não disparar em loop infinito
+        if (pacotesEnviadosNesteCiclo > 0) {
+            par("packets_sent") = par("packets_sent").doubleValue() + pacotesEnviadosNesteCiclo;
+            par("data_out") = par("packets_sent").doubleValue();
+        }
+        
         par("data_in") = 0.0;
     }
     
-    // Agenda a próxima checagem
-    scheduleAt(simTime() + 1.0, msg);
-}
-
-void NetworkNode::finish() {
-    // Limpeza padrão
-    if (timerEvent) {
-        cancelAndDelete(timerEvent);
+    // Reagenda o pulso para o próximo segundo
+    if (!msg->isPacket()) {
+        scheduleAt(simTime() + 1.0, msg);
     }
 }

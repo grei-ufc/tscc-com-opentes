@@ -30,9 +30,13 @@ def main():
     gerador_sim = world.start('Gerador')
     coletor_sim = world.start('Coletor')
     
-    # 2. Cria as entidades na memória
-    nodes = omnet_sim.NetworkNode.create(2, node_type='NetworkNode')
+    # 2. Cria as entidades na memória (Agora 4 nós!)
+    nodes = omnet_sim.NetworkNode.create(4, node_type='NetworkNode')
+    
+    # Desenha a Topologia em Estrela (Hub -> Clientes)
     omnet_sim.Connection.create(1, src='node_0', dest='node_1')
+    omnet_sim.Connection.create(1, src='node_0', dest='node_2')
+    omnet_sim.Connection.create(1, src='node_0', dest='node_3')
     
     gen_entity = gerador_sim.TrafficGen.create(1, valor_injecao=15.0)
     monitor = coletor_sim.Monitor.create(1)
