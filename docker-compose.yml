@@ -24,6 +24,8 @@ services:
       - OMNET_PORT=5555
     volumes:
       - ./mosaik-dir:/app
+    # Instala as bibliotecas de gráficos e depois roda a simulação principal
+    command: sh -c "pip install pandas matplotlib && python main.py"
 
 networks:
   sim_net:

@@ -9,6 +9,7 @@ Este script define e executa o cenário de co-simulação. Ele é responsável p
 5. Executar o loop temporal da simulação (lock-step).
 """
 
+import plot_results
 import mosaik
 import os
 
@@ -49,6 +50,10 @@ def main():
     # Executa a simulação inteira de uma vez, do tempo 0 ao 10
     world.run(until=10)
     print("Simulacao finalizada! Verifique o ficheiro results.csv")
+    
+    # Chama o script para desenhar o gráfico imediatamente após salvar o CSV
+    print("Gerando grafico de resultados...")
+    plot_results.gerar_grafico()
 
 if __name__ == '__main__':
     main()
