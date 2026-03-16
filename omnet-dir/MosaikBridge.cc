@@ -86,13 +86,16 @@ void MosaikBridge::initialize() {
                 cGate *srcGate = srcNode->gate("out", srcNode->gateSize("out") - 1);
                 cGate *destGate = destNode->gate("in", destNode->gateSize("in") - 1);
 
-                // Cria o canal e liga
-                cIdealChannel *channel = cIdealChannel::create("channel");
-                srcGate->connectTo(destGate, channel);
+                // Cria um canal realista com latência e chance de perda
+                cDatarateChannel *channel = cDatarateChannel::create("channel");
                 
-                // Ligar o canal na memória (Obrigatório para canais dinâmicos)
-                channel->callInitialize();
+                channel->setDelay(0.015); // 15 milissegundos de latência
+                channel->setDatarate(1000000); // 1 Mbps de banda
+                channel->setPacketErrorRate(0.10); // 10% de chance de perder pacotes
 
+                srcGate->connectTo(destGate, channel);
+                channel->callInitialize();
+                
                 EV << "MosaikBridge: Conectado cabo de " << srcId << " para " << destId << std::endl;
                 response = {{"status", "ok"}};
             } else {
@@ -129,16 +132,22 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             std::string nodeName = submod->getName();
             json node_data = json::object();
 
-            if (submod->hasPar("status")) {
-                node_data["status"] = submod->par("status").stdstringValue();
-            } else {
-                node_data["status"] = "unknown";
-            }
+            // Extrai as variáveis base
+            node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
+            node_data["data_out"] = submod->hasPar("data_out") ? submod->par("data_out").doubleValue() : 0.0;
 
-            if (submod->hasPar("data_out")) {
-                node_data["data_out"] = submod->par("data_out").doubleValue();
-            } else {
-                node_data["data_out"] = 0.0;
+            // Extrai as NOVAS variáveis de rede
+            if (submod->hasPar("packets_sent")) {
+                node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
+            }
+            if (submod->hasPar("packets_received")) {
+                node_data["packets_received"] = submod->par("packets_received").doubleValue();
+            }
+            if (submod->hasPar("last_latency")) {
+                node_data["last_latency"] = submod->par("last_latency").doubleValue();
+            }
+            if (submod->hasPar("last_packet_size")) {
+                node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
             }
 
             data_json[nodeName] = node_data;

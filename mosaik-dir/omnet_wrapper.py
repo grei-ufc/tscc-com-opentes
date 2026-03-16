@@ -16,18 +16,27 @@ import zmq
 import json
 
 META = {
-    'type': 'hybrid',
+    'type': 'time-based',
     'models': {
-        # Representa os nós físicos na rede
         'NetworkNode': {
+            'public': True,
             'params': ['node_type'],
-            'attrs': ['data_in', 'data_out', 'status'],
+            'attrs': [
+                'data_in', 
+                'data_out', 
+                'status', 
+                'packets_sent', 
+                'packets_received', 
+                'last_latency', 
+                'last_packet_size'
+            ],
         },
-        # Representa os cabos virtuais (topologia)
+        # Faltava declarar este modelo para a linha omnet_sim.Connection.create(...) funcionar
         'Connection': {
+            'public': True,
             'params': ['src', 'dest'],
             'attrs': [],
-        }
+        },
     },
 }
 

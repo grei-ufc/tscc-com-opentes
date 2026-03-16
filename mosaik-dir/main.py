@@ -43,7 +43,7 @@ def main():
 
     # Recolha: Dos dois nós do OMNeT++ para o Monitor CSV
     for node in nodes:
-        world.connect(node, monitor[0], 'data_out', 'status')
+        world.connect(node, monitor[0], 'data_out', 'status', 'packets_sent', 'packets_received', 'last_latency', 'last_packet_size')
 
     print("\nIniciando co-simulacao com injecao e gravacao CSV...")
     # Executa a simulação inteira de uma vez, do tempo 0 ao 10

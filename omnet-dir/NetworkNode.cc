@@ -32,51 +32,57 @@ void NetworkNode::initialize() {
     scheduleAt(simTime() + 0.1, timerEvent);
 }
 
-void NetworkNode::handleMessage(cMessage *msg) {
-    
-    // Se a mensagem for o nosso relógio interno (timer)
-    if (msg == timerEvent) {
+void NetworkNode::handleMessage(cMessage *msg)
+{
+    // SE FOR UMA MENSAGEM RECEBIDA DE OUTRO NÓ PELA REDE
+    if (msg->isPacket()) {
+        cPacket *pkt = check_and_cast<cPacket *>(msg);
         
-        // 1. Lê a variável que o Mosaik (através do Bridge) pode ter alterado
-        double currentDataIn = par("data_in").doubleValue();
-
-        if (currentDataIn > 0) {
-            EV << "NetworkNode " << getName() << ": O Mosaik mandou " << currentDataIn 
-               << ". A gerar pacote de rede!" << std::endl;
-
-            // 2. Cria um pacote de rede genuíno do OMNeT++
-            char msgName[32];
-            sprintf(msgName, "Pacote_Mosaik-%d", ++packetCounter);
-            cMessage *pkt = new cMessage(msgName);
-
-            // 3. Atualiza a estatística de saída (o Bridge lerá isto no próximo 'step')
-            double currentDataOut = par("data_out").doubleValue();
-            par("data_out").setDoubleValue(currentDataOut + 1.0); // Incrementa contador de envio
-
-            // 4. "Consome" a instrução do Mosaik para não disparar em loop infinito
-            par("data_in").setDoubleValue(0.0);
-
-            // 5. Tenta enviar o pacote pela primeira porta do vetor "out[]"
-            if (gateSize("out") > 0 && gate("out", 0)->isConnected()) {
-                send(pkt, "out", 0); // O '0' indica o índice do vetor da porta
-                EV << "NetworkNode " << getName() << ": Pacote enviado com sucesso!" << std::endl;
-            } else {
-                EV << "NetworkNode " << getName() << ": Nenhuma porta conectada. Pacote descartado." << std::endl;
-                delete pkt; 
-            }
-        }
-        // Reagenda o relógio para verificar novamente daqui a 1 segundo de simulação
-        scheduleAt(simTime() + 1.0, timerEvent);
+        // 1. Calcula a Latência (Tempo atual - Tempo em que o pacote foi criado)
+        double latency = (simTime() - pkt->getCreationTime()).dbl();
         
-    } 
-    // Se a mensagem não for o timer, significa que é um pacote a chegar de OUTRO nó
-    else {
-        EV << "NetworkNode " << getName() << ": Recebi o pacote " 
-           << msg->getName() << " vindo da rede!" << std::endl;
+        // 2. Lê o tamanho do pacote
+        double size = pkt->getByteLength();
         
-        // Destrói o pacote após o processar (evita fugas de memória)
-        delete msg;
+        // 3. Atualiza os contadores para o Python ler
+        par("packets_received") = par("packets_received").doubleValue() + 1;
+        par("last_latency") = latency;
+        par("last_packet_size") = size;
+        
+        EV << "NetworkNode " << getName() << " RECEBEU pacote de " << size 
+           << " bytes. Latencia: " << latency << "s" << std::endl;
+           
+        delete pkt;
+        return;
     }
+
+    // SE FOR O COMANDO DO MOSAIK (A INJEÇÃO DE DADOS)
+    double current_in = par("data_in").doubleValue();
+    
+    if (current_in > 0) {
+        EV << "NetworkNode " << getName() << ": O Mosaik injetou dados. A gerar pacote de rede real!" << std::endl;
+        
+        // Em vez de cMessage, usamos cPacket para ter tamanho em bytes
+        cPacket *pkt = new cPacket("Pacote_Mosaik");
+        pkt->setByteLength(1024); // Exemplo: Pacote de 1024 Bytes (1 KB)
+        
+        if (gateSize("out") > 0 && gate("out", 0)->isConnected()) {
+            send(pkt, "out", 0);
+            
+            // Atualiza os contadores de envio
+            par("packets_sent") = par("packets_sent").doubleValue() + 1;
+            par("data_out") = par("packets_sent").doubleValue(); // Mantemos o data_out a crescer para legado
+            
+        } else {
+            delete pkt; 
+        }
+        
+        // Zera o input para não disparar em loop infinito
+        par("data_in") = 0.0;
+    }
+    
+    // Agenda a próxima checagem
+    scheduleAt(simTime() + 1.0, msg);
 }
 
 void NetworkNode::finish() {
