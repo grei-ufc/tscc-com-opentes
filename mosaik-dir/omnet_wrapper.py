@@ -1,14 +1,14 @@
 """
 Adaptador Mosaik para o OMNeT++ (ZMQ Client / REQ).
 
-Esta classe atua como um proxy (ponte) entre o ecossistema Mosaik (Python) e 
-o motor de simulação OMNeT++ (C++). Utiliza sockets ZeroMQ no padrão Request-Reply (REQ-REP)
-para enviar comandos JSON e receber as respostas do simulador remoto.
-
-Responsabilidades:
-    - Traduzir chamadas da API do Mosaik (init, create, step) para JSON.
-    - Sincronizar o relógio do Mosaik com o relógio de eventos discretos do OMNeT++.
-    - Tratar exceções de timeout de rede (ZMQ_RCVTIMEO).
+PROTOCOLO CÍCLICO:
+  init()   → conecta ao OMNeT++
+  create() → envia CREATE/CONNECT, recebe ACK
+  step(t)  → envia STEP(t, inputs, time_resolution)
+             recebe {status, data, mosaik_step}
+             armazena dados em last_results
+             retorna t + 1  (próximo passo)
+  get_data() → devolve last_results para o Mosaik
 """
 
 import mosaik_api
@@ -22,16 +22,15 @@ META = {
             'public': True,
             'params': ['node_type'],
             'attrs': [
-                'data_in', 
-                'data_out', 
-                'status', 
-                'packets_sent', 
-                'packets_received', 
-                'last_latency', 
-                'last_packet_size'
+                'data_in',
+                'data_out',
+                'status',
+                'packets_sent',
+                'packets_received',
+                'last_latency',
+                'last_packet_size',
             ],
         },
-        # Faltava declarar este modelo para a linha omnet_sim.Connection.create(...) funcionar
         'Connection': {
             'public': True,
             'params': ['src', 'dest'],
@@ -40,86 +39,102 @@ META = {
     },
 }
 
+
 class OmnetAdapter(mosaik_api.Simulator):
     def __init__(self):
         super().__init__(META)
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.REQ)
-        self.sid = None
-        self.last_results = {}
+        self.socket  = self.context.socket(zmq.REQ)
+        self.sid     = None
+        self.last_results   = {}
+        # time_resolution (segundos por passo) é definido pelo Mosaik no init()
+        self.time_resolution = 1.0
 
+    # ------------------------------------------------------------------
     def init(self, sid, time_resolution, host='omnet_sim', port=5555):
-        self.sid = sid
+        self.sid             = sid
+        self.time_resolution = time_resolution          # ex.: 1.0 (1 s/passo)
         self.socket.connect(f"tcp://{host}:{port}")
-        print(f"[MOSAIK] Conectado ao OMNeT++ em tcp://{host}:{port}")
+        print(f"[MOSAIK] Conectado ao OMNeT++ em tcp://{host}:{port} "
+              f"(time_resolution={time_resolution}s/passo)")
         return self.meta
 
+    # ------------------------------------------------------------------
     def create(self, num, model, **model_params):
         entities = []
-        
-        # --- LÓGICA PARA PASSAR CABOS (CONEXÕES) ---
+
+        # ---- Conexões (cabos) ----
         if model == 'Connection':
             for i in range(num):
                 payload = {
                     'action': 'connect',
-                    'src': model_params['src'],
-                    'dest': model_params['dest']
+                    'src':    model_params['src'],
+                    'dest':   model_params['dest'],
                 }
-                print(f"\n[MOSAIK] ---> Enviando comando CONNECT:\n{json.dumps(payload, indent=4)}")
+                print(f"\n[MOSAIK] ---> CONNECT:\n{json.dumps(payload, indent=4)}")
                 self.socket.send_json(payload)
                 response = self.socket.recv_json()
-                
-                print(f"[MOSAIK] <--- Resposta do OMNeT++:\n{json.dumps(response, indent=4)}")
-                
+                print(f"[MOSAIK] <--- CONNECT ACK:\n{json.dumps(response, indent=4)}")
+
                 if response.get('status') == 'ok':
-                    # O ID do cabo é gerado dinamicamente para manter o registo no Mosaik
                     conn_id = f"conn_{model_params['src']}_{model_params['dest']}_{i}"
                     entities.append({'eid': conn_id, 'type': model})
                 else:
-                    print(f"[MOSAIK] ERRO ao conectar {model_params['src']} a {model_params['dest']}: {response.get('reason')}")
+                    print(f"[MOSAIK] ERRO ao conectar: {response.get('reason')}")
             return entities
 
-        # --- LÓGICA PARA CRIAR NÓS ---
+        # ---- Nós ----
         for i in range(num):
-            eid = f'node_{i}'
+            eid     = f'node_{i}'
             payload = {
                 'action': 'create',
-                'eid': eid,
-                'params': model_params
+                'eid':    eid,
+                'params': model_params,
             }
-            
-            print(f"\n[MOSAIK] ---> Enviando comando CREATE:\n{json.dumps(payload, indent=4)}")
+            print(f"\n[MOSAIK] ---> CREATE:\n{json.dumps(payload, indent=4)}")
             self.socket.send_json(payload)
             response = self.socket.recv_json()
-            
-            print(f"[MOSAIK] <--- Resposta do OMNeT++:\n{json.dumps(response, indent=4)}")
-            
+            print(f"[MOSAIK] <--- CREATE ACK:\n{json.dumps(response, indent=4)}")
+
             if response.get('status') == 'ok':
                 entities.append({'eid': eid, 'type': model})
             else:
-                print(f"[MOSAIK] ERRO ao criar entidade {eid}: {response.get('reason')}")
-        
+                print(f"[MOSAIK] ERRO ao criar {eid}: {response.get('reason')}")
+
         return entities
 
+    # ------------------------------------------------------------------
     def step(self, time, inputs, max_advance):
         payload = {
-            'action': 'step',
-            'time': time,
-            'inputs': inputs
+            'action':          'step',
+            'time':            time,
+            'inputs':          inputs,
+            # Propaga time_resolution para o OMNeT++ alinhar seus ticks
+            'time_resolution': self.time_resolution,
         }
-        
-        print(f"\n[MOSAIK] ---> Enviando comando STEP (Tempo: {time}):\n{json.dumps(payload, indent=4)}")
+
+        print(f"\n[MOSAIK] ---> STEP t={time}:\n{json.dumps(payload, indent=4)}")
         self.socket.send_json(payload)
-        
+
         response = self.socket.recv_json()
-        
-        print(f"[MOSAIK] <--- Resultados recebidos (Tempo: {time}):\n{json.dumps(response, indent=4)}")
-        
+        print(f"[MOSAIK] <--- STEP t={time} ACK (mosaik_step={response.get('mosaik_step')}):\n"
+              f"{json.dumps(response, indent=4)}")
+
         if response.get('status') == 'ok':
             self.last_results = response.get('data', {})
-        
+
+            # Verificação de sincronismo: o OMNeT++ deve confirmar o mesmo passo
+            remote_step = response.get('mosaik_step', time)
+            if remote_step != time:
+                print(f"[MOSAIK] ⚠ DESSINCRONIZAÇÃO: Mosaik t={time}, "
+                      f"OMNeT++ confirmou mosaik_step={remote_step}")
+        else:
+            print(f"[MOSAIK] ERRO no STEP t={time}: {response.get('reason')}")
+
+        # Retorna o próximo passo — Mosaik avança 1 unidade por vez
         return time + 1
 
+    # ------------------------------------------------------------------
     def get_data(self, outputs):
         data = {}
         for eid, attrs in outputs.items():
@@ -128,6 +143,7 @@ class OmnetAdapter(mosaik_api.Simulator):
                 if eid in self.last_results:
                     data[eid][attr] = self.last_results[eid].get(attr)
         return data
+
 
 if __name__ == '__main__':
     mosaik_api.start_simulation(OmnetAdapter())
