@@ -17,7 +17,7 @@ META = {
         'TrafficGen': {
             'public': True,
             'params': ['valor_injecao'],
-            'attrs': ['sinal_saida'], # A variável que vamos ligar ao OMNeT++
+            'attrs': ['sinal_saida', 'retroalimentacao'], # A variável que vamos ligar ao OMNeT++
         },
     },
 }
@@ -36,7 +36,21 @@ class Controlador(mosaik_api.Simulator):
         return [{'eid': self.eid, 'type': model}]
 
     def step(self, time, inputs, max_advance):
-        # Avança o tempo de forma síncrona
+        # 1 Verifica se chegou algum dado de feedback do OMNeT++
+        if self.eid in inputs and 'retroalimentacao' in inputs[self.eid]:
+            # Pega o valor que o OMNeT++ enviou no passo anterior
+            valores_recebidos = inputs[self.eid]['retroalimentacao']
+            pacotes_enviados_pelo_omnet = list(valores_recebidos.values())[0]
+            
+            # 2 Mudando o comportamento do Gerador
+            # Exemplo: Se o OMNeT++ mandou mais de 10 pacotes, o Gerador diminui a taxa de injeção pela metade para não sobrecarregar a rede.
+            if pacotes_enviados_pelo_omnet > 10:
+                self.valor = 7.5
+                print(f"[Gerador t={time}] A rede está cheia! Reduzindo injeção para {self.valor}")
+            else:
+                self.valor = 15.0
+
+        # Avança o tempo
         return time + 1
 
     def get_data(self, outputs):
