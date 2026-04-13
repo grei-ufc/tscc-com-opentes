@@ -1,67 +1,82 @@
-# Dynamic Mosaik-OMNeT++ Co-Simulation Environment
+# Branch development - TSCC
+Um ambiente de co-simulação que conecta o gerenciador de cenários **Mosaik** (Python) ao simulador de eventos discretos **OMNeT++** (C++), a comunicação é construída sobre sockets **ZeroMQ (ZMQ)** e em lock-step entre os contêineres Docker.
 
-A robust, dynamic co-simulation framework connecting Python's Mosaik scenario manager with the C++ OMNeT++ discrete event network simulator. This environment enables advanced simulations where Python controls the high-level scenario and injects real-time parameters into a detailed, dynamic network model simulated by C++.
+### Estrutura
 
-The communication is built on ZeroMQ sockets, ensuring synchronized, lock-step execution across Docker containers.
+```
+tscc-com-opentes/
+├── docker-compose.yml              # Orquestra os dois contêineres
+│
+├── mosaik-dir/                     # Lado Python / Mosaik
+│   ├── Dockerfile                  # Imagem Python com ZMQ e Mosaik
+│   ├── main.py                     # Orquestrador principal: topologia, conexões, world.run()
+│   ├── omnet_wrapper.py            # Adaptador Mosaik Simulator — cliente ZMQ para o OMNeT++
+│   ├── controller.py               # Agente TrafficGen: injeta data_in; adapta taxa via feedback
+│   ├── collector.py                # Agente Monitor: grava telemetria em results.csv
+│   ├── plot_results.py             # Gera grafico_trafego.png a partir do results.csv
+│   └── results.csv                 # Saída: telemetria em série temporal (gerado em execução)
+│
+└── omnet-dir/                      # Lado C++ / OMNeT++
+    ├── Dockerfile                  # Imagem OMNeT++ com ZMQ e nlohmann/json
+    ├── Makefile                    # Regras de build (gerado pelo opp_makemake)
+    ├── omnetpp.ini                 # Configuração da simulação: rede, scheduler, limite de tempo
+    ├── Network.ned                 # Contêiner de rede de alto nível (nós adicionados dinamicamente)
+    ├── NetworkNode.ned             # Definição do nó: gates, parâmetros @mutable
+    ├── MosaikBridge.cc             # Servidor ZMQ REP: protocolo CREATE / CONNECT / STEP
+    ├── NetworkNode.cc              # Lógica do nó: geração de pacotes, tratamento de @mutable
+    └── sim_exec                    # Binário compilado (gerado no build)
+```
 
-## Architecture Diagram
+---
 
-The diagram below illustrates the dynamic interaction between the Python (Mosaik) and C++ (OMNeT++) worlds. It visualizes the flow of command execution (CREATE, CONNECT, STEP), parameter injection (`15.0`), internal OMNeT++ network events, and real-time telemetry collection into a CSV file.
+## Pré-requisitos
 
+| Ferramenta | Versão | Observação |
+|---|---|---|
+| [Docker](https://docs.docker.com/get-docker/) | ≥ 24.x | Obrigatório |
+| [Docker Compose](https://docs.docker.com/compose/) | ≥ 2.x (plugin `compose` v2) | Obrigatório |
+| Git | qualquer | Opcional — para clonar o repositório |
 
-### Key Architecture Features:
+Nenhuma instalação local de Python ou C++ é necessária; tudo executa dentro do Docker.
 
-1.  **Hybrid Environment:** C++ manages the specialized network logic (latencies, packets) while Python manages the dynamic scenario and logic agents.
-2.  **Dynamic Network Construction:** Nodes (`NetworkNode`) and channels (`cIdealChannel`) are instantiated and connected *at runtime* via ZMQ commands from Python, without needing pre-defined `.ned` network structures.
-3.  **Real-Time Parameter Injection:** The framework uses OMNeT++ `@mutable` parameter annotations to inject Python values (e.g., `15.0`) directly into C++ objects during the simulation loop.
-4.  **Lock-Step Synchronization:** A custom ZMQ bridge (`MosaikBridge.cc`) ensures that the OMNeT++ simulation time advances only when commanded by Mosaik, keeping both worlds perfectly in sync.
+---
 
-## Prerequisites
+## Instalação e Uso
 
-* [Docker](https://www.docker.com/) and Docker Compose
-* (Optional, for direct editing) Git and CMake
+### 1. Clonar o repositório
 
-## Directory Structure
+```bash
+git clone https://github.com/grei-ufc/tscc-com-opentes.git
+cd tscc-com-opentes
+```
 
-* `docker-compose.yml`: Orchestrates the containers.
-* `mosaik-dir/`: Python Mosaik Master Cluster.
-    * `Dockerfile`: Builds the Python image with ZMQ.
-    * `main.py`: The main Mosaik scenario definition (orchestrator).
-    * `omnet_wrapper.py`: The Python ZMQ client adapter for Mosaik.
-    * `controller.py`: The `TrafficGenerator` agent, injecting data.
-    * `collector.py`: The `DataCollector` agent, writing to CSV.
-* `omnet-dir/`: C++ OMNeT++ Simulation Cluster.
-    * `Dockerfile`: Builds the OMNeT++ image with dynamic C++17 compilation.
-    * `Network.ned`: A largely empty network container for dynamic creation.
-    * `NetworkNode.ned`: Definition of the dynamic node, including gates and `@mutable` parameters.
-    * `MosaikBridge.cc` / `.h`: The C++ ZMQ Server, handling all dynamic creation and stepping.
-    * `NetworkNode.cc` / `.h`: The C++ logic for handling mutable parameters and generating packets.
-    * `omnetpp.ini`: Basic OMNeT++ configuration.
+### 2. Construir e iniciar os contêineres
 
-## Installation & Usage
+```bash
+docker-compose up --build
+```
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/grei-ufc/tscc-com-opentes.git
-    cd tscc-com-opentes
-    ```
+A sequência de inicialização é:
+1. `omnet_sim` compila e inicia a simulação OMNeT++, aguardando conexões ZMQ na porta `5555`.
+2. `mosaik_master` (que depende do `omnet_sim`) instala os pacotes Python e executa `main.py`.
 
-2.  **Build and run the containers:**
-    ```bash
-    docker-compose up --build
-    ```
-    *The `--build` flag is required only when C++ code has changed.*
+### 3. Verificar a saída
 
-3.  **Check the output:**
-    A file named `results.csv` will be generated in the `mosaik-dir/` directory, containing the data flow results collected in real-time.
+Após a simulação terminar (10 passos por padrão), dois arquivos são gerados:
 
-## System Workflow Example
+- `results.csv`
+- `grafico_trafego.png`
 
-1.  **Mosaik (Python)** sends a `CREATE` command.
-2.  **OMNeT++ (C++)** dynamically instantiates `node_0`.
-3.  **Mosaik (Python)** sends a `STEP` command with data (e.g., `15.0`).
-4.  **OMNeT++ (C++)** sets `node_0.@mutable data_in = 15.0` and advances time 1 second.
-5.  **OMNeT++ (C++)** internal logic detects the data change, generates a packet (`Pacote_Mosaik-1`), and sends it to `node_1`. It updates its `@mutable data_out = 1.0`.
-6.  **OMNeT++ (C++)** sends the `STEP` response with telemetry.
-7.  **Mosaik (Python)** receives `data_out = 1.0` and writes it to `results.csv`.
+Para executar novamente sem recompilar o C++:
 
+```bash
+docker-compose up
+```
+
+Para parar e remover os contêineres:
+
+```bash
+docker-compose down
+```
+
+---
