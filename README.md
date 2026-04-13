@@ -42,15 +42,29 @@ Nenhuma instalação local de Python ou C++ é necessária; tudo executa dentro 
 ---
 
 ## Instalação e Uso
+### Windows
+### 1.Instalação de Pré-requisitos
+```bash
+winget install Git.Git
+winget install Docker.DockerDesktop
+```
+Antes de clonar o repositório, abra o software Docker Desktop e deixe com a janela habilitada, pois senão o Docker não conseguirá se conectar à sua API.
 
-### 1. Clonar o repositório
+### Linux
+```bash
+sudo apt-get install git
+sudo apt-get install docker
+sudo apt-get install compose
+```
+
+### 2. Clonar o repositório
 
 ```bash
 git clone https://github.com/grei-ufc/tscc-com-opentes.git
 cd tscc-com-opentes
 ```
 
-### 2. Construir e iniciar os contêineres
+### 3. Construir e iniciar os contêineres
 
 ```bash
 docker-compose up --build
@@ -60,7 +74,7 @@ A sequência de inicialização é:
 1. `omnet_sim` compila e inicia a simulação OMNeT++, aguardando conexões ZMQ na porta `5555`.
 2. `mosaik_master` (que depende do `omnet_sim`) instala os pacotes Python e executa `main.py`.
 
-### 3. Verificar a saída
+### 4. Verificar a saída
 
 Após a simulação terminar (10 passos por padrão), dois arquivos são gerados:
 
