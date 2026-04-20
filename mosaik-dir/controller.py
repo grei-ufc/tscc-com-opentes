@@ -9,7 +9,7 @@ Attributes:
     META (dict): Metadados de configuração do simulador requeridos pela API Mosaik.
 """
 
-import mosaik_api
+import mosaik_api_v3 as mosaik_api
 
 META = {
     'type': 'time-based',

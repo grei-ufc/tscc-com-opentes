@@ -11,7 +11,7 @@ PROTOCOLO CÍCLICO:
   get_data() → devolve last_results para o Mosaik
 """
 
-import mosaik_api
+import mosaik_api_v3 as mosaik_api
 import zmq
 import json
 

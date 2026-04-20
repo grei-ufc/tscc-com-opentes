@@ -11,7 +11,7 @@ Attributes:
                  permite que ele receba variáveis arbitrárias sem declaração prévia.
 """
 
-import mosaik_api
+import mosaik_api_v3 as mosaik_api
 import csv
 
 META = {

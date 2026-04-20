@@ -1,11 +1,11 @@
-FROM python:3.10-slim
+FROM python:3.12.11-slim
 
 WORKDIR /app
 
 # Instala dependências
-RUN pip install mosaik mosaik-api pyzmq
+RUN pip install mosaik==3.6.0 mosaik-api-v3==3.0.14 pyzmq==27.1.0
 # ... (início do ficheiro) ...
-RUN pip install mosaik mosaik-api pyzmq mosaik-csv
+RUN pip install mosaik==3.6.0 mosaik-api-v3==3.0.14 pyzmq==27.1.0 mosaik-csv==2.0.1
 # ... (resto do ficheiro) ...
 
 # Copia os arquivos
