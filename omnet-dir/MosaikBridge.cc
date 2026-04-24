@@ -17,6 +17,9 @@ class MosaikBridge : public cSimpleModule {
     zmq::socket_t socket{context, zmq::socket_type::rep};
     cMessage *stepMsg = nullptr;
 
+    // Nova função auxiliar para processar as mensagens injetadas
+    void applyInputs(json j);
+
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
@@ -24,6 +27,41 @@ class MosaikBridge : public cSimpleModule {
 };
 
 Define_Module(MosaikBridge);
+
+void MosaikBridge::applyInputs(json j) {
+    if (j.contains("inputs") && !j["inputs"].is_null()) {
+        json inputs = j["inputs"];
+        for (auto& [nodeName, nodeAttributes] : inputs.items()) {
+            cModule *targetNode = getParentModule()->getSubmodule(nodeName.c_str());
+            if (targetNode != nullptr) {
+                for (auto& [attrName, sources] : nodeAttributes.items()) {
+                    if (targetNode->hasPar(attrName.c_str())) {
+                        if (sources.begin().value().is_number()) {
+                            double totalValue = 0.0;
+                            for (auto& [sourceEntity, value] : sources.items()) {
+                                totalValue += value.get<double>();
+                            }
+                            targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
+                        } 
+                        else if (sources.begin().value().is_string()) {
+                            std::string combinedStr = "";
+                            for (auto& [sourceEntity, value] : sources.items()) {
+                                std::string valStr = value.get<std::string>();
+                                if (!valStr.empty()) {
+                                    combinedStr = valStr;
+                                }
+                            }
+                            // Só injeta no OMNeT++ se a mensagem não for vazia
+                            if (!combinedStr.empty()) {
+                                targetNode->par(attrName.c_str()).setStringValue(combinedStr.c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 void MosaikBridge::initialize() {
     socket.bind("tcp://*:5555");
@@ -58,6 +96,9 @@ void MosaikBridge::initialize() {
             socket.send(zmq::buffer(json({{"status", "ok"}}).dump()), zmq::send_flags::none);
         }
         else if (j["action"] == "step") {
+            // A GRANDE CORREÇÃO: Lê a mensagem FIPA-ACL do t=0 antes de soltar o simulador!
+            applyInputs(j);
+            
             scenario_ready = true;
             stepMsg = new cMessage("next_step");
             scheduleAt(simTime() + 1.0, stepMsg);
@@ -67,7 +108,6 @@ void MosaikBridge::initialize() {
 
 void MosaikBridge::handleMessage(cMessage *msg) {
     if (msg == stepMsg) {
-        
         json data_json = json::object();
 
         for (cModule::SubmoduleIterator it(getParentModule()); !it.end(); ++it) {
@@ -80,10 +120,9 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
             node_data["data_out"] = submod->hasPar("data_out") ? submod->par("data_out").doubleValue() : 0.0;
 
-            // Extrai a mensagem FIPA e LIMPA a porta para não enviar duplicados
             if (submod->hasPar("val_out")) {
                 node_data["val_out"] = submod->par("val_out").stdstringValue();
-                submod->par("val_out").setStringValue(""); 
+                submod->par("val_out").setStringValue(""); // Limpa a montra após envio
             }
 
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
@@ -108,39 +147,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
         json j = json::parse(msg_str);
 
         if (j["action"] == "step") {
-            if (j.contains("inputs") && !j["inputs"].is_null()) {
-                json inputs = j["inputs"];
-                
-                for (auto& [nodeName, nodeAttributes] : inputs.items()) {
-                    cModule *targetNode = getParentModule()->getSubmodule(nodeName.c_str());
-                    
-                    if (targetNode != nullptr) {
-                        for (auto& [attrName, sources] : nodeAttributes.items()) {
-                            
-                            if (targetNode->hasPar(attrName.c_str())) {
-                                if (sources.begin().value().is_number()) {
-                                    double totalValue = 0.0;
-                                    for (auto& [sourceEntity, value] : sources.items()) {
-                                        totalValue += value.get<double>();
-                                    }
-                                    targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
-                                } 
-                                else if (sources.begin().value().is_string()) {
-                                    // A CORREÇÃO MÁGICA: Vasculha todos os cabos ligados e pega no que tem a mensagem!
-                                    std::string combinedStr = "";
-                                    for (auto& [sourceEntity, value] : sources.items()) {
-                                        std::string valStr = value.get<std::string>();
-                                        if (!valStr.empty()) {
-                                            combinedStr = valStr;
-                                        }
-                                    }
-                                    targetNode->par(attrName.c_str()).setStringValue(combinedStr.c_str());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            applyInputs(j); // Reaproveita a função para ler os passos t=1, t=2...
             scheduleAt(simTime() + 1.0, stepMsg);
         } else if (j["action"] == "stop") {
             endSimulation();

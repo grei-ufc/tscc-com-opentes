@@ -3,49 +3,49 @@ import matplotlib.pyplot as plt
 
 def gerar_grafico():
     try:
+        print("📊 Lendo dados de results.csv...")
         df = pd.read_csv('results.csv')
         
-        # 1. CORREÇÃO: Força a coluna 'Valor' a ser tratada como número (Float)
+        # 1. TRATAMENTO DE DADOS: 
+        # O CSV tem a porta 'val_out' que contém o JSON em texto. O Matplotlib só lê números.
+        # errors='coerce' força o que for texto a virar 'NaN' (vazio), deixando os números intactos.
         df['Valor'] = pd.to_numeric(df['Valor'], errors='coerce')
-
-        plt.figure(figsize=(10, 6))
-
-        # Dados do Hub
-        hub_data = df[(df['Origem'] == 'OmnetSim-0.node_0') & (df['Atributo'] == 'packets_sent')]
-        total_enviados = hub_data['Valor'].iloc[-1] if not hub_data.empty else 0
-        total_recebidos = 0
         
-        # 2. CORREÇÃO: Usar int(float()) para evitar o erro do terminal
-        plt.plot(hub_data['Tempo'], hub_data['Valor'], label=f'Hub (TOTAL Enviados: {int(float(total_enviados))})', 
-                 color='black', marker='o', linewidth=2, linestyle='--')
+        # Limpa as linhas com NaN para não quebrar o gráfico
+        df = df.dropna(subset=['Valor'])
 
-        cores = ['red', 'green', 'blue']
-        for i in range(1, 4):
-            node_name = f'OmnetSim-0.node_{i}'
-            recv_data = df[(df['Origem'] == node_name) & (df['Atributo'] == 'packets_received')]
-            
-            recebidos_neste_no = recv_data['Valor'].iloc[-1] if not recv_data.empty else 0
-            total_recebidos += recebidos_neste_no
-            
-            plt.plot(recv_data['Tempo'], recv_data['Valor'], label=f'Cliente {i} (Recebidos: {int(float(recebidos_neste_no))})', 
-                     color=cores[i-1], marker='x')
+        # 2. FILTRAR O NÓ DA NUVEM:
+        node_data = df[df['Origem'] == 'OmnetSim-0.node_0']
 
-        perda_pct = 0.0
-        if total_enviados > 0:
-            perda_pct = ((float(total_enviados) - float(total_recebidos)) / float(total_enviados)) * 100
+        # Separar as métricas que queremos estudar
+        latencia = node_data[node_data['Atributo'] == 'last_latency']
+        tamanho = node_data[node_data['Atributo'] == 'last_packet_size']
+        pacotes_totais = node_data[node_data['Atributo'] == 'packets_sent']['Valor'].max()
 
-        plt.title(f'Broadcast em Estrela (Perda Total de Pacotes: {perda_pct:.1f}%)')
-        plt.xlabel('Tempo (s)')
-        plt.ylabel('Quantidade de Pacotes')
-        plt.grid(True)
-        plt.legend()
+        # 3. GERAR OS GRÁFICOS (2 Painéis)
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+        # Painel Superior: O Efeito Ping-Pong (Tamanho do Pacote a oscilar)
+        ax1.plot(tamanho['Tempo'], tamanho['Valor'], marker='o', color='#1f77b4', linewidth=2)
+        ax1.set_title(f'Tamanho do Pacote (Total Processado na Nuvem: {int(pacotes_totais)} pacotes)')
+        ax1.set_ylabel('Tamanho (Bytes)')
+        ax1.grid(True, linestyle=':', alpha=0.7)
+
+        # Painel Inferior: A Física da Rede (Latência Dinâmica que programámos em C++)
+        ax2.plot(latencia['Tempo'], latencia['Valor'], marker='s', color='#d62728', linestyle='--', linewidth=2)
+        ax2.set_title('Latência da Rede (Atraso de Propagação Fixo + Tempo de Transmissão)')
+        ax2.set_xlabel('Tempo da Simulação (Passos do Mosaik)')
+        ax2.set_ylabel('Latência (Segundos)')
+        ax2.grid(True, linestyle=':', alpha=0.7)
+
         plt.tight_layout()
-
-        plt.savefig('grafico_trafego.png')
-        print("Sucesso! Gráfico gerado perfeitamente.")
+        plt.savefig('grafico_trafego.png', dpi=300)
+        print("✅ Sucesso! Gráfico gerado perfeitamente e salvo como 'grafico_trafego.png'.")
         
+    except FileNotFoundError:
+        print("❌ Erro: O arquivo 'results.csv' não foi encontrado. Rode a simulação primeiro.")
     except Exception as e:
-        print(f"Erro ao gerar o grafico: {e}")
+        print(f"❌ Erro inesperado ao gerar o grafico: {e}")
 
 if __name__ == '__main__':
     gerar_grafico()

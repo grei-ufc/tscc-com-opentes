@@ -1,16 +1,3 @@
-"""
-Módulo Coletor (Data Collector) para o Mosaik.
-
-Este simulador atua como um sumidouro (sink) de dados do tipo *event-based*.
-A sua principal função é subscrever as variáveis de saída de outras entidades
-(como os nós do OMNeT++) e gravar essas métricas em tempo real num ficheiro
-CSV ('results.csv') utilizando o formato longo de série temporal (Time-Series).
-
-Attributes:
-    META (dict): Metadados de configuração do simulador. O parâmetro 'any_inputs': True 
-                 permite que ele receba variáveis arbitrárias sem declaração prévia.
-"""
-
 import mosaik_api_v3 as mosaik_api
 import csv
 
@@ -20,7 +7,8 @@ META = {
         'Monitor': {
             'public': True,
             'any_inputs': True,
-            'attrs': [], # <- Faltava esta linha!
+            # ADICIONE AQUI O 'last_packet_size'
+            'attrs': ['status', 'packets_sent', 'last_latency', 'last_packet_size', 'val_out'], 
         },
     },
 }
@@ -51,6 +39,8 @@ class Coletor(mosaik_api.Simulator):
         
         # Força a gravação no disco para podermos ver em tempo real
         self.csv_file.flush()
+        
+        # return None num 'event-based' significa: "Fico a dormir até chegar nova mensagem"
         return None 
 
     def finalize(self):

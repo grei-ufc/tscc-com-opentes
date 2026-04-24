@@ -1,81 +1,101 @@
 Tempo,Origem,Atributo,Valor
-0,OmnetSim-0.node_0,val_out,
+0,OmnetSim-0.node_0,last_latency,0.02808
 0,OmnetSim-0.node_0,status,idle
-0,OmnetSim-0.node_0,last_latency,0.0
-0,OmnetSim-0.node_0,packets_sent,0.0
-1,OmnetSim-0.node_0,val_out,
+0,OmnetSim-0.node_0,last_packet_size,113.0
+0,OmnetSim-0.node_0,packets_sent,1.0
+0,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Acesso autorizado. Qual \u00e9 a lat\u00eancia da rede?""}"
+1,OmnetSim-0.node_0,last_latency,0.02616
 1,OmnetSim-0.node_0,status,idle
-1,OmnetSim-0.node_0,last_latency,0.0
-1,OmnetSim-0.node_0,packets_sent,0.0
-2,OmnetSim-0.node_0,val_out,
+1,OmnetSim-0.node_0,last_packet_size,101.0
+1,OmnetSim-0.node_0,packets_sent,2.0
+1,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+2,OmnetSim-0.node_0,last_latency,0.02744
 2,OmnetSim-0.node_0,status,idle
-2,OmnetSim-0.node_0,last_latency,0.0
-2,OmnetSim-0.node_0,packets_sent,0.0
-3,OmnetSim-0.node_0,val_out,
+2,OmnetSim-0.node_0,last_packet_size,109.0
+2,OmnetSim-0.node_0,packets_sent,3.0
+2,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+3,OmnetSim-0.node_0,last_latency,0.02616
 3,OmnetSim-0.node_0,status,idle
-3,OmnetSim-0.node_0,last_latency,0.0
-3,OmnetSim-0.node_0,packets_sent,0.0
-4,OmnetSim-0.node_0,val_out,
+3,OmnetSim-0.node_0,last_packet_size,101.0
+3,OmnetSim-0.node_0,packets_sent,4.0
+3,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+4,OmnetSim-0.node_0,last_latency,0.02744
 4,OmnetSim-0.node_0,status,idle
-4,OmnetSim-0.node_0,last_latency,0.0
-4,OmnetSim-0.node_0,packets_sent,0.0
-5,OmnetSim-0.node_0,val_out,
+4,OmnetSim-0.node_0,last_packet_size,109.0
+4,OmnetSim-0.node_0,packets_sent,5.0
+4,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+5,OmnetSim-0.node_0,last_latency,0.02616
 5,OmnetSim-0.node_0,status,idle
-5,OmnetSim-0.node_0,last_latency,0.0
-5,OmnetSim-0.node_0,packets_sent,0.0
-6,OmnetSim-0.node_0,val_out,
+5,OmnetSim-0.node_0,last_packet_size,101.0
+5,OmnetSim-0.node_0,packets_sent,6.0
+5,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+6,OmnetSim-0.node_0,last_latency,0.02744
 6,OmnetSim-0.node_0,status,idle
-6,OmnetSim-0.node_0,last_latency,0.0
-6,OmnetSim-0.node_0,packets_sent,0.0
-7,OmnetSim-0.node_0,val_out,
+6,OmnetSim-0.node_0,last_packet_size,109.0
+6,OmnetSim-0.node_0,packets_sent,7.0
+6,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+7,OmnetSim-0.node_0,last_latency,0.02616
 7,OmnetSim-0.node_0,status,idle
-7,OmnetSim-0.node_0,last_latency,0.0
-7,OmnetSim-0.node_0,packets_sent,0.0
-8,OmnetSim-0.node_0,val_out,
+7,OmnetSim-0.node_0,last_packet_size,101.0
+7,OmnetSim-0.node_0,packets_sent,8.0
+7,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+8,OmnetSim-0.node_0,last_latency,0.02744
 8,OmnetSim-0.node_0,status,idle
-8,OmnetSim-0.node_0,last_latency,0.0
-8,OmnetSim-0.node_0,packets_sent,0.0
-9,OmnetSim-0.node_0,val_out,
+8,OmnetSim-0.node_0,last_packet_size,109.0
+8,OmnetSim-0.node_0,packets_sent,9.0
+8,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+9,OmnetSim-0.node_0,last_latency,0.02616
 9,OmnetSim-0.node_0,status,idle
-9,OmnetSim-0.node_0,last_latency,0.0
-9,OmnetSim-0.node_0,packets_sent,0.0
-10,OmnetSim-0.node_0,val_out,
+9,OmnetSim-0.node_0,last_packet_size,101.0
+9,OmnetSim-0.node_0,packets_sent,10.0
+9,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+10,OmnetSim-0.node_0,last_latency,0.02744
 10,OmnetSim-0.node_0,status,idle
-10,OmnetSim-0.node_0,last_latency,0.0
-10,OmnetSim-0.node_0,packets_sent,0.0
-11,OmnetSim-0.node_0,val_out,
+10,OmnetSim-0.node_0,last_packet_size,109.0
+10,OmnetSim-0.node_0,packets_sent,11.0
+10,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+11,OmnetSim-0.node_0,last_latency,0.02616
 11,OmnetSim-0.node_0,status,idle
-11,OmnetSim-0.node_0,last_latency,0.0
-11,OmnetSim-0.node_0,packets_sent,0.0
-12,OmnetSim-0.node_0,val_out,
+11,OmnetSim-0.node_0,last_packet_size,101.0
+11,OmnetSim-0.node_0,packets_sent,12.0
+11,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+12,OmnetSim-0.node_0,last_latency,0.02744
 12,OmnetSim-0.node_0,status,idle
-12,OmnetSim-0.node_0,last_latency,0.0
-12,OmnetSim-0.node_0,packets_sent,0.0
-13,OmnetSim-0.node_0,val_out,
+12,OmnetSim-0.node_0,last_packet_size,109.0
+12,OmnetSim-0.node_0,packets_sent,13.0
+12,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+13,OmnetSim-0.node_0,last_latency,0.02616
 13,OmnetSim-0.node_0,status,idle
-13,OmnetSim-0.node_0,last_latency,0.0
-13,OmnetSim-0.node_0,packets_sent,0.0
-14,OmnetSim-0.node_0,val_out,
+13,OmnetSim-0.node_0,last_packet_size,101.0
+13,OmnetSim-0.node_0,packets_sent,14.0
+13,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+14,OmnetSim-0.node_0,last_latency,0.02744
 14,OmnetSim-0.node_0,status,idle
-14,OmnetSim-0.node_0,last_latency,0.0
-14,OmnetSim-0.node_0,packets_sent,0.0
-15,OmnetSim-0.node_0,val_out,
+14,OmnetSim-0.node_0,last_packet_size,109.0
+14,OmnetSim-0.node_0,packets_sent,15.0
+14,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+15,OmnetSim-0.node_0,last_latency,0.02616
 15,OmnetSim-0.node_0,status,idle
-15,OmnetSim-0.node_0,last_latency,0.0
-15,OmnetSim-0.node_0,packets_sent,0.0
-16,OmnetSim-0.node_0,val_out,
+15,OmnetSim-0.node_0,last_packet_size,101.0
+15,OmnetSim-0.node_0,packets_sent,16.0
+15,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+16,OmnetSim-0.node_0,last_latency,0.02744
 16,OmnetSim-0.node_0,status,idle
-16,OmnetSim-0.node_0,last_latency,0.0
-16,OmnetSim-0.node_0,packets_sent,0.0
-17,OmnetSim-0.node_0,val_out,
+16,OmnetSim-0.node_0,last_packet_size,109.0
+16,OmnetSim-0.node_0,packets_sent,17.0
+16,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+17,OmnetSim-0.node_0,last_latency,0.02616
 17,OmnetSim-0.node_0,status,idle
-17,OmnetSim-0.node_0,last_latency,0.0
-17,OmnetSim-0.node_0,packets_sent,0.0
-18,OmnetSim-0.node_0,val_out,
+17,OmnetSim-0.node_0,last_packet_size,101.0
+17,OmnetSim-0.node_0,packets_sent,18.0
+17,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"
+18,OmnetSim-0.node_0,last_latency,0.02744
 18,OmnetSim-0.node_0,status,idle
-18,OmnetSim-0.node_0,last_latency,0.0
-18,OmnetSim-0.node_0,packets_sent,0.0
-19,OmnetSim-0.node_0,val_out,
+18,OmnetSim-0.node_0,last_packet_size,109.0
+18,OmnetSim-0.node_0,packets_sent,19.0
+18,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteA"", ""destino"": ""AgenteB"", ""payload"": ""Copiado, Agente B. Mantendo a conex\u00e3o ativa...""}"
+19,OmnetSim-0.node_0,last_latency,0.02616
 19,OmnetSim-0.node_0,status,idle
-19,OmnetSim-0.node_0,last_latency,0.0
-19,OmnetSim-0.node_0,packets_sent,0.0
+19,OmnetSim-0.node_0,last_packet_size,101.0
+19,OmnetSim-0.node_0,packets_sent,20.0
+19,OmnetSim-0.node_0,val_out,"{""origem"": ""AgenteB"", ""destino"": ""AgenteA"", ""payload"": ""Lat\u00eancia processada. Sistema operante!""}"

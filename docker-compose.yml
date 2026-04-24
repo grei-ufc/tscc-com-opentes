@@ -37,8 +37,8 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
-    # CORREÇÃO: Espera 10 segundos para dar tempo ao PADE de abrir a porta
-    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 10 && python first.py"
+    # A MÁGICA ACONTECE AQUI: Adicionámos o script do gráfico no final!
+    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 5 && python first.py && python plot_results.py"
 
 networks:
   sim_net:

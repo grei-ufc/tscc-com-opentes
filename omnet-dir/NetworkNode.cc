@@ -1,6 +1,6 @@
 /**
  * @file NetworkNode.cc
- * @brief Nuvem de Rede: Recebe FIPA-ACL, aplica delay, e expõe para o destino.
+ * @brief Nuvem de Rede: Recebe FIPA-ACL, aplica delay realista, e expõe para o destino.
  */
 
 #include <omnetpp.h>
@@ -44,7 +44,7 @@ void NetworkNode::handleMessage(cMessage *msg)
         std::string payload = pkt->getName();
         par("val_out").setStringValue(payload.c_str());
         
-        EV << "Nuvem OMNeT++ liberou pacote. Latencia: " << latency << "s" << std::endl;
+        EV << "Nuvem OMNeT++ liberou pacote de " << size << " bytes. Latencia total: " << latency << "s" << std::endl;
            
         delete pkt;
         return;
@@ -56,13 +56,23 @@ void NetworkNode::handleMessage(cMessage *msg)
     std::string current_in = par("val_in").stdstringValue();
     
     if (!current_in.empty()) {
-        EV << "Nuvem OMNeT++: Mensagem do PADE detectada! Simulando atraso..." << std::endl;
+        EV << "Nuvem OMNeT++: Mensagem do PADE detectada! Calculando atraso real..." << std::endl;
         
         cPacket *pkt = new cPacket(current_in.c_str());
         pkt->setByteLength(current_in.length()); 
         
-        // A MAGIA: O nó agenda o pacote para chegar a si mesmo 15ms no futuro!
-        scheduleAt(simTime() + 0.015, pkt); 
+        // --- A NOVA MAGIA MATEMÁTICA DE REDE ---
+        double propagation_delay = 0.010; // 10ms fixos de distância física
+        double bandwidth_bps = 50000.0;   // Largura de banda: 50 kbps (link simulado)
+        
+        // Calcula o tempo de transmissão: (Bytes * 8 bits) / Largura de Banda
+        double bits = current_in.length() * 8.0;
+        double transmission_delay = bits / bandwidth_bps;
+        
+        double total_latency = propagation_delay + transmission_delay;
+
+        // O pacote agora chega no futuro baseado no seu tamanho real!
+        scheduleAt(simTime() + total_latency, pkt); 
         
         par("packets_sent") = par("packets_sent").doubleValue() + 1;
         
