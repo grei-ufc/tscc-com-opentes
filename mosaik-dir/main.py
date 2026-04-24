@@ -1,81 +1,50 @@
-"""
-Orquestrador Principal da Co-Simulação Mosaik-OMNeT++.
-
-CICLO DE DADOS:
-  Gerador ──(sinal_saida → data_in)──→ node_0 (OMNeT++)
-  node_0  ──(data_out → retroalimentacao) ──→ Gerador  [time_shifted=True]
-  nodes   ──(data_out, status, …)──────────→ Coletor (CSV)
-
-  A conexão time_shifted=True é o que permite o ciclo sem violar a
-  causalidade do Mosaik: os dados do passo t chegam ao Gerador no passo t+1.
-"""
-
-import plot_results
 import mosaik
 import os
 
-sim_config = {
-    'OmnetSim': {'python': 'omnet_wrapper:OmnetAdapter'},
-    'Gerador':  {'python': 'controller:Controlador'},
-    'Coletor':  {'python': 'collector:Coletor'},
+# Configuração: apontamos para o nosso OMNeT++ e conectamos ao servidor nativo do PADE
+SIM_CONFIG = {
+    'OmnetSim': {
+        'python': 'omnet_wrapper:OmnetAdapter'
+    },
+    'ColetorSim': { 
+        'python': 'collector:Coletor' 
+    },
+    'PadeSim': {
+        # Remova o "_container", deixe apenas "pade"
+        'connect': 'pade:5678' 
+    }
 }
-
-
 def main():
-    world = mosaik.World(sim_config)
+    world = mosaik.World(SIM_CONFIG)
 
-    omnet_host = os.getenv('OMNET_HOST', 'localhost')
-    omnet_port = int(os.getenv('OMNET_PORT', 5555))
+    # 1. Inicia/Conecta os Simuladores
+    omnet_sim = world.start('OmnetSim')
+    coletor_sim = world.start('ColetorSim')
+    pade_sim = world.start('PadeSim') # Conecta ao PADE nativo
 
-    # 1. Inicia os 3 simuladores
-    omnet_sim  = world.start('OmnetSim', host=omnet_host, port=omnet_port)
-    gerador_sim = world.start('Gerador')
-    coletor_sim = world.start('Coletor')
-
-    # 2. Cria entidades na memória (Agora 4 nós!)
-    nodes = omnet_sim.NetworkNode.create(4, node_type='NetworkNode')
-
-    # Desenha a Topologia em Estrela (Hub -> Clientes)
-    omnet_sim.Connection.create(1, src='node_0', dest='node_1')
-    omnet_sim.Connection.create(1, src='node_0', dest='node_2')
-    omnet_sim.Connection.create(1, src='node_0', dest='node_3')
-
-    gen_entity = gerador_sim.TrafficGen.create(1, valor_injecao=15.0)
-    monitor    = coletor_sim.Monitor.create(1)
-
-    # 3. Ligar os fios (Data Flow)
+    # 2. Instancia os Modelos (As entidades)
+    # ATENÇÃO: Verifique no 'mosaik_example' qual o nome exato do modelo e atributo 
+    # que o PADE expõe (geralmente é 'Agent', 'msg_out' e 'msg_in')
+    agente_a = pade_sim.Agent(agent_id='AgenteA')
+    agente_b = pade_sim.Agent(agent_id='AgenteB')
     
-    # Injeção: Do Gerador para a porta 'data_in' do node_0 
-    world.connect(gen_entity[0], nodes[0], ('sinal_saida', 'data_in'))
+    rede_omnet = omnet_sim.NetworkNode(node_id='RedePrincipal')
+    monitor = coletor_sim.Monitor()
 
-    # Recolha: Dos dois nós do OMNeT++ para o Monitor CSV
-    for node in nodes:
-        world.connect(
-            node, monitor[0],
-            'data_out', 'status',
-            'packets_sent', 'packets_received',
-            'last_latency', 'last_packet_size',
-        )
+    # 3. A INTERCEPTAÇÃO (O seu objetivo!)
+    # Em vez de Agente A -> Agente B direto, fazemos:
+    
+    # A) PADE envia para a Rede
+    world.connect(agente_a, rede_omnet, 'val_out', 'val_in')
+    
+    # B) Rede calcula o delay e envia de volta ao PADE
+    world.connect(rede_omnet, agente_b, 'val_out', 'val_in')
 
-    # *** CICLO DE FEEDBACK ***
-    # Os dados de saída do node_0 (hub) retroalimentam o Gerador no passo seguinte.
-    # time_shifted=True evita o ciclo causal no mesmo passo — os dados chegam
-    # com 1 passo de atraso, que é o comportamento correto em co-simulação.
-    world.connect(
-        nodes[0], gen_entity[0],
-        ('data_out', 'retroalimentacao'),
-        time_shifted=True,
-        initial_data={'data_out': 0.0}
-    )
+    # Monitoria do OMNeT++
+    world.connect(rede_omnet, monitor, 'status', 'packets_sent', 'last_latency')
 
-    # 4. Executa a simulação
-    print("\nIniciando co-simulação cíclica Mosaik ↔ OMNeT++...")
+    # 4. Roda a co-simulação
     world.run(until=10)
-    print("Simulação finalizada! Verifique results.csv")
-
-    print("Gerando gráfico...")
-    plot_results.gerar_grafico()
-
 
 if __name__ == '__main__':
     main()

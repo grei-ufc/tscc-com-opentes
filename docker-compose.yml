@@ -1,15 +1,30 @@
-version: '3.8'
-
 services:
+  pade:
+    build:
+      context: .
+      dockerfile: Dockerfile.pade
+    container_name: pade
+    networks:
+      - sim_net
+    ports:
+      - "5678:5678"
+    # Mapeia a pasta local 'pade_agents' para a pasta '/app/agents' no contentor
+    volumes:
+      - ./pade_agents:/app/agents
+    stdin_open: true
+    tty: true
+    # O comando aponta exatamente para o caminho dentro da pasta mapeada
+    command: python3 /app/agents/agent_example_1_mosaik_updated.py
+
   omnet_sim:
     build: ./omnet-dir
     container_name: omnet_sim
     networks:
       - sim_net
+    expose:
+      - "5555"
     volumes:
-      # Monta a pasta local para não ter de reconstruir a imagem a cada mudança de código C++
       - ./omnet-dir:/root/models 
-    # Comando de compilação e execução
     command: /bin/bash -c "source /root/omnetpp/setenv && opp_makemake -f --deep -O out -o sim_exec -lzmq && make && ./sim_exec -u Cmdenv -c General"
 
   mosaik_master:
@@ -19,13 +34,11 @@ services:
       - sim_net
     depends_on:
       - omnet_sim
-    environment:
-      - OMNET_HOST=omnet_sim
-      - OMNET_PORT=5555
+      - pade
     volumes:
       - ./mosaik-dir:/app
-    # Instala as bibliotecas de gráficos e depois roda a simulação principal
-    command: sh -c "pip install pandas matplotlib && python main.py"
+    # CORREÇÃO: Espera 10 segundos para dar tempo ao PADE de abrir a porta
+    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 10 && python first.py"
 
 networks:
   sim_net:

@@ -22,8 +22,8 @@ META = {
             'public': True,
             'params': ['node_type'],
             'attrs': [
-                'data_in',
-                'data_out',
+                'val_in',
+                'val_out',
                 'status',
                 'packets_sent',
                 'packets_received',

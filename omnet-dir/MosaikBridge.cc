@@ -1,10 +1,6 @@
 /**
  * @file MosaikBridge.cc
  * @brief Ponte de comunicação entre OMNeT++ e Mosaik via ZeroMQ.
- *
- * Implementa um servidor TCP que escuta os comandos JSON do Mosaik (CREATE,
- * CONNECT, STEP), instancia componentes de rede dinamicamente usando a API
- * do cSimulation e avança o relógio de eventos discretos em lock-step.
  */
 
 #include <omnetpp.h>
@@ -31,8 +27,6 @@ Define_Module(MosaikBridge);
 
 void MosaikBridge::initialize() {
     socket.bind("tcp://*:5555");
-    EV << "MosaikBridge: Aguardando conexao do mosaik na porta 5555..." << std::endl;
-
     bool scenario_ready = false;
     
     while (!scenario_ready) {
@@ -42,9 +36,6 @@ void MosaikBridge::initialize() {
         std::string msg_str(static_cast<char*>(request.data()), request.size());
         json j = json::parse(msg_str);
 
-        EV << "\n>>> RECEBIDO DO MOSAIK (SETUP):\n" << j.dump(4) << "\n" << std::endl;
-
-        // --- CRIAR NÓ ---
         if (j["action"] == "create") {
             std::string modelName = j["params"]["node_type"];
             std::string entityId = j["eid"];
@@ -57,64 +48,19 @@ void MosaikBridge::initialize() {
                 newModule->finalizeParameters();
                 newModule->buildInside();
                 newModule->scheduleStart(simTime());
-                
-                EV << "MosaikBridge: Modulo " << entityId << " criado com sucesso." << std::endl;
                 response = {{"status", "ok"}};
             } else {
-                EV_ERROR << "MosaikBridge: Tipo de modulo nao encontrado: " << modelName << std::endl;
-                response = {{"status", "error", "reason", "Tipo de modulo nao encontrado"}};
+                response = {{"status", "error", "reason", "Modulo nao encontrado"}};
             }
-
-            EV << "<<< ENVIANDO PARA O MOSAIK:\n" << response.dump(4) << "\n" << std::endl;
             socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
         } 
-        // --- CRIAR CONEXÃO (CABO) ---
         else if (j["action"] == "connect") {
-            std::string srcId = j["src"];
-            std::string destId = j["dest"];
-
-            cModule *srcNode = getParentModule()->getSubmodule(srcId.c_str());
-            cModule *destNode = getParentModule()->getSubmodule(destId.c_str());
-            json response;
-
-            if (srcNode && destNode) {
-                // Aumenta o tamanho do vetor das portas "out" na origem e "in" no destino
-                srcNode->setGateSize("out", srcNode->gateSize("out") + 1);
-                destNode->setGateSize("in", destNode->gateSize("in") + 1);
-
-                // Pega a referência para as portas recém-criadas (último índice)
-                cGate *srcGate = srcNode->gate("out", srcNode->gateSize("out") - 1);
-                cGate *destGate = destNode->gate("in", destNode->gateSize("in") - 1);
-
-                // Cria um canal realista com latência e chance de perda
-                cDatarateChannel *channel = cDatarateChannel::create("channel");
-                
-                channel->setDelay(0.015); // 15 milissegundos de latência
-                channel->setDatarate(1000000); // 1 Mbps de banda
-                channel->setPacketErrorRate(0.10); // 10% de chance de perder pacotes
-
-                srcGate->connectTo(destGate, channel);
-                channel->callInitialize();
-                
-                EV << "MosaikBridge: Conectado cabo de " << srcId << " para " << destId << std::endl;
-                response = {{"status", "ok"}};
-            } else {
-                EV_ERROR << "MosaikBridge: Erro ao conectar. Nó não encontrado." << std::endl;
-                response = {{"status", "error", "reason", "Nó de origem ou destino não encontrado"}};
-            }
-
-            EV << "<<< ENVIANDO PARA O MOSAIK:\n" << response.dump(4) << "\n" << std::endl;
-            socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
+            socket.send(zmq::buffer(json({{"status", "ok"}}).dump()), zmq::send_flags::none);
         }
-        // --- INICIAR SIMULAÇÃO ---
         else if (j["action"] == "step") {
             scenario_ready = true;
             stepMsg = new cMessage("next_step");
-            
-            double stepSize = 1.0; 
-            scheduleAt(simTime() + stepSize, stepMsg);
-            
-            EV << "MosaikBridge: Cenario montado. Iniciando loop de simulacao..." << std::endl;
+            scheduleAt(simTime() + 1.0, stepMsg);
         }
     }
 }
@@ -122,7 +68,6 @@ void MosaikBridge::initialize() {
 void MosaikBridge::handleMessage(cMessage *msg) {
     if (msg == stepMsg) {
         
-        // 1. EXTRAÇÃO DE DADOS DOS NÓS
         json data_json = json::object();
 
         for (cModule::SubmoduleIterator it(getParentModule()); !it.end(); ++it) {
@@ -132,23 +77,19 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             std::string nodeName = submod->getName();
             json node_data = json::object();
 
-            // Extrai as variáveis base
             node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
             node_data["data_out"] = submod->hasPar("data_out") ? submod->par("data_out").doubleValue() : 0.0;
 
-            // Extrai as NOVAS variáveis de rede
-            if (submod->hasPar("packets_sent")) {
-                node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
+            // Extrai a mensagem FIPA e LIMPA a porta para não enviar duplicados
+            if (submod->hasPar("val_out")) {
+                node_data["val_out"] = submod->par("val_out").stdstringValue();
+                submod->par("val_out").setStringValue(""); 
             }
-            if (submod->hasPar("packets_received")) {
-                node_data["packets_received"] = submod->par("packets_received").doubleValue();
-            }
-            if (submod->hasPar("last_latency")) {
-                node_data["last_latency"] = submod->par("last_latency").doubleValue();
-            }
-            if (submod->hasPar("last_packet_size")) {
-                node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
-            }
+
+            if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
+            if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
+            if (submod->hasPar("last_latency")) node_data["last_latency"] = submod->par("last_latency").doubleValue();
+            if (submod->hasPar("last_packet_size")) node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
 
             data_json[nodeName] = node_data;
         }
@@ -158,21 +99,15 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             {"data", data_json}
         };
         
-        EV << "\n<<< ENVIANDO RESULTADOS PARA O MOSAIK:\n" << response.dump(4) << "\n" << std::endl;
         socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
 
-        // 2. RECEBE PRÓXIMO COMANDO DO MOSAIK
         zmq::message_t next_request;
         socket.recv(next_request, zmq::recv_flags::none);
         
         std::string msg_str(static_cast<char*>(next_request.data()), next_request.size());
         json j = json::parse(msg_str);
 
-        EV << "\n>>> RECEBIDO DO MOSAIK (PASSO):\n" << j.dump(4) << "\n" << std::endl;
-
-        // 3. APLICA INPUTS E AVANÇA O TEMPO
         if (j["action"] == "step") {
-            
             if (j.contains("inputs") && !j["inputs"].is_null()) {
                 json inputs = j["inputs"];
                 
@@ -182,24 +117,31 @@ void MosaikBridge::handleMessage(cMessage *msg) {
                     if (targetNode != nullptr) {
                         for (auto& [attrName, sources] : nodeAttributes.items()) {
                             
-                            double totalValue = 0.0;
-                            for (auto& [sourceEntity, value] : sources.items()) {
-                                totalValue += value.get<double>();
-                            }
-                            
                             if (targetNode->hasPar(attrName.c_str())) {
-                                targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
-                                EV << "MosaikBridge: Injetado no nó " << nodeName 
-                                   << " atributo " << attrName << " = " << totalValue << std::endl;
+                                if (sources.begin().value().is_number()) {
+                                    double totalValue = 0.0;
+                                    for (auto& [sourceEntity, value] : sources.items()) {
+                                        totalValue += value.get<double>();
+                                    }
+                                    targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
+                                } 
+                                else if (sources.begin().value().is_string()) {
+                                    // A CORREÇÃO MÁGICA: Vasculha todos os cabos ligados e pega no que tem a mensagem!
+                                    std::string combinedStr = "";
+                                    for (auto& [sourceEntity, value] : sources.items()) {
+                                        std::string valStr = value.get<std::string>();
+                                        if (!valStr.empty()) {
+                                            combinedStr = valStr;
+                                        }
+                                    }
+                                    targetNode->par(attrName.c_str()).setStringValue(combinedStr.c_str());
+                                }
                             }
                         }
                     }
                 }
             }
-
-            double stepSize = 1.0;
-            scheduleAt(simTime() + stepSize, stepMsg);
-            
+            scheduleAt(simTime() + 1.0, stepMsg);
         } else if (j["action"] == "stop") {
             endSimulation();
         }
@@ -209,9 +151,6 @@ void MosaikBridge::handleMessage(cMessage *msg) {
 }
 
 void MosaikBridge::finish() {
-    if (stepMsg) {
-        cancelAndDelete(stepMsg);
-    }
+    if (stepMsg) cancelAndDelete(stepMsg);
     socket.close();
-    EV << "MosaikBridge: Conexao encerrada e memoria limpa." << std::endl;
 }
