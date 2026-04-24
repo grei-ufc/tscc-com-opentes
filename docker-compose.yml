@@ -37,7 +37,7 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
-    # A MÁGICA ACONTECE AQUI: Adicionámos o script do gráfico no final!
+      
     command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 5 && python first.py && python plot_results.py"
 
 networks:

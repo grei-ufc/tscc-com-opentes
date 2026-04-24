@@ -35,7 +35,6 @@ def create_scenario(world):
     # ROTA 3: OMNeT++ -> Collector (Telemetria)
     # ==========================================
     # O Collector recolhe as métricas e também a mensagem que saiu da rede (val_out)
-    # Provavelmente a sua linha estava sem o 'last_packet_size'
     world.connect(rede_omnet, monitor, 'status', 'packets_sent', 'last_latency', 'last_packet_size', 'val_out')
 
 
@@ -44,6 +43,5 @@ if __name__ == '__main__':
     world = mosaik.World(sim_config)
     create_scenario(world)
     
-    # Aumentamos o tempo para 20 para dar tempo de as mensagens irem e voltarem!
     world.run(until=20) 
     print("✅ Co-simulação finalizada! Verifique o CSV gerado pelo Collector.")

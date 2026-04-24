@@ -61,7 +61,7 @@ void NetworkNode::handleMessage(cMessage *msg)
         cPacket *pkt = new cPacket(current_in.c_str());
         pkt->setByteLength(current_in.length()); 
         
-        // --- A NOVA MAGIA MATEMÁTICA DE REDE ---
+        // --- MATEMÁTICA DE REDE ---
         double propagation_delay = 0.010; // 10ms fixos de distância física
         double bandwidth_bps = 50000.0;   // Largura de banda: 50 kbps (link simulado)
         
@@ -71,7 +71,7 @@ void NetworkNode::handleMessage(cMessage *msg)
         
         double total_latency = propagation_delay + transmission_delay;
 
-        // O pacote agora chega no futuro baseado no seu tamanho real!
+        // O pacote chega no futuro baseado no seu tamanho real
         scheduleAt(simTime() + total_latency, pkt); 
         
         par("packets_sent") = par("packets_sent").doubleValue() + 1;
