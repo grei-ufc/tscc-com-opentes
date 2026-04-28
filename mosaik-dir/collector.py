@@ -7,7 +7,6 @@ META = {
         'Monitor': {
             'public': True,
             'any_inputs': True,
-            # ADICIONE AQUI O 'last_packet_size'
             'attrs': ['status', 'packets_sent', 'last_latency', 'last_packet_size', 'val_out'], 
         },
     },
@@ -40,7 +39,7 @@ class Coletor(mosaik_api.Simulator):
         # Força a gravação no disco para podermos ver em tempo real
         self.csv_file.flush()
         
-        # return None num 'event-based' significa: "Fico a dormir até chegar nova mensagem"
+        # "Fico a dormir até chegar nova mensagem"
         return None 
 
     def finalize(self):

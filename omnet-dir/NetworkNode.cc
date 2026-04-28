@@ -40,7 +40,7 @@ void NetworkNode::handleMessage(cMessage *msg)
         par("last_latency") = latency;
         par("last_packet_size") = size;
         
-        // Coloca a string FIPA-ACL na porta de saída para o Mosaik recolher!
+        // Coloca a string FIPA-ACL na porta de saída para o Mosaik recolher
         std::string payload = pkt->getName();
         par("val_out").setStringValue(payload.c_str());
         

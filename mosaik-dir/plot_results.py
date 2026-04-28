@@ -7,11 +7,8 @@ def gerar_grafico():
         df = pd.read_csv('results.csv')
         
         # 1. TRATAMENTO DE DADOS: 
-        # O CSV tem a porta 'val_out' que contém o JSON em texto. O Matplotlib só lê números.
-        # errors='coerce' força o que for texto a virar 'NaN' (vazio), deixando os números intactos.
         df['Valor'] = pd.to_numeric(df['Valor'], errors='coerce')
         
-        # Limpa as linhas com NaN para não quebrar o gráfico
         df = df.dropna(subset=['Valor'])
 
         # 2. FILTRAR O NÓ DA NUVEM:

@@ -64,7 +64,6 @@ class AgenteComunicador(Agent):
         ACTIVE_AGENTS[self.aid.localname] = self
         display_message(self.aid.localname, '🌐 Agente Online. Ligado à Matriz OMNeT++.')
         
-        # CORREÇÃO 1: O Agente A dispara a primeira mensagem IMEDIATAMENTE (t=0)
         if self.aid.localname == 'AgenteA':
             self.preparar_envio("Acesso autorizado. Qual é a latência da rede?", "AgenteB")
 
@@ -85,11 +84,11 @@ class AgenteComunicador(Agent):
             
             # --- LÓGICA BIDIRECIONAL CONTÍNUA ---
             
-            # 1. Se eu for o Agente B e recebi do A, eu respondo!
+            # 1. Se eu for o Agente B e recebi do A, eu respondo
             if self.aid.localname == 'AgenteB' and mensagem['origem'] == 'AgenteA':
                 self.preparar_envio("Latência processada. Sistema operante!", "AgenteA")
                 
-            # 2. NOVO: Se eu for o Agente A e recebi a confirmação do B, eu mando outra mensagem!
+            # 2. NOVO: Se eu for o Agente A e recebi a confirmação do B, eu mando outra mensagem
             elif self.aid.localname == 'AgenteA' and mensagem['origem'] == 'AgenteB':
                 self.preparar_envio("Copiado, Agente B. Mantendo a conexão ativa...", "AgenteB")
                 

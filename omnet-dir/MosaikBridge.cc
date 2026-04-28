@@ -17,7 +17,6 @@ class MosaikBridge : public cSimpleModule {
     zmq::socket_t socket{context, zmq::socket_type::rep};
     cMessage *stepMsg = nullptr;
 
-    // Nova função auxiliar para processar as mensagens injetadas
     void applyInputs(json j);
 
   protected:
@@ -96,7 +95,6 @@ void MosaikBridge::initialize() {
             socket.send(zmq::buffer(json({{"status", "ok"}}).dump()), zmq::send_flags::none);
         }
         else if (j["action"] == "step") {
-            // A GRANDE CORREÇÃO: Lê a mensagem FIPA-ACL do t=0 antes de soltar o simulador!
             applyInputs(j);
             
             scenario_ready = true;
@@ -122,7 +120,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
 
             if (submod->hasPar("val_out")) {
                 node_data["val_out"] = submod->par("val_out").stdstringValue();
-                submod->par("val_out").setStringValue(""); // Limpa a montra após envio
+                submod->par("val_out").setStringValue("");
             }
 
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();

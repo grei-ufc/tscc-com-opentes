@@ -3,21 +3,13 @@ FROM python:3.12.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Dependências do sistema
+# Dependências do sistema (mantemos build-essential e gcc para compilar pacotes Python como Twisted e pyzmq)
 RUN apt-get update && apt-get install -y \
-    git \
     build-essential \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Clona a versão correta do PADE
-RUN git clone --branch pade2026 https://github.com/grei-ufc/pade.git
-
-WORKDIR /app/pade
-
-RUN pip install --no-cache-dir mosaik-api-v3==3.0.14
 
 # Atualiza pip + ferramentas base
 RUN pip install --no-cache-dir --upgrade \
@@ -27,6 +19,7 @@ RUN pip install --no-cache-dir --upgrade \
 
 # Instala dependências críticas com versões FIXAS
 RUN pip install --no-cache-dir \
+    mosaik-api-v3==3.0.14 \
     twisted==24.7.0 \
     autobahn==23.6.2 \
     zope.interface==6.4.post2 \
@@ -37,17 +30,11 @@ RUN pip install --no-cache-dir \
     hyperlink==21.0.0 \
     pyzmq==26.0.3
 
-# Caso o PADE tenha requirements próprios
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
-
-# Instala o PADE
-RUN pip install --no-cache-dir .
+# Instala o PADE usando o pacote oficial
+RUN pip install --no-cache-dir pade-agents
 
 # Ferramentas úteis para debug
 RUN pip install --no-cache-dir ipython==8.26.0
-
-# Diretório para seus agentes
-WORKDIR /app
 
 EXPOSE 8000
 
