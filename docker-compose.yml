@@ -1,20 +1,18 @@
 services:
   pade:
-    build:
-      context: .
-      dockerfile: Dockerfile.pade
+    build: ./pade-dir
     container_name: pade
     networks:
       - sim_net
     ports:
       - "5678:5678"
-    # Mapeia a pasta local 'pade_agents' para a pasta '/app/agents' no contentor
+    # A MÁGICA ESTÁ AQUI: Mapeia diretamente a pasta pade_agents para /app
     volumes:
-      - ./pade_agents:/app/agents
+      - ./pade-dir/pade_agents:/app
     stdin_open: true
     tty: true
-    # O comando aponta exatamente para o caminho dentro da pasta mapeada
-    command: python3 /app/agents/agent_example_1_mosaik_updated.py
+    # Agora ele encontra o ficheiro na raiz!
+    command: python3 pade_sim.py
 
   omnet_sim:
     build: ./omnet-dir
@@ -37,8 +35,8 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
-      
-    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 5 && python first.py && python plot_results.py"
+    # 10 segundos de sleep para os agentes FIPA iniciarem em segurança
+    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 3 && python first.py && python plot_results.py"
 
 networks:
   sim_net:
