@@ -1,96 +1,194 @@
-# Branch development - TSCC
-Um ambiente de co-simulação que conecta o gerenciador de cenários **Mosaik** (Python) ao simulador de eventos discretos **OMNeT++** (C++), a comunicação é construída sobre sockets **ZeroMQ (ZMQ)** e em lock-step entre os contêineres Docker.
 
-### Estrutura
+# 🚀 TSCC: Co-Simulação PADE + OMNeT++ + Mosaik
 
+![Docker](https://img.shields.io/badge/Docker-%E2%89%A5%2024.x-blue)
+![Compose](https://img.shields.io/badge/Docker%20Compose-V2-blue)
+![Status](https://img.shields.io/badge/status-active-success)
+
+Ambiente avançado de **co-simulação distribuída** que integra:
+
+- 🤖 **PADE (Python)** → Agentes inteligentes  
+- 🌐 **OMNeT++ (C++)** → Simulação de rede  
+- 🔄 **Mosaik** → Orquestração e sincronização  
+
+A comunicação é realizada via **ZeroMQ (ZMQ)** com sincronização em **lock-step**, garantindo consistência temporal entre os simuladores.
+
+---
+
+## 📑 Sumário
+
+- [🧠 Arquitetura](#-arquitetura)
+- [📂 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🛠️ Pré-requisitos](#️-pré-requisitos)
+- [⚙️ Instalação](#️-instalação)
+- [🚀 Execução](#-execução)
+- [📊 Resultados](#-resultados)
+- [🧰 Comandos Úteis](#-comandos-úteis)
+
+---
+
+## 🧠 Arquitetura
+
+O sistema implementa uma integração cíclica com **Física de Rede Dinâmica**:
+
+### 🔄 Fluxo da Simulação
+
+1. **PADE → Mosaik**  
+   Agentes enviam mensagens **FIPA-ACL (JSON)** ao Mosaik
+
+2. **Mosaik → OMNeT++**  
+   Mensagens são injetadas na rede simulada
+
+3. **Processamento de Rede (C++)**  
 ```
+
+Latência = Atraso de Propagação + (Tamanho em bits / Largura de Banda)
+
+````
+
+4. **Entrega sincronizada**  
+Mensagens são liberadas no tempo correto (**lock-step**)
+
+---
+
+## 📂 Estrutura do Projeto
+
+```text
 tscc-com-opentes/
-├── docker-compose.yml              # Orquestra os dois contêineres
+├── docker-compose.yml
 │
-├── mosaik-dir/                     # Lado Python / Mosaik
-│   ├── Dockerfile                  # Imagem Python com ZMQ e Mosaik
-│   ├── main.py                     # Orquestrador principal: topologia, conexões, world.run()
-│   ├── omnet_wrapper.py            # Adaptador Mosaik Simulator — cliente ZMQ para o OMNeT++
-│   ├── controller.py               # Agente TrafficGen: injeta data_in; adapta taxa via feedback
-│   ├── collector.py                # Agente Monitor: grava telemetria em results.csv
-│   ├── plot_results.py             # Gera grafico_trafego.png a partir do results.csv
-│   └── results.csv                 # Saída: telemetria em série temporal (gerado em execução)
+├── mosaik-dir/
+│   ├── first.py
+│   ├── collector.py
+│   └── plot_results.py
 │
-└── omnet-dir/                      # Lado C++ / OMNeT++
-    ├── Dockerfile                  # Imagem OMNeT++ com ZMQ e nlohmann/json
-    ├── Makefile                    # Regras de build (gerado pelo opp_makemake)
-    ├── omnetpp.ini                 # Configuração da simulação: rede, scheduler, limite de tempo
-    ├── Network.ned                 # Contêiner de rede de alto nível (nós adicionados dinamicamente)
-    ├── NetworkNode.ned             # Definição do nó: gates, parâmetros @mutable
-    ├── MosaikBridge.cc             # Servidor ZMQ REP: protocolo CREATE / CONNECT / STEP
-    ├── NetworkNode.cc              # Lógica do nó: geração de pacotes, tratamento de @mutable
-    └── sim_exec                    # Binário compilado (gerado no build)
-```
+├── pade-dir/
+│   ├── Dockerfile
+│   └── agent_example.py
+│
+└── omnet-dir/
+ ├── Dockerfile
+ ├── MosaikBridge.cc
+ └── NetworkNode.cc
+````
 
 ---
 
-## Pré-requisitos
+## 🛠️ Pré-requisitos
 
-| Ferramenta | Versão | Observação |
-|---|---|---|
-| [Docker](https://docs.docker.com/get-docker/) | ≥ 24.x | Obrigatório |
-| [Docker Compose](https://docs.docker.com/compose/) | ≥ 2.x (plugin `compose` v2) | Obrigatório |
-| Git | qualquer | Opcional — para clonar o repositório |
+| Ferramenta     | Versão | Obrigatório |
+| -------------- | ------ | ----------- |
+| Docker         | ≥ 24.x | ✅           |
+| Docker Compose | V2     | ✅           |
+| Git            | -      | ❌           |
 
-Nenhuma instalação local de Python ou C++ é necessária; tudo executa dentro do Docker.
+> 💡 Todo o ambiente é containerizado — não é necessário instalar Python, C++ ou OMNeT++ localmente.
 
 ---
 
-## Instalação e Uso
-### Windows
-### 1.Instalação de Pré-requisitos
-```bash
+## ⚙️ Instalação
+
+### 🪟 Windows
+
+```powershell
 winget install Git.Git
 winget install Docker.DockerDesktop
 ```
-Antes de clonar o repositório, abra o software Docker Desktop e deixe com a janela habilitada, pois senão o Docker não conseguirá se conectar à sua API.
 
-### Linux
+> ⚠️ Certifique-se de que o Docker Desktop está em execução.
+
+---
+
+### 🐧 Linux (Ubuntu/Debian)
+
 ```bash
-sudo apt-get install git
-sudo apt-get install docker
-sudo apt-get install compose
+sudo apt-get update
+sudo apt-get install git docker.io docker-compose-plugin
 ```
 
-### 2. Clonar o repositório
+**(Opcional) Rodar sem sudo:**
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+---
+
+## 🚀 Execução
+
+### 1. Clonar repositório
 
 ```bash
 git clone https://github.com/grei-ufc/tscc-com-opentes.git
 cd tscc-com-opentes
 ```
 
-### 3. Construir e iniciar os contêineres
+### 2. Subir o ambiente
 
 ```bash
-docker-compose up --build
-```
-
-A sequência de inicialização é:
-1. `omnet_sim` compila e inicia a simulação OMNeT++, aguardando conexões ZMQ na porta `5555`.
-2. `mosaik_master` (que depende do `omnet_sim`) instala os pacotes Python e executa `main.py`.
-
-### 4. Verificar a saída
-
-Após a simulação terminar (10 passos por padrão), dois arquivos são gerados:
-
-- `results.csv`
-- `grafico_trafego.png`
-
-Para executar novamente sem recompilar o C++:
-
-```bash
-docker-compose up
-```
-
-Para parar e remover os contêineres:
-
-```bash
-docker-compose down
+docker compose up --build
 ```
 
 ---
+
+### 🔄 Inicialização automática
+
+| Serviço         | Função                                     |
+| --------------- | ------------------------------------------ |
+| `omnet_sim`     | Compila e inicia servidor ZMQ (porta 5555) |
+| `pade`          | Inicializa agentes (porta 5678)            |
+| `mosaik_master` | Orquestra e executa a simulação            |
+
+---
+
+## 📊 Resultados
+
+Após a execução (`Simulation finished successfully`):
+
+### 📄 Arquivos gerados
+
+* **`results.csv`**
+  Métricas por passo de simulação:
+
+  * Latência
+  * Tamanho de pacote
+
+* **`grafico_trafego.png`**
+
+### 📈 Visualizações
+
+* 📦 **Tamanho do Pacote**
+  Comportamento ping-pong (ex: 113 ↔ 101 bytes)
+
+* ⏱️ **Latência**
+  Demonstra impacto do tamanho do pacote no atraso
+
+---
+
+## 🧰 Comandos Úteis
+
+### ▶️ Executar novamente
+
+```bash
+docker compose up
+```
+
+### 🛑 Parar e limpar
+
+```bash
+docker compose down
+```
+
+---
+
+## 📌 Observações
+
+* Arquitetura baseada em **co-simulação sincronizada**
+* Comunicação desacoplada via **ZeroMQ**
+* Totalmente reprodutível via Docker
+
+---
+
+## 📄 Licença
+
+

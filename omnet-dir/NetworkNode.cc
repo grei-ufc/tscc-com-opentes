@@ -1,9 +1,10 @@
 /**
  * @file NetworkNode.cc
- * @brief Implementação da lógica comportamental do NetworkNode.
+ * @brief Nuvem de Rede: Recebe FIPA-ACL, aplica delay realista, e expõe para o destino.
  */
 
 #include <omnetpp.h>
+#include <string>
 
 using namespace omnetpp;
 
@@ -18,15 +19,17 @@ Define_Module(NetworkNode);
 
 void NetworkNode::initialize()
 {
-    EV << "NetworkNode " << getName() << " inicializado." << std::endl;
-    // Dispara o primeiro pulso
+    EV << "Nuvem OMNeT++ inicializada." << std::endl;
+    // Dispara o primeiro pulso de leitura
     cMessage *wakeUpMsg = new cMessage("wakeup");
     scheduleAt(simTime(), wakeUpMsg);
 }
 
 void NetworkNode::handleMessage(cMessage *msg)
 {
-    // SE FOR UMA MENSAGEM RECEBIDA DE OUTRO NÓ PELA REDE
+    // ==============================================================
+    // 1. O PACOTE ACABOU DE SAIR DO "TÚNEL DE LATÊNCIA"
+    // ==============================================================
     if (msg->isPacket()) {
         cPacket *pkt = check_and_cast<cPacket *>(msg);
         
@@ -37,41 +40,47 @@ void NetworkNode::handleMessage(cMessage *msg)
         par("last_latency") = latency;
         par("last_packet_size") = size;
         
-        EV << "NetworkNode " << getName() << " RECEBEU pacote. Latencia: " << latency << "s" << std::endl;
+        // Coloca a string FIPA-ACL na porta de saída para o Mosaik recolher
+        std::string payload = pkt->getName();
+        par("val_out").setStringValue(payload.c_str());
+        
+        EV << "Nuvem OMNeT++ liberou pacote de " << size << " bytes. Latencia total: " << latency << "s" << std::endl;
            
         delete pkt;
         return;
     }
 
-    // SE FOR O PULSO INTERNO, VERIFICA SE O MOSAIK INJETOU ALGO
-    double current_in = par("data_in").doubleValue();
+    // ==============================================================
+    // 2. VERIFICA SE O MOSAIK INJETOU ALGO NOVO
+    // ==============================================================
+    std::string current_in = par("val_in").stdstringValue();
     
-    if (current_in > 0) {
-        EV << "NetworkNode " << getName() << ": Injetando trafego! Fazendo BROADCAST..." << std::endl;
+    if (!current_in.empty()) {
+        EV << "Nuvem OMNeT++: Mensagem do PADE detectada! Calculando atraso real..." << std::endl;
         
-        int numGates = gateSize("out");
-        int pacotesEnviadosNesteCiclo = 0;
+        cPacket *pkt = new cPacket(current_in.c_str());
+        pkt->setByteLength(current_in.length()); 
         
-        for (int i = 0; i < numGates; i++) {
-            cGate *outGate = gate("out", i);
-            
-            if (outGate != nullptr && outGate->isConnected()) {
-                cPacket *pkt = new cPacket("Pacote_Mosaik_Broadcast");
-                pkt->setByteLength(1024); 
-                send(pkt, outGate);
-                pacotesEnviadosNesteCiclo++;
-            }
-        }
+        // --- MATEMÁTICA DE REDE ---
+        double propagation_delay = 0.010; // 10ms fixos de distância física
+        double bandwidth_bps = 50000.0;   // Largura de banda: 50 kbps (link simulado)
         
-        if (pacotesEnviadosNesteCiclo > 0) {
-            par("packets_sent") = par("packets_sent").doubleValue() + pacotesEnviadosNesteCiclo;
-            par("data_out") = par("packets_sent").doubleValue();
-        }
+        // Calcula o tempo de transmissão: (Bytes * 8 bits) / Largura de Banda
+        double bits = current_in.length() * 8.0;
+        double transmission_delay = bits / bandwidth_bps;
         
-        par("data_in") = 0.0;
+        double total_latency = propagation_delay + transmission_delay;
+
+        // O pacote chega no futuro baseado no seu tamanho real
+        scheduleAt(simTime() + total_latency, pkt); 
+        
+        par("packets_sent") = par("packets_sent").doubleValue() + 1;
+        
+        // Limpa a entrada para não gerar envios duplicados
+        par("val_in").setStringValue("");
     }
     
-    // Reagenda o pulso para o próximo segundo
+    // Reagenda o pulso interno para continuar a escutar o Mosaik
     if (!msg->isPacket()) {
         scheduleAt(simTime() + 1.0, msg);
     }

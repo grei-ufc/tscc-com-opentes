@@ -15,4 +15,3 @@ RUN git clone https://github.com/zeromq/cppzmq.git /tmp/cppzmq && \
     rm -rf /tmp/cppzmq
 
 WORKDIR /root/models
-# O seu código C++ será copiado para cá via volumes ou COPY
