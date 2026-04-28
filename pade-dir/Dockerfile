@@ -3,7 +3,7 @@ FROM python:3.12.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Dependências do sistema (mantemos build-essential e gcc para compilar pacotes Python como Twisted e pyzmq)
+# Instalação de dependências de compilação (necessárias para Twisted e PyZMQ)
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -11,31 +11,26 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Atualiza pip + ferramentas base
+# Atualização de ferramentas base
 RUN pip install --no-cache-dir --upgrade \
     pip==24.2 \
     setuptools==75.1.0 \
     wheel==0.44.0
 
-# Instala dependências críticas com versões FIXAS
+# Instalação do ecossistema Mosaik e dependências do PADE
 RUN pip install --no-cache-dir \
     mosaik-api-v3==3.0.14 \
     twisted==24.7.0 \
     autobahn==23.6.2 \
-    zope.interface==6.4.post2 \
-    attrs==24.2.0 \
-    automat==24.8.1 \
-    constantly==23.10.4 \
-    incremental==24.7.2 \
-    hyperlink==21.0.0 \
     pyzmq==26.0.3
 
-# Instala o PADE usando o pacote oficial
+# Instalação oficial do Framework PADE
 RUN pip install --no-cache-dir pade-agents
 
-# Ferramentas úteis para debug
+# Ferramenta para monitorização e debug
 RUN pip install --no-cache-dir ipython==8.26.0
 
-EXPOSE 8000
+# Porta padrão para comunicação entre agentes/Mosaik
+EXPOSE 5678
 
-CMD ["bash"]
+CMD ["python3", "pade_sim.py"]
