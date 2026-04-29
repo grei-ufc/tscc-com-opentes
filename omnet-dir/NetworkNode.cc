@@ -63,7 +63,9 @@ void NetworkNode::handleMessage(cMessage *msg)
         
         // --- MATEMÁTICA DE REDE ---
         double propagation_delay = 0.010; // 10ms fixos de distância física
-        double bandwidth_bps = 50000.0;   // Largura de banda: 50 kbps (link simulado)
+        
+        // NOVO: Lê a largura de banda diretamente dos parâmetros do OMNeT++
+        double bandwidth_bps = par("bandwidth_bps").doubleValue();   
         
         // Calcula o tempo de transmissão: (Bytes * 8 bits) / Largura de Banda
         double bits = current_in.length() * 8.0;
