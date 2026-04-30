@@ -6,13 +6,13 @@ services:
       - sim_net
     ports:
       - "5678:5678"
-    # A MÁGICA ESTÁ AQUI: Mapeia diretamente a pasta pade_agents para /app
     volumes:
       - ./pade-dir/pade_agents:/app
+    environment:
+      - NUM_PERIFERICOS=50     # <--- CONTROLE DE ESCALA
     stdin_open: true
     tty: true
-    # Agora ele encontra o ficheiro na raiz!
-    command: python3 pade_sim.py
+    command: python3 pade_star.py
 
   omnet_sim:
     build: ./omnet-dir
@@ -35,8 +35,9 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
-    # 10 segundos de sleep para os agentes FIPA iniciarem em segurança
-    command: sh -c "pip install pandas matplotlib && echo 'Aguardando o PADE arrancar...' && sleep 3 && python first.py && python plot_results.py"
+    environment:
+      - NUM_PERIFERICOS=50     # <--- CONTROLE DE ESCALA AQUI
+    command: sh -c "pip install pandas matplotlib && echo 'Aguardando...' && sleep 3 && python star.py && python plot_results_star.py"
 
 networks:
   sim_net:

@@ -49,7 +49,7 @@ class OmnetAdapter(mosaik_api.Simulator):
         self.socket  = self.context.socket(zmq.REQ)
         self.sid     = None
         self.last_results   = {}
-        # time_resolution (segundos por passo) é definido pelo Mosaik no init()
+        # time_resolution é definido pelo Mosaik no init()
         self.time_resolution = 1.0
 
     def init(self, sid, time_resolution, host='omnet_sim', port=5555):

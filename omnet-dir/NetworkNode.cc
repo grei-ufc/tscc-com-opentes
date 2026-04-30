@@ -35,70 +35,74 @@ void NetworkNode::handleMessage(cMessage *msg)
         
         double latency = (simTime() - pkt->getCreationTime()).dbl();
         double size = pkt->getByteLength();
-        
-        // --- Cálculo de Jitter ---
         double previous_latency = par("last_latency").doubleValue();
-        // O Jitter é a diferença absoluta entre a latência atual e a anterior
         double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
         
-        // Atualiza as métricas expostas
         par("packets_received") = par("packets_received").doubleValue() + 1;
         par("last_latency") = latency;
         par("last_packet_size") = size;
-        par("current_jitter") = jitter; // Exporta o jitter calculado
+        par("current_jitter") = jitter; 
         
-        // Coloca a string FIPA-ACL na porta de saída para o Mosaik recolher
+        // MULTIPLEXAGEM DE SAÍDA (Não sobrescreve se chegarem 2 ao mesmo tempo)
         std::string payload = pkt->getName();
-        par("val_out").setStringValue(payload.c_str());
+        std::string current_out = par("val_out").stdstringValue();
+        if (current_out.empty()) {
+            par("val_out").setStringValue(payload.c_str());
+        } else {
+            par("val_out").setStringValue((current_out + "|||" + payload).c_str());
+        }
         
-        EV << "[OMNeT++] Pacote de " << size << " bytes ENTREGUE. Latencia: " << latency 
-           << "s | Jitter: " << jitter << "s" << std::endl;
-           
+        EV << "[OMNeT++] Pacote de " << size << " bytes ENTREGUE. Latencia: " << latency << "s" << std::endl;
         delete pkt;
         return;
     }
 
     // ==============================================================
-    // 2. VERIFICA SE O MOSAIK INJETOU ALGO NOVO
+    // 2. VERIFICA SE O MOSAIK INJETOU ALGO NOVO (MULTIPLEXAGEM DE ENTRADA)
     // ==============================================================
     std::string current_in = par("val_in").stdstringValue();
     
     if (!current_in.empty()) {
+        std::vector<std::string> messages;
+        size_t pos = 0;
+        std::string delimiter = "|||";
         
-        // --- 2.1. Implementação Probabilística de Perda de Pacotes ---
-        double drop_prob = par("drop_probability").doubleValue();
-        // Lança o "dado" entre 0 e 1 usando a distribuição Uniforme nativa do OMNeT++
-        if (uniform(0.0, 1.0) < drop_prob) {
-            EV << "[OMNeT++] ❌ DROP! Pacote FIPA descartado por probabilidade (" << (drop_prob * 100) << "%)." << std::endl;
-            par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
-            par("val_in").setStringValue(""); // Limpa o buffer
-            return; // Encerra a função sem agendar a entrega
+        // Separa o comboio de mensagens num Array
+        while ((pos = current_in.find(delimiter)) != std::string::npos) {
+            messages.push_back(current_in.substr(0, pos));
+            current_in.erase(0, pos + delimiter.length());
         }
+        messages.push_back(current_in); // Adiciona a última
 
-        cPacket *pkt = new cPacket(current_in.c_str());
-        pkt->setByteLength(current_in.length()); 
-        
-        // --- 2.2. Matemática da Rede + Fator Estocástico ---
-        double propagation_delay = 0.010; 
-        double bandwidth_bps = par("bandwidth_bps").doubleValue();   
-        
-        double bits = current_in.length() * 8.0;
-        double transmission_delay = bits / bandwidth_bps;
-        
-        // Adiciona um ruído probabilístico via Dist. Exponencial
-        double jitter_mean = par("jitter_mean").doubleValue();
-        double stochastic_delay = (jitter_mean > 0.0) ? exponential(jitter_mean) : 0.0;
-        
-        double total_latency = propagation_delay + transmission_delay + stochastic_delay;
+        // Processa cada mensagem de forma independente
+        for (const std::string& msg_str : messages) {
+            if (msg_str.empty()) continue;
 
-        // O pacote chega no futuro
-        scheduleAt(simTime() + total_latency, pkt); 
-        
-        par("packets_sent") = par("packets_sent").doubleValue() + 1;
-        par("val_in").setStringValue("");
+            double drop_prob = par("drop_probability").doubleValue();
+            if (uniform(0.0, 1.0) < drop_prob) {
+                EV << "[OMNeT++] ❌ DROP! Pacote FIPA descartado." << std::endl;
+                par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+                continue; 
+            }
+
+            cPacket *pkt = new cPacket(msg_str.c_str());
+            pkt->setByteLength(msg_str.length()); 
+            
+            double propagation_delay = 0.010; 
+            double bandwidth_bps = par("bandwidth_bps").doubleValue();   
+            double bits = msg_str.length() * 8.0;
+            double transmission_delay = bits / bandwidth_bps;
+            double jitter_mean = par("jitter_mean").doubleValue();
+            double stochastic_delay = (jitter_mean > 0.0) ? exponential(jitter_mean) : 0.0;
+            
+            double total_latency = propagation_delay + transmission_delay + stochastic_delay;
+
+            scheduleAt(simTime() + total_latency, pkt); 
+            par("packets_sent") = par("packets_sent").doubleValue() + 1;
+        }
+        par("val_in").setStringValue(""); // Limpa o buffer
     }
     
-    // Reagenda o pulso interno para continuar a escutar o Mosaik
     if (!msg->isPacket()) {
         scheduleAt(simTime() + 1.0, msg);
     }

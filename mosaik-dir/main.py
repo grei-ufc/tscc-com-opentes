@@ -58,7 +58,7 @@ def main():
         )
 
     # *** CICLO DE FEEDBACK ***
-    # Os dados de saída do node_0 (hub) retroalimentam o Gerador no passo seguinte.
+    # Os dados de saída do node_0 retroalimentam o Gerador no passo seguinte.
     # time_shifted=True evita o ciclo causal no mesmo passo — os dados chegam
     # com 1 passo de atraso, que é o comportamento correto em co-simulação.
     world.connect(

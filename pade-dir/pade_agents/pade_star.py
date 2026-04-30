@@ -1,14 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import json
-from sys import argv
+import os
 from twisted.internet import reactor
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
+
+NUM_PERIFERICOS = int(os.environ.get('NUM_PERIFERICOS', 3))
 
 MOSAIK_MODELS = {
     'api_version': '3.0',
@@ -24,9 +23,6 @@ MOSAIK_MODELS = {
 
 ACTIVE_AGENTS = {}
 
-# ==========================================
-# FUNÇÕES DE SERIALIZAÇÃO FIPA <-> MOSAIK
-# ==========================================
 def acl_to_json(acl_msg):
     msg_dict = {
         "performative": acl_msg.performative,
@@ -41,40 +37,39 @@ def acl_to_json(acl_msg):
 def json_to_acl(json_str):
     data = json.loads(json_str)
     msg = ACLMessage(data.get("performative"))
-    
     sender_name = data.get("sender")
     if sender_name and sender_name != "Unknown":
         msg.set_sender(AID(name=sender_name))
-        
     for r in data.get("receivers", []):
         msg.add_receiver(AID(name=r))
-        
     msg.set_content(data.get("content"))
     msg.set_ontology(data.get("ontology"))
     msg.set_conversation_id(data.get("conversation_id"))
     return msg
 
-# ==========================================
-# CLASSE DO MOSAIK SIMULATOR
-# ==========================================
 class MosaikSim(MosaikCon):
     def __init__(self, agent):
         super().__init__(MOSAIK_MODELS, agent)
-
+        
     def create(self, num, model, agent_id):
         return [{'eid': agent_id, 'type': model}]
-
+        
     def step(self, time, inputs, max_advance=0):
+        # 1. Processa qualquer mensagem que chegue
         for eid, attrs in inputs.items():
             if eid in ACTIVE_AGENTS and 'val_in' in attrs:
                 msg_recebida = list(attrs['val_in'].values())[0]
                 if msg_recebida != "":
-                    # Corta as mensagens e processa-as uma a uma
                     for msg in msg_recebida.split("|||"):
                         if msg:
                             ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg)
-        return time + 1
 
+        # 2. Central dispara novo Broadcast independentemente do que aconteceu antes
+        if 'AgenteCentral' in ACTIVE_AGENTS:
+            ACTIVE_AGENTS['AgenteCentral'].enviar_broadcast_continuo(time)
+
+        return time + 1
+        
     def get_data(self, outputs):
         data = {}
         for eid, attrs in outputs.items():
@@ -85,85 +80,72 @@ class MosaikSim(MosaikCon):
                     ACTIVE_AGENTS[eid].val_out = "" 
         return data
 
-# ==========================================
-# AGENTE INTELIGENTE (FIPA-ACL)
-# ==========================================
 class AgenteFIPA(Agent):
     def __init__(self, aid, is_sender=False):
         super().__init__(aid=aid, debug=False)
         self.val_out = "" 
         self.is_sender = is_sender
-        
         if self.is_sender:
             self.mosaik_sim = MosaikSim(self)
 
     def on_start(self):
         super().on_start()
         ACTIVE_AGENTS[self.aid.localname] = self
-        display_message(self.aid.localname, '🌐 Agente Online. Ligado à Matriz OMNeT++ (FIPA-ACL).')
-        
-        if self.aid.localname == 'AgenteA':
-            self.preparar_envio_inicial()
+        display_message(self.aid.localname, '🌐 Online na Topologia Estrela (Modo Polling Resiliente)')
 
-    def preparar_envio_inicial(self):
+    def enviar_broadcast_continuo(self, tempo_mosaik):
         msg = ACLMessage(ACLMessage.REQUEST)
         msg.set_sender(self.aid)
-        # Aponta diretamente para o endereço exato do Agente B na rede PADE
-        msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679')) 
+        
+        for i in range(1, NUM_PERIFERICOS + 1):
+            msg.add_receiver(AID(name=f'AgenteP_{i}@0.0.0.0:{5678+i}')) 
+        
         msg.set_ontology('telemetria_rede')
-        msg.set_conversation_id('conv-001')
-        msg.set_content('Acesso autorizado. Qual é a latência da rede?')
+        msg.set_conversation_id(f'poll-t{tempo_mosaik}') # Marca o tempo na mensagem
+        msg.set_content(f'Polling de status no passo t={tempo_mosaik}')
         
         self.val_out = acl_to_json(msg)
-        display_message(self.aid.localname, "📤 REQUEST FIPA-ACL submetido ao Mosaik.")
+        display_message(self.aid.localname, f"📡 BROADCAST t={tempo_mosaik} enviado. Aguardando quem puder responder...")
 
     def receber_mensagem_da_rede(self, json_string):
         try:
             msg = json_to_acl(json_string)
-            display_message(self.aid.localname, f"📥 PACOTE FIPA RECEBIDO DA REDE!")
-            display_message(self.aid.localname, f"   -> Performative: {msg.performative} | Ontologia: {msg.ontology}")
-            display_message(self.aid.localname, f"   -> De: {msg.sender.localname} | Payload: {msg.content}")
+            sou_destinatario = any(r.name == self.aid.name for r in msg.receivers)
+            if not sou_destinatario and msg.sender.name != self.aid.name:
+                return 
             
-            # --- LÓGICA BIDIRECIONAL ---
-            
-            # 1. Agente B recebe REQUEST do A -> Responde (INFORM)
-            if self.aid.localname == 'AgenteB' and msg.performative == ACLMessage.REQUEST:
+            # Periférico recebe o Broadcast e TENTA RESPONDER
+            if self.aid.localname.startswith('AgenteP_') and msg.performative == ACLMessage.REQUEST:
+                display_message(self.aid.localname, f"📥 Recebi pacote {msg.conversation_id}. Enviando resposta!")
                 reply = msg.create_reply()
-                reply.set_sender(self.aid) 
+                reply.set_sender(self.aid)
                 reply.set_performative(ACLMessage.INFORM)
-                reply.set_content("Latência processada. Sistema operante!")
-                
+                reply.set_content(f"Status OK do {self.aid.localname}")
                 self.val_out = acl_to_json(reply)
-                display_message(self.aid.localname, "📤 INFORM FIPA-ACL (Resposta) submetido.")
                 
-            # 2. Agente A recebe INFORM do B -> Continua o loop enviando novo REQUEST
-            elif self.aid.localname == 'AgenteA' and msg.performative == ACLMessage.INFORM:
-                nova_msg = ACLMessage(ACLMessage.REQUEST)
-                nova_msg.set_sender(self.aid)
-                nova_msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
-                nova_msg.set_ontology('telemetria_rede')
-                nova_msg.set_conversation_id('conv-002') # Novo id para continuar a interação
-                nova_msg.set_content("Copiado, Agente B. Mantendo a conexão ativa...")
+            # Central recebe as respostas
+            elif self.aid.localname == 'AgenteCentral' and msg.performative == ACLMessage.INFORM:
+                display_message(self.aid.localname, f"✅ Confirmação recebida de {msg.sender.localname} (ref: {msg.conversation_id})")
                 
-                self.val_out = acl_to_json(nova_msg)
-                display_message(self.aid.localname, "📤 NOVO REQUEST FIPA-ACL submetido.")
-                
-        except Exception as e:
-            display_message(self.aid.localname, f"Erro ao descodificar pacote: {e}")
+        except Exception:
+            pass
 
 if __name__ == '__main__':
     host = '0.0.0.0'
     port = 5678 
-
     ams_config = {'name': host, 'port': 8000}
     
-    aid_a = AID(name=f'AgenteA@{host}:{port}')
-    aid_b = AID(name=f'AgenteB@{host}:{port+1}')
+    agentes = []
+    
+    aid_central = AID(name=f'AgenteCentral@{host}:{port}')
+    agente_central = AgenteFIPA(aid=aid_central, is_sender=True)
+    agente_central.update_ams(ams_config)
+    agentes.append(agente_central)
 
-    agente_a = AgenteFIPA(aid=aid_a, is_sender=True)
-    agente_b = AgenteFIPA(aid=aid_b, is_sender=False)
+    for i in range(1, NUM_PERIFERICOS + 1):
+        aid_p = AID(name=f'AgenteP_{i}@{host}:{port+i}')
+        agente_p = AgenteFIPA(aid=aid_p, is_sender=False)
+        agente_p.update_ams(ams_config)
+        agentes.append(agente_p)
 
-    agente_a.update_ams(ams_config)
-    agente_b.update_ams(ams_config)
-
-    start_loop([agente_a, agente_b])
+    start_loop(agentes)

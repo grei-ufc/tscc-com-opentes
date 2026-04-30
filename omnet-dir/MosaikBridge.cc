@@ -43,16 +43,20 @@ void MosaikBridge::applyInputs(json j) {
                             targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
                         } 
                         else if (sources.begin().value().is_string()) {
-                            std::string combinedStr = "";
+                            std::string combined = "";
                             for (auto& [sourceEntity, value] : sources.items()) {
-                                std::string valStr = value.get<std::string>();
-                                if (!valStr.empty()) {
-                                    combinedStr = valStr;
+                                std::string val = value.get<std::string>();
+                                if (!val.empty()) {
+                                    if (!combined.empty()) combined += "|||";
+                                    combined += val;
                                 }
                             }
-                            // Só injeta no OMNeT++ se a mensagem não for vazia
-                            if (!combinedStr.empty()) {
-                                targetNode->par(attrName.c_str()).setStringValue(combinedStr.c_str());
+                            if (!combined.empty()) {
+                                std::string existing = targetNode->par(attrName.c_str()).stdstringValue();
+                                if(!existing.empty()) {
+                                    combined = existing + "|||" + combined;
+                                }
+                                targetNode->par(attrName.c_str()).setStringValue(combined.c_str());
                             }
                         }
                     }
@@ -147,7 +151,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
         json j = json::parse(msg_str);
 
         if (j["action"] == "step") {
-            applyInputs(j); // Reaproveita a função para ler os passos t=1, t=2...
+            applyInputs(j); 
             scheduleAt(simTime() + 1.0, stepMsg);
         } else if (j["action"] == "stop") {
             endSimulation();
