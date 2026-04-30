@@ -127,6 +127,8 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
             if (submod->hasPar("last_latency")) node_data["last_latency"] = submod->par("last_latency").doubleValue();
             if (submod->hasPar("last_packet_size")) node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
+            if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();
+            if (submod->hasPar("current_jitter")) node_data["current_jitter"] = submod->par("current_jitter").doubleValue();
 
             data_json[nodeName] = node_data;
         }

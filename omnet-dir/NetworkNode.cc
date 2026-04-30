@@ -36,15 +36,23 @@ void NetworkNode::handleMessage(cMessage *msg)
         double latency = (simTime() - pkt->getCreationTime()).dbl();
         double size = pkt->getByteLength();
         
+        // --- Cálculo de Jitter ---
+        double previous_latency = par("last_latency").doubleValue();
+        // O Jitter é a diferença absoluta entre a latência atual e a anterior
+        double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
+        
+        // Atualiza as métricas expostas
         par("packets_received") = par("packets_received").doubleValue() + 1;
         par("last_latency") = latency;
         par("last_packet_size") = size;
+        par("current_jitter") = jitter; // Exporta o jitter calculado
         
         // Coloca a string FIPA-ACL na porta de saída para o Mosaik recolher
         std::string payload = pkt->getName();
         par("val_out").setStringValue(payload.c_str());
         
-        EV << "Nuvem OMNeT++ liberou pacote de " << size << " bytes. Latencia total: " << latency << "s" << std::endl;
+        EV << "[OMNeT++] Pacote de " << size << " bytes ENTREGUE. Latencia: " << latency 
+           << "s | Jitter: " << jitter << "s" << std::endl;
            
         delete pkt;
         return;
@@ -56,29 +64,37 @@ void NetworkNode::handleMessage(cMessage *msg)
     std::string current_in = par("val_in").stdstringValue();
     
     if (!current_in.empty()) {
-        EV << "Nuvem OMNeT++: Mensagem do PADE detectada! Calculando atraso real..." << std::endl;
         
+        // --- 2.1. Implementação Probabilística de Perda de Pacotes ---
+        double drop_prob = par("drop_probability").doubleValue();
+        // Lança o "dado" entre 0 e 1 usando a distribuição Uniforme nativa do OMNeT++
+        if (uniform(0.0, 1.0) < drop_prob) {
+            EV << "[OMNeT++] ❌ DROP! Pacote FIPA descartado por probabilidade (" << (drop_prob * 100) << "%)." << std::endl;
+            par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+            par("val_in").setStringValue(""); // Limpa o buffer
+            return; // Encerra a função sem agendar a entrega
+        }
+
         cPacket *pkt = new cPacket(current_in.c_str());
         pkt->setByteLength(current_in.length()); 
         
-        // --- MATEMÁTICA DE REDE ---
-        double propagation_delay = 0.010; // 10ms fixos de distância física
-        
-        // Lê a largura de banda diretamente dos parâmetros do OMNeT++
+        // --- 2.2. Matemática da Rede + Fator Estocástico ---
+        double propagation_delay = 0.010; 
         double bandwidth_bps = par("bandwidth_bps").doubleValue();   
         
-        // Calcula o tempo de transmissão: (Bytes * 8 bits) / Largura de Banda
         double bits = current_in.length() * 8.0;
         double transmission_delay = bits / bandwidth_bps;
         
-        double total_latency = propagation_delay + transmission_delay;
+        // Adiciona um ruído probabilístico via Dist. Exponencial
+        double jitter_mean = par("jitter_mean").doubleValue();
+        double stochastic_delay = (jitter_mean > 0.0) ? exponential(jitter_mean) : 0.0;
+        
+        double total_latency = propagation_delay + transmission_delay + stochastic_delay;
 
-        // O pacote chega no futuro baseado no seu tamanho real
+        // O pacote chega no futuro
         scheduleAt(simTime() + total_latency, pkt); 
         
         par("packets_sent") = par("packets_sent").doubleValue() + 1;
-        
-        // Limpa a entrada para não gerar envios duplicados
         par("val_in").setStringValue("");
     }
     

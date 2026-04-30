@@ -29,6 +29,8 @@ META = {
                 'packets_received',
                 'last_latency',
                 'last_packet_size',
+                'packets_dropped',
+                'current_jitter',
             ],
         },
         'Connection': {

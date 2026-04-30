@@ -7,7 +7,16 @@ META = {
         'Monitor': {
             'public': True,
             'any_inputs': True,
-            'attrs': ['status', 'packets_sent', 'last_latency', 'last_packet_size', 'val_out'], 
+            'attrs': [
+                'status', 
+                'packets_sent', 
+                'packets_received', 
+                'last_latency', 
+                'last_packet_size', 
+                'packets_dropped',
+                'current_jitter',
+                'val_out'
+            ], 
         },
     },
 }
