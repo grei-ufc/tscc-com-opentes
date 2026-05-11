@@ -22,15 +22,9 @@ META = {
             'public': True,
             'params': ['node_type'],
             'attrs': [
-                'val_in',
-                'val_out',
-                'status',
-                'packets_sent',
-                'packets_received',
-                'last_latency',
-                'last_packet_size',
-                'packets_dropped',
-                'current_jitter',
+                'val_in', 'val_out', 'status', 'packets_sent', 
+                'packets_received', 'packets_dropped', 
+                'packet_sizes_out', 'latencies_out', 'jitters_out'
             ],
         },
         'Connection': {

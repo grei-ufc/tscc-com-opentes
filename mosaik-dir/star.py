@@ -33,9 +33,8 @@ def create_scenario(world):
 
     # Conexão da Telemetria (Coletor)
     world.connect(rede_omnet, monitor, 
-                  'status', 'packets_sent', 'packets_received', 
-                  'last_latency', 'last_packet_size', 
-                  'packets_dropped', 'current_jitter', 'val_out')
+                  'status', 'packets_sent', 'packets_received', 'packets_dropped', 
+                  'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 if __name__ == '__main__':
     world = mosaik.World(sim_config)

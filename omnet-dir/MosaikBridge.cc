@@ -120,19 +120,32 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             json node_data = json::object();
 
             node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
-            node_data["data_out"] = submod->hasPar("data_out") ? submod->par("data_out").doubleValue() : 0.0;
-
+            
             if (submod->hasPar("val_out")) {
                 node_data["val_out"] = submod->par("val_out").stdstringValue();
                 submod->par("val_out").setStringValue("");
             }
 
+            // ==============================================================
+            // EXPORTAÇÃO DA TELEMETRIA DE ALTA RESOLUÇÃO (AS NOVAS GAVETAS!)
+            // ==============================================================
+            if (submod->hasPar("packet_sizes_out")) {
+                node_data["packet_sizes_out"] = submod->par("packet_sizes_out").stdstringValue();
+                submod->par("packet_sizes_out").setStringValue("");
+            }
+            if (submod->hasPar("latencies_out")) {
+                node_data["latencies_out"] = submod->par("latencies_out").stdstringValue();
+                submod->par("latencies_out").setStringValue("");
+            }
+            if (submod->hasPar("jitters_out")) {
+                node_data["jitters_out"] = submod->par("jitters_out").stdstringValue();
+                submod->par("jitters_out").setStringValue("");
+            }
+
+            // Métricas globais (As do gráfico de pizza)
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
-            if (submod->hasPar("last_latency")) node_data["last_latency"] = submod->par("last_latency").doubleValue();
-            if (submod->hasPar("last_packet_size")) node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
             if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();
-            if (submod->hasPar("current_jitter")) node_data["current_jitter"] = submod->par("current_jitter").doubleValue();
 
             data_json[nodeName] = node_data;
         }

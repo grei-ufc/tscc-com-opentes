@@ -35,15 +35,15 @@ void NetworkNode::handleMessage(cMessage *msg)
         
         double latency = (simTime() - pkt->getCreationTime()).dbl();
         double size = pkt->getByteLength();
+        
+        // Calcula o jitter baseado na última latência conhecida
         double previous_latency = par("last_latency").doubleValue();
         double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
         
         par("packets_received") = par("packets_received").doubleValue() + 1;
-        par("last_latency") = latency;
-        par("last_packet_size") = size;
-        par("current_jitter") = jitter; 
+        par("last_latency") = latency; // Mantemos isto apenas para o cálculo interno do Jitter no próximo pacote
         
-        // MULTIPLEXAGEM DE SAÍDA (Não sobrescreve se chegarem 2 ao mesmo tempo)
+        // MULTIPLEXAGEM DE SAÍDA (Mensagens FIPA)
         std::string payload = pkt->getName();
         std::string current_out = par("val_out").stdstringValue();
         if (current_out.empty()) {
@@ -51,6 +51,21 @@ void NetworkNode::handleMessage(cMessage *msg)
         } else {
             par("val_out").setStringValue((current_out + "|||" + payload).c_str());
         }
+        
+        // ==============================================================
+        // MULTIPLEXAGEM DE TELEMETRIA (Para evitar aliasing no Gráfico)
+        // ==============================================================
+        std::string cur_sizes = par("packet_sizes_out").stdstringValue();
+        std::string cur_lats = par("latencies_out").stdstringValue();
+        std::string cur_jits = par("jitters_out").stdstringValue();
+
+        std::string new_size = std::to_string(size);
+        std::string new_lat = std::to_string(latency);
+        std::string new_jit = std::to_string(jitter);
+
+        par("packet_sizes_out").setStringValue(cur_sizes.empty() ? new_size.c_str() : (cur_sizes + "|||" + new_size).c_str());
+        par("latencies_out").setStringValue(cur_lats.empty() ? new_lat.c_str() : (cur_lats + "|||" + new_lat).c_str());
+        par("jitters_out").setStringValue(cur_jits.empty() ? new_jit.c_str() : (cur_jits + "|||" + new_jit).c_str());
         
         EV << "[OMNeT++] Pacote de " << size << " bytes ENTREGUE. Latencia: " << latency << "s" << std::endl;
         delete pkt;

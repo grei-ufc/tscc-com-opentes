@@ -19,6 +19,10 @@ simple NetworkNode
         
         double packets_dropped @mutable = default(0);
         double current_jitter @mutable = default(0.0);
+
+        string latencies_out @mutable = default("");
+        string packet_sizes_out @mutable = default("");
+        string jitters_out @mutable = default("");
         
     gates:
         input in[];

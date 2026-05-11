@@ -8,14 +8,8 @@ META = {
             'public': True,
             'any_inputs': True,
             'attrs': [
-                'status', 
-                'packets_sent', 
-                'packets_received', 
-                'last_latency', 
-                'last_packet_size', 
-                'packets_dropped',
-                'current_jitter',
-                'val_out'
+                'status', 'packets_sent', 'packets_received', 'packets_dropped',
+                'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out'
             ], 
         },
     },
