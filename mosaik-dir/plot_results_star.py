@@ -27,7 +27,7 @@ def gerar_grafico():
             time_data[col] = pd.to_numeric(time_data[col], errors='coerce').fillna(0)
 
         # =================================================================
-        # NOVO: DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA (FIM DO ALIASING)
+        # DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA
         # =================================================================
         dados_expandidos = []
         
@@ -45,7 +45,7 @@ def gerar_grafico():
                 lats = lats_str.split('|||') if lats_str and lats_str != 'nan' else []
                 jits = jits_str.split('|||') if jits_str and jits_str != 'nan' else []
                 
-                # Para cada mensagem dentro do mesmo segundo, cria um ponto individual!
+                # Para cada mensagem dentro do mesmo segundo, cria um ponto individual
                 for i in range(len(msgs)):
                     msg = msgs[i]
                     size = float(sizes[i]) if i < len(sizes) and sizes[i] else 0.0
