@@ -33,10 +33,12 @@ class MosaikSim(MosaikCon):
     def step(self, time, inputs, max_advance=0):
         for eid, attrs in inputs.items():
             if eid in ACTIVE_AGENTS and 'val_in' in attrs:
-                # Extrai a mensagem vinda do OMNeT++
                 msg_recebida = list(attrs['val_in'].values())[0]
                 if msg_recebida != "":
-                    ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg_recebida)
+                    # Corta as mensagens e processa-as uma a uma
+                    for msg in msg_recebida.split("|||"):
+                        if msg:
+                            ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg)
         return time + 1
 
     def get_data(self, outputs):

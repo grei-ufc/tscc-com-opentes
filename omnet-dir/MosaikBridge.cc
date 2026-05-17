@@ -43,16 +43,20 @@ void MosaikBridge::applyInputs(json j) {
                             targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
                         } 
                         else if (sources.begin().value().is_string()) {
-                            std::string combinedStr = "";
+                            std::string combined = "";
                             for (auto& [sourceEntity, value] : sources.items()) {
-                                std::string valStr = value.get<std::string>();
-                                if (!valStr.empty()) {
-                                    combinedStr = valStr;
+                                std::string val = value.get<std::string>();
+                                if (!val.empty()) {
+                                    if (!combined.empty()) combined += "|||";
+                                    combined += val;
                                 }
                             }
-                            // Só injeta no OMNeT++ se a mensagem não for vazia
-                            if (!combinedStr.empty()) {
-                                targetNode->par(attrName.c_str()).setStringValue(combinedStr.c_str());
+                            if (!combined.empty()) {
+                                std::string existing = targetNode->par(attrName.c_str()).stdstringValue();
+                                if(!existing.empty()) {
+                                    combined = existing + "|||" + combined;
+                                }
+                                targetNode->par(attrName.c_str()).setStringValue(combined.c_str());
                             }
                         }
                     }
@@ -116,17 +120,32 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             json node_data = json::object();
 
             node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
-            node_data["data_out"] = submod->hasPar("data_out") ? submod->par("data_out").doubleValue() : 0.0;
-
+            
             if (submod->hasPar("val_out")) {
                 node_data["val_out"] = submod->par("val_out").stdstringValue();
                 submod->par("val_out").setStringValue("");
             }
 
+            // ==============================================================
+            // EXPORTAÇÃO DA TELEMETRIA DE ALTA RESOLUÇÃO (AS NOVAS GAVETAS!)
+            // ==============================================================
+            if (submod->hasPar("packet_sizes_out")) {
+                node_data["packet_sizes_out"] = submod->par("packet_sizes_out").stdstringValue();
+                submod->par("packet_sizes_out").setStringValue("");
+            }
+            if (submod->hasPar("latencies_out")) {
+                node_data["latencies_out"] = submod->par("latencies_out").stdstringValue();
+                submod->par("latencies_out").setStringValue("");
+            }
+            if (submod->hasPar("jitters_out")) {
+                node_data["jitters_out"] = submod->par("jitters_out").stdstringValue();
+                submod->par("jitters_out").setStringValue("");
+            }
+
+            // Métricas globais (As do gráfico de pizza)
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
-            if (submod->hasPar("last_latency")) node_data["last_latency"] = submod->par("last_latency").doubleValue();
-            if (submod->hasPar("last_packet_size")) node_data["last_packet_size"] = submod->par("last_packet_size").doubleValue();
+            if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();
 
             data_json[nodeName] = node_data;
         }
@@ -145,7 +164,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
         json j = json::parse(msg_str);
 
         if (j["action"] == "step") {
-            applyInputs(j); // Reaproveita a função para ler os passos t=1, t=2...
+            applyInputs(j); 
             scheduleAt(simTime() + 1.0, stepMsg);
         } else if (j["action"] == "stop") {
             endSimulation();

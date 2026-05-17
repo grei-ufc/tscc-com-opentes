@@ -35,7 +35,9 @@ def create_scenario(world):
     # ROTA 3: OMNeT++ -> Collector (Telemetria)
     # ==========================================
     # O Collector recolhe as métricas e também a mensagem que saiu da rede (val_out)
-    world.connect(rede_omnet, monitor, 'status', 'packets_sent', 'last_latency', 'last_packet_size', 'val_out')
+    world.connect(rede_omnet, monitor, 
+                  'status', 'packets_sent', 'packets_received', 'packets_dropped', 
+                  'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 
 if __name__ == '__main__':
