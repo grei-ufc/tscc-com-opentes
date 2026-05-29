@@ -1,62 +1,102 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import json
-from sys import argv
-from twisted.internet import reactor
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
+from pade.behaviours.protocols import Behaviour, FipaRequestProtocol
 
 MOSAIK_MODELS = {
     'api_version': '3.0',
     'type': 'time-based',
     'models': {
-        'PadeAgent': { 
+        'PadeAgent': {
             'public': True,
             'params': ['agent_id'],
-            'attrs': ['val_in', 'val_out'],
+            'attrs': [],          # sem val_in/val_out — mensagens trafegam pelo PADE, deu bug a atribuição dessas var
         },
     },
 }
 
-ACTIVE_AGENTS = {}
+# ==========================================
+# BEHAVIOURS FIPA
+# ==========================================
+
+class EnvioInicialBehaviour(Behaviour):
+    """
+    Disparado uma vez no on_start() do AgenteA.
+    Envia o primeiro REQUEST via self.agent.send() — transporte PADE nativo.
+    O step() do Mosaik retorna sem time+1 (return vazio) e só avança
+    quando handle_inform() chamar self.agent.mosaik_sim.step_done().
+    """
+    def on_start(self):
+        super().on_start()
+        msg = ACLMessage(ACLMessage.REQUEST)
+        msg.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        msg.set_sender(self.agent.aid)
+        msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
+        msg.set_ontology('telemetria_rede')
+        msg.set_conversation_id('conv-001')
+        msg.set_content('Acesso autorizado. Qual é a latência da rede?')
+        self.agent.send(msg)                          # FIPA nativo — sem val_out, sem JSON manual
+        display_message(self.agent.aid.localname, ' REQUEST enviado via PADE (FIPA nativo).')
+
+    def execute(self, message):
+        pass                                          # não reage a mensagens recebidas
+
+
+class ProtocoloTelemetriaB(FipaRequestProtocol):
+    """
+    Registrado no AgenteB.
+    handle_request() é chamado automaticamente pelo PADE ao receber REQUEST.
+    Após responder, chama step_done() para liberar o passo do Mosaik.
+    """
+    def __init__(self, agent):
+        super().__init__(agent=agent, message=None, is_initiator=False)
+
+    def handle_request(self, msg):
+        display_message(self.agent.aid.localname, ' REQUEST recebido.')
+        display_message(self.agent.aid.localname, f'   -> De: {msg.sender.localname} | Payload: {msg.content}')
+
+        reply = msg.create_reply()
+        reply.set_performative(ACLMessage.INFORM)
+        reply.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        reply.set_content('Latência processada. Sistema operante!')
+        self.agent.send(reply)                        # FIPA nativo
+        display_message(self.agent.aid.localname, ' INFORM enviado via PADE (FIPA nativo).')
+
+        self.agent.mosaik_sim.step_done()             # libera o Mosaik para avançar o passo
+
+
+class ProtocoloTelemetriaA(FipaRequestProtocol):
+    """
+    Registrado no AgenteA.
+    handle_inform() é chamado automaticamente pelo PADE ao receber INFORM.
+    Envia novo REQUEST e chama step_done() para liberar o próximo passo.
+    """
+    def __init__(self, agent):
+        super().__init__(agent=agent, message=None, is_initiator=True)
+
+    def handle_inform(self, msg):
+        display_message(self.agent.aid.localname, ' INFORM recebido.')
+        display_message(self.agent.aid.localname, f'   -> De: {msg.sender.localname} | Payload: {msg.content}')
+
+        nova_msg = ACLMessage(ACLMessage.REQUEST)
+        nova_msg.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        nova_msg.set_sender(self.agent.aid)
+        nova_msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
+        nova_msg.set_ontology('telemetria_rede')
+        nova_msg.set_conversation_id('conv-002')
+        nova_msg.set_content('Copiado, Agente B. Mantendo a conexão ativa...')
+        self.agent.send(nova_msg)                     # FIPA nativo
+        display_message(self.agent.aid.localname, 'Novo REQUEST enviado via PADE (FIPA nativo).')
+
+        self.agent.mosaik_sim.step_done()             # libera o Mosaik para avançar o passo
+
 
 # ==========================================
-# FUNÇÕES DE SERIALIZAÇÃO FIPA <-> MOSAIK
+# MOSAIK SIMULATOR
 # ==========================================
-def acl_to_json(acl_msg):
-    msg_dict = {
-        "performative": acl_msg.performative,
-        "sender": acl_msg.sender.name if acl_msg.sender else "Unknown",
-        "receivers": [r.name for r in acl_msg.receivers] if acl_msg.receivers else [],
-        "content": acl_msg.content,
-        "ontology": acl_msg.ontology,
-        "conversation_id": acl_msg.conversation_id
-    }
-    return json.dumps(msg_dict)
 
-def json_to_acl(json_str):
-    data = json.loads(json_str)
-    msg = ACLMessage(data.get("performative"))
-    
-    sender_name = data.get("sender")
-    if sender_name and sender_name != "Unknown":
-        msg.set_sender(AID(name=sender_name))
-        
-    for r in data.get("receivers", []):
-        msg.add_receiver(AID(name=r))
-        
-    msg.set_content(data.get("content"))
-    msg.set_ontology(data.get("ontology"))
-    msg.set_conversation_id(data.get("conversation_id"))
-    return msg
-
-# ==========================================
-# CLASSE DO MOSAIK SIMULATOR
-# ==========================================
 class MosaikSim(MosaikCon):
     def __init__(self, agent):
         super().__init__(MOSAIK_MODELS, agent)
@@ -65,98 +105,51 @@ class MosaikSim(MosaikCon):
         return [{'eid': agent_id, 'type': model}]
 
     def step(self, time, inputs, max_advance=0):
-        for eid, attrs in inputs.items():
-            if eid in ACTIVE_AGENTS and 'val_in' in attrs:
-                msg_recebida = list(attrs['val_in'].values())[0]
-                if msg_recebida != "":
-                    # Corta as mensagens e processa-as uma a uma
-                    for msg in msg_recebida.split("|||"):
-                        if msg:
-                            ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg)
-        return time + 1
+        # O step não entrega mensagens manualmente nem usa val_in.
+        # Mensagens trafegam pelo PADE; quando o behaviour responde,
+        # step_done() é chamado e o Mosaik avança automaticamente.
+        # Retorno sem valor = passo suspenso até step_done().
+        return
 
     def get_data(self, outputs):
-        data = {}
-        for eid, attrs in outputs.items():
-            data[eid] = {}
-            for attr in attrs:
-                if attr == 'val_out' and eid in ACTIVE_AGENTS:
-                    data[eid][attr] = ACTIVE_AGENTS[eid].val_out
-                    ACTIVE_AGENTS[eid].val_out = "" 
-        return data
+        # Sem val_out — dados de simulação seriam retornados aqui se necessário.
+        return {}
+
 
 # ==========================================
-# AGENTE INTELIGENTE (FIPA-ACL)
+# AGENTE
 # ==========================================
+
 class AgenteFIPA(Agent):
     def __init__(self, aid, is_sender=False):
         super().__init__(aid=aid, debug=False)
-        self.val_out = "" 
         self.is_sender = is_sender
-        
         if self.is_sender:
             self.mosaik_sim = MosaikSim(self)
 
     def on_start(self):
         super().on_start()
-        ACTIVE_AGENTS[self.aid.localname] = self
-        display_message(self.aid.localname, '🌐 Agente Online. Ligado à Matriz OMNeT++ (FIPA-ACL).')
-        
+        display_message(self.aid.localname, ' Agente Online. Ligado à Matriz OMNeT++ (FIPA-ACL).')
+
         if self.aid.localname == 'AgenteA':
-            self.preparar_envio_inicial()
+            # behaviours.append() — padrão correto do PADE (não sobrescreve a lista)
+            self.behaviours.append(EnvioInicialBehaviour(self))
+            req_a = ProtocoloTelemetriaA(self)
+            self.behaviours.append(req_a)
+            req_a.on_start()
 
-    def preparar_envio_inicial(self):
-        msg = ACLMessage(ACLMessage.REQUEST)
-        msg.set_sender(self.aid)
-        # Aponta diretamente para o endereço exato do Agente B na rede PADE
-        msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679')) 
-        msg.set_ontology('telemetria_rede')
-        msg.set_conversation_id('conv-001')
-        msg.set_content('Acesso autorizado. Qual é a latência da rede?')
-        
-        self.val_out = acl_to_json(msg)
-        display_message(self.aid.localname, "📤 REQUEST FIPA-ACL submetido ao Mosaik.")
+        if self.aid.localname == 'AgenteB':
+            req_b = ProtocoloTelemetriaB(self)
+            self.behaviours.append(req_b)
+            req_b.on_start()
 
-    def receber_mensagem_da_rede(self, json_string):
-        try:
-            msg = json_to_acl(json_string)
-            display_message(self.aid.localname, f"📥 PACOTE FIPA RECEBIDO DA REDE!")
-            display_message(self.aid.localname, f"   -> Performative: {msg.performative} | Ontologia: {msg.ontology}")
-            display_message(self.aid.localname, f"   -> De: {msg.sender.localname} | Payload: {msg.content}")
-            
-            # --- LÓGICA BIDIRECIONAL ---
-            
-            # 1. Agente B recebe REQUEST do A -> Responde (INFORM)
-            if self.aid.localname == 'AgenteB' and msg.performative == ACLMessage.REQUEST:
-                reply = msg.create_reply()
-                reply.set_sender(self.aid) 
-                reply.set_performative(ACLMessage.INFORM)
-                reply.set_content("Latência processada. Sistema operante!")
-                
-                self.val_out = acl_to_json(reply)
-                display_message(self.aid.localname, "📤 INFORM FIPA-ACL (Resposta) submetido.")
-                
-            # 2. Agente A recebe INFORM do B -> Continua o loop enviando novo REQUEST
-            elif self.aid.localname == 'AgenteA' and msg.performative == ACLMessage.INFORM:
-                nova_msg = ACLMessage(ACLMessage.REQUEST)
-                nova_msg.set_sender(self.aid)
-                nova_msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
-                nova_msg.set_ontology('telemetria_rede')
-                nova_msg.set_conversation_id('conv-002') # Novo id para continuar a interação
-                nova_msg.set_content("Copiado, Agente B. Mantendo a conexão ativa...")
-                
-                self.val_out = acl_to_json(nova_msg)
-                display_message(self.aid.localname, "📤 NOVO REQUEST FIPA-ACL submetido.")
-                
-        except Exception as e:
-            display_message(self.aid.localname, f"Erro ao descodificar pacote: {e}")
 
 if __name__ == '__main__':
     host = '0.0.0.0'
-    port = 5678 
+    port = 5678
 
     ams_config = {'name': host, 'port': 8000}
-    
+
     aid_a = AID(name=f'AgenteA@{host}:{port}')
     aid_b = AID(name=f'AgenteB@{host}:{port+1}')
 
