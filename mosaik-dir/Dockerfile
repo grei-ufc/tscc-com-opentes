@@ -10,4 +10,4 @@ RUN pip install mosaik==3.6.0 mosaik-api-v3==3.0.14 pyzmq==27.1.0 mosaik-csv==2.
 COPY omnet_wrapper.py .
 
 # Comando para rodar
-CMD ["python", "main.py"]
+CMD ["python"]
