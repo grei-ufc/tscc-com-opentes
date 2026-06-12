@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -5,6 +6,8 @@ import json
 import zmq
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
+=======
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
@@ -19,11 +22,16 @@ MOSAIK_MODELS = {
         'PadeAgent': {
             'public': True,
             'params': ['agent_id'],
+<<<<<<< HEAD
             'attrs': [],
+=======
+            'attrs': [],          # sem val_in/val_out — mensagens trafegam pelo PADE, deu bug a atribuição dessas var
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
         },
     },
 }
 
+<<<<<<< HEAD
 # Endereço do ROUTER embutido no omnet_wrapper.py (Super Wrapper).
 # omnet_wrapper.py é o 'OmnetSim' do sim_config em star.py, executado
 # DENTRO do container 'mosaik_master' (não em 'omnet_sim', que é só
@@ -175,6 +183,88 @@ class ProtocoloTelemetriaA(FipaRequestProtocol):
 # MOSAIK SIMULATOR
 # ==========================================
 
+=======
+# ==========================================
+# BEHAVIOURS FIPA
+# ==========================================
+
+class EnvioInicialBehaviour(Behaviour):
+    """
+    Disparado uma vez no on_start() do AgenteA.
+    Envia o primeiro REQUEST via self.agent.send() — transporte PADE nativo.
+    O step() do Mosaik retorna sem time+1 (return vazio) e só avança
+    quando handle_inform() chamar self.agent.mosaik_sim.step_done().
+    """
+    def on_start(self):
+        super().on_start()
+        msg = ACLMessage(ACLMessage.REQUEST)
+        msg.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        msg.set_sender(self.agent.aid)
+        msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
+        msg.set_ontology('telemetria_rede')
+        msg.set_conversation_id('conv-001')
+        msg.set_content('Acesso autorizado. Qual é a latência da rede?')
+        self.agent.send(msg)                          # FIPA nativo — sem val_out, sem JSON manual
+        display_message(self.agent.aid.localname, ' REQUEST enviado via PADE (FIPA nativo).')
+
+    def execute(self, message):
+        pass                                          # não reage a mensagens recebidas
+
+
+class ProtocoloTelemetriaB(FipaRequestProtocol):
+    """
+    Registrado no AgenteB.
+    handle_request() é chamado automaticamente pelo PADE ao receber REQUEST.
+    Após responder, chama step_done() para liberar o passo do Mosaik.
+    """
+    def __init__(self, agent):
+        super().__init__(agent=agent, message=None, is_initiator=False)
+
+    def handle_request(self, msg):
+        display_message(self.agent.aid.localname, ' REQUEST recebido.')
+        display_message(self.agent.aid.localname, f'   -> De: {msg.sender.localname} | Payload: {msg.content}')
+
+        reply = msg.create_reply()
+        reply.set_performative(ACLMessage.INFORM)
+        reply.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        reply.set_content('Latência processada. Sistema operante!')
+        self.agent.send(reply)                        # FIPA nativo
+        display_message(self.agent.aid.localname, ' INFORM enviado via PADE (FIPA nativo).')
+
+        self.agent.mosaik_sim.step_done()             # libera o Mosaik para avançar o passo
+
+
+class ProtocoloTelemetriaA(FipaRequestProtocol):
+    """
+    Registrado no AgenteA.
+    handle_inform() é chamado automaticamente pelo PADE ao receber INFORM.
+    Envia novo REQUEST e chama step_done() para liberar o próximo passo.
+    """
+    def __init__(self, agent):
+        super().__init__(agent=agent, message=None, is_initiator=True)
+
+    def handle_inform(self, msg):
+        display_message(self.agent.aid.localname, ' INFORM recebido.')
+        display_message(self.agent.aid.localname, f'   -> De: {msg.sender.localname} | Payload: {msg.content}')
+
+        nova_msg = ACLMessage(ACLMessage.REQUEST)
+        nova_msg.set_protocol(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        nova_msg.set_sender(self.agent.aid)
+        nova_msg.add_receiver(AID(name='AgenteB@0.0.0.0:5679'))
+        nova_msg.set_ontology('telemetria_rede')
+        nova_msg.set_conversation_id('conv-002')
+        nova_msg.set_content('Copiado, Agente B. Mantendo a conexão ativa...')
+        self.agent.send(nova_msg)                     # FIPA nativo
+        display_message(self.agent.aid.localname, 'Novo REQUEST enviado via PADE (FIPA nativo).')
+
+        self.agent.mosaik_sim.step_done()             # libera o Mosaik para avançar o passo
+
+
+# ==========================================
+# MOSAIK SIMULATOR
+# ==========================================
+
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
 class MosaikSim(MosaikCon):
     def __init__(self, agent):
         super().__init__(MOSAIK_MODELS, agent)
@@ -183,15 +273,30 @@ class MosaikSim(MosaikCon):
         return [{'eid': agent_id, 'type': model}]
 
     def step(self, time, inputs, max_advance=0):
+<<<<<<< HEAD
         # Mosaik controla apenas o tempo — mensagens trafegam pelo ZMQ/OMNeT++
         return
 
     def get_data(self, outputs):
+=======
+        # O step não entrega mensagens manualmente nem usa val_in.
+        # Mensagens trafegam pelo PADE; quando o behaviour responde,
+        # step_done() é chamado e o Mosaik avança automaticamente.
+        # Retorno sem valor = passo suspenso até step_done().
+        return
+
+    def get_data(self, outputs):
+        # Sem val_out — dados de simulação seriam retornados aqui se necessário.
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
         return {}
 
 
 # ==========================================
+<<<<<<< HEAD
 # AGENTE — placa de rede ZMQ (DEALER) integrada
+=======
+# AGENTE
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
 # ==========================================
 
 class AgenteFIPA(Agent):
@@ -230,6 +335,7 @@ class AgenteFIPA(Agent):
 
     def on_start(self):
         super().on_start()
+<<<<<<< HEAD
         display_message(self.aid.localname,
                         f'🌐 Agente Online. Placa de rede ZMQ (DEALER) → {self.ZMQ_GATEWAY_ADDR}')
 
@@ -238,6 +344,12 @@ class AgenteFIPA(Agent):
         self._zmq_loop.start(self.ZMQ_POLL_INTERVAL, now=False)
 
         if self.aid.localname == 'AgenteA':
+=======
+        display_message(self.aid.localname, ' Agente Online. Ligado à Matriz OMNeT++ (FIPA-ACL).')
+
+        if self.aid.localname == 'AgenteA':
+            # behaviours.append() — padrão correto do PADE (não sobrescreve a lista)
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
             self.behaviours.append(EnvioInicialBehaviour(self))
             req_a = ProtocoloTelemetriaA(self)
             self.behaviours.append(req_a)
@@ -248,6 +360,7 @@ class AgenteFIPA(Agent):
             self.behaviours.append(req_b)
             req_b.on_start()
 
+<<<<<<< HEAD
     def enviar_via_zmq(self, acl_msg):
         """
         Ponte de saída: ACLMessage → JSON → DEALER → gateway.
@@ -278,6 +391,8 @@ class AgenteFIPA(Agent):
         except Exception as e:
             display_message(self.aid.localname, f'⚠️ Erro polling ZMQ: {e}')
 
+=======
+>>>>>>> eab8773c09b4b1b17c927c2946ada7f7682a41d7
 
 if __name__ == '__main__':
     host = '0.0.0.0'
