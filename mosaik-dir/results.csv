@@ -1,161 +1,161 @@
 Tempo,Origem,Atributo,Valor
-0,OmnetSim-0.node_0,jitters_out,0.000000
+0,OmnetSim-0.node_0,packet_sizes_out,247.000000
+0,OmnetSim-0.node_0,packets_dropped,0.0
+0,OmnetSim-0.node_0,latencies_out,0.094448
+0,OmnetSim-0.node_0,packets_received,1.0
+0,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=0"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}"
 0,OmnetSim-0.node_0,packets_sent,1.0
 0,OmnetSim-0.node_0,status,idle
-0,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=0"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}"
-0,OmnetSim-0.node_0,packets_dropped,0.0
-0,OmnetSim-0.node_0,packets_received,1.0
-0,OmnetSim-0.node_0,packet_sizes_out,247.000000
-0,OmnetSim-0.node_0,latencies_out,0.094448
-1,OmnetSim-0.node_0,jitters_out,0.048052
+0,OmnetSim-0.node_0,jitters_out,0.000000
+1,OmnetSim-0.node_0,packet_sizes_out,247.000000
+1,OmnetSim-0.node_0,packets_dropped,0.0
+1,OmnetSim-0.node_0,latencies_out,0.142500
+1,OmnetSim-0.node_0,packets_received,2.0
+1,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}"
 1,OmnetSim-0.node_0,packets_sent,2.0
 1,OmnetSim-0.node_0,status,idle
-1,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}"
-1,OmnetSim-0.node_0,packets_dropped,0.0
-1,OmnetSim-0.node_0,packets_received,2.0
-1,OmnetSim-0.node_0,packet_sizes_out,247.000000
-1,OmnetSim-0.node_0,latencies_out,0.142500
-2,OmnetSim-0.node_0,jitters_out,0.004597
+1,OmnetSim-0.node_0,jitters_out,0.048052
+2,OmnetSim-0.node_0,packet_sizes_out,247.000000
+2,OmnetSim-0.node_0,packets_dropped,0.0
+2,OmnetSim-0.node_0,latencies_out,0.147097
+2,OmnetSim-0.node_0,packets_received,3.0
+2,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}"
 2,OmnetSim-0.node_0,packets_sent,3.0
 2,OmnetSim-0.node_0,status,idle
-2,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}"
-2,OmnetSim-0.node_0,packets_dropped,0.0
-2,OmnetSim-0.node_0,packets_received,3.0
-2,OmnetSim-0.node_0,packet_sizes_out,247.000000
-2,OmnetSim-0.node_0,latencies_out,0.147097
-3,OmnetSim-0.node_0,jitters_out,0.003629
+2,OmnetSim-0.node_0,jitters_out,0.004597
+3,OmnetSim-0.node_0,packet_sizes_out,247.000000
+3,OmnetSim-0.node_0,packets_dropped,0.0
+3,OmnetSim-0.node_0,latencies_out,0.143468
+3,OmnetSim-0.node_0,packets_received,4.0
+3,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}"
 3,OmnetSim-0.node_0,packets_sent,4.0
 3,OmnetSim-0.node_0,status,idle
-3,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}"
-3,OmnetSim-0.node_0,packets_dropped,0.0
-3,OmnetSim-0.node_0,packets_received,4.0
-3,OmnetSim-0.node_0,packet_sizes_out,247.000000
-3,OmnetSim-0.node_0,latencies_out,0.143468
-4,OmnetSim-0.node_0,jitters_out,0.045098
+3,OmnetSim-0.node_0,jitters_out,0.003629
+4,OmnetSim-0.node_0,packet_sizes_out,247.000000
+4,OmnetSim-0.node_0,packets_dropped,0.0
+4,OmnetSim-0.node_0,latencies_out,0.098370
+4,OmnetSim-0.node_0,packets_received,5.0
+4,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=4"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}"
 4,OmnetSim-0.node_0,packets_sent,5.0
 4,OmnetSim-0.node_0,status,idle
-4,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=4"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}"
-4,OmnetSim-0.node_0,packets_dropped,0.0
-4,OmnetSim-0.node_0,packets_received,5.0
-4,OmnetSim-0.node_0,packet_sizes_out,247.000000
-4,OmnetSim-0.node_0,latencies_out,0.098370
-5,OmnetSim-0.node_0,jitters_out,0.024594
+4,OmnetSim-0.node_0,jitters_out,0.045098
+5,OmnetSim-0.node_0,packet_sizes_out,247.000000
+5,OmnetSim-0.node_0,packets_dropped,0.0
+5,OmnetSim-0.node_0,latencies_out,0.073776
+5,OmnetSim-0.node_0,packets_received,6.0
+5,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=5"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}"
 5,OmnetSim-0.node_0,packets_sent,6.0
 5,OmnetSim-0.node_0,status,idle
-5,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=5"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}"
-5,OmnetSim-0.node_0,packets_dropped,0.0
-5,OmnetSim-0.node_0,packets_received,6.0
-5,OmnetSim-0.node_0,packet_sizes_out,247.000000
-5,OmnetSim-0.node_0,latencies_out,0.073776
-6,OmnetSim-0.node_0,jitters_out,0.006598
+5,OmnetSim-0.node_0,jitters_out,0.024594
+6,OmnetSim-0.node_0,packet_sizes_out,247.000000
+6,OmnetSim-0.node_0,packets_dropped,0.0
+6,OmnetSim-0.node_0,latencies_out,0.067178
+6,OmnetSim-0.node_0,packets_received,7.0
+6,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=6"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}"
 6,OmnetSim-0.node_0,packets_sent,7.0
 6,OmnetSim-0.node_0,status,idle
-6,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=6"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}"
-6,OmnetSim-0.node_0,packets_dropped,0.0
-6,OmnetSim-0.node_0,packets_received,7.0
-6,OmnetSim-0.node_0,packet_sizes_out,247.000000
-6,OmnetSim-0.node_0,latencies_out,0.067178
-7,OmnetSim-0.node_0,jitters_out,0.014739
+6,OmnetSim-0.node_0,jitters_out,0.006598
+7,OmnetSim-0.node_0,packet_sizes_out,247.000000
+7,OmnetSim-0.node_0,packets_dropped,0.0
+7,OmnetSim-0.node_0,latencies_out,0.052439
+7,OmnetSim-0.node_0,packets_received,8.0
+7,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=7"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t7""}"
 7,OmnetSim-0.node_0,packets_sent,8.0
 7,OmnetSim-0.node_0,status,idle
-7,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=7"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t7""}"
-7,OmnetSim-0.node_0,packets_dropped,0.0
-7,OmnetSim-0.node_0,packets_received,8.0
-7,OmnetSim-0.node_0,packet_sizes_out,247.000000
-7,OmnetSim-0.node_0,latencies_out,0.052439
-8,OmnetSim-0.node_0,jitters_out,0.012999
+7,OmnetSim-0.node_0,jitters_out,0.014739
+8,OmnetSim-0.node_0,packet_sizes_out,247.000000
+8,OmnetSim-0.node_0,packets_dropped,0.0
+8,OmnetSim-0.node_0,latencies_out,0.065438
+8,OmnetSim-0.node_0,packets_received,9.0
+8,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=8"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}"
 8,OmnetSim-0.node_0,packets_sent,9.0
 8,OmnetSim-0.node_0,status,idle
-8,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=8"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}"
-8,OmnetSim-0.node_0,packets_dropped,0.0
-8,OmnetSim-0.node_0,packets_received,9.0
-8,OmnetSim-0.node_0,packet_sizes_out,247.000000
-8,OmnetSim-0.node_0,latencies_out,0.065438
-9,OmnetSim-0.node_0,jitters_out,0.016555
+8,OmnetSim-0.node_0,jitters_out,0.012999
+9,OmnetSim-0.node_0,packet_sizes_out,247.000000
+9,OmnetSim-0.node_0,packets_dropped,0.0
+9,OmnetSim-0.node_0,latencies_out,0.081992
+9,OmnetSim-0.node_0,packets_received,10.0
+9,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=9"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}"
 9,OmnetSim-0.node_0,packets_sent,10.0
 9,OmnetSim-0.node_0,status,idle
-9,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=9"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}"
-9,OmnetSim-0.node_0,packets_dropped,0.0
-9,OmnetSim-0.node_0,packets_received,10.0
-9,OmnetSim-0.node_0,packet_sizes_out,247.000000
-9,OmnetSim-0.node_0,latencies_out,0.081992
-10,OmnetSim-0.node_0,jitters_out,0.051458
-10,OmnetSim-0.node_0,packets_sent,11.0
+9,OmnetSim-0.node_0,jitters_out,0.016555
+10,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||203.000000|||203.000000|||249.000000
+10,OmnetSim-0.node_0,packets_dropped,1.0
+10,OmnetSim-0.node_0,latencies_out,0.043501|||0.047038|||0.067424|||0.075174|||0.132898|||0.133451
+10,OmnetSim-0.node_0,packets_received,16.0
+10,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=10"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}"
+10,OmnetSim-0.node_0,packets_sent,16.0
 10,OmnetSim-0.node_0,status,idle
-10,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=10"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}"
-10,OmnetSim-0.node_0,packets_dropped,0.0
-10,OmnetSim-0.node_0,packets_received,11.0
-10,OmnetSim-0.node_0,packet_sizes_out,249.000000
-10,OmnetSim-0.node_0,latencies_out,0.133451
-11,OmnetSim-0.node_0,jitters_out,0.050916
-11,OmnetSim-0.node_0,packets_sent,12.0
+10,OmnetSim-0.node_0,jitters_out,0.038491|||0.003537|||0.020386|||0.007751|||0.057724|||0.000552
+11,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||203.000000|||249.000000|||203.000000
+11,OmnetSim-0.node_0,packets_dropped,2.0
+11,OmnetSim-0.node_0,latencies_out,0.074565|||0.079228|||0.117769|||0.123180|||0.139214|||0.144525
+11,OmnetSim-0.node_0,packets_received,22.0
+11,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=11"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}"
+11,OmnetSim-0.node_0,packets_sent,22.0
 11,OmnetSim-0.node_0,status,idle
-11,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=11"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}"
-11,OmnetSim-0.node_0,packets_dropped,0.0
-11,OmnetSim-0.node_0,packets_received,12.0
-11,OmnetSim-0.node_0,packet_sizes_out,249.000000
-11,OmnetSim-0.node_0,latencies_out,0.082534
-12,OmnetSim-0.node_0,jitters_out,0.007751|||0.058115
-12,OmnetSim-0.node_0,packets_sent,14.0
+11,OmnetSim-0.node_0,jitters_out,0.058885|||0.004663|||0.038541|||0.005411|||0.016034|||0.005310
+12,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||203.000000|||203.000000|||249.000000|||203.000000|||203.000000
+12,OmnetSim-0.node_0,packets_dropped,4.0
+12,OmnetSim-0.node_0,latencies_out,0.050216|||0.052790|||0.074565|||0.079371|||0.093552|||0.106637|||0.109245|||0.187201
+12,OmnetSim-0.node_0,packets_received,30.0
+12,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=12"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}"
+12,OmnetSim-0.node_0,packets_sent,30.0
 12,OmnetSim-0.node_0,status,idle
-12,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=12"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}"
-12,OmnetSim-0.node_0,packets_dropped,0.0
-12,OmnetSim-0.node_0,packets_received,14.0
-12,OmnetSim-0.node_0,packet_sizes_out,249.000000|||203.000000
-12,OmnetSim-0.node_0,latencies_out,0.074784|||0.132898
-13,OmnetSim-0.node_0,jitters_out,0.089397|||0.003537
-13,OmnetSim-0.node_0,packets_sent,16.0
+12,OmnetSim-0.node_0,jitters_out,0.094308|||0.002574|||0.021775|||0.004807|||0.014180|||0.013085|||0.002608|||0.077957
+13,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||249.000000|||203.000000|||203.000000|||203.000000|||203.000000|||203.000000
+13,OmnetSim-0.node_0,packets_dropped,6.0
+13,OmnetSim-0.node_0,latencies_out,0.049744|||0.055052|||0.062042|||0.066908|||0.072367|||0.089955|||0.090549|||0.158926
+13,OmnetSim-0.node_0,packets_received,38.0
+13,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t7""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=13"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t13""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t7""}"
+13,OmnetSim-0.node_0,packets_sent,38.0
 13,OmnetSim-0.node_0,status,idle
-13,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t0""}"
-13,OmnetSim-0.node_0,packets_dropped,1.0
-13,OmnetSim-0.node_0,packets_received,16.0
-13,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000
-13,OmnetSim-0.node_0,latencies_out,0.043501|||0.047038
-14,OmnetSim-0.node_0,jitters_out,0.070731|||0.021445|||0.005310
-14,OmnetSim-0.node_0,packets_sent,19.0
+13,OmnetSim-0.node_0,jitters_out,0.137457|||0.005308|||0.006990|||0.004865|||0.005459|||0.017587|||0.000594|||0.068377
+14,OmnetSim-0.node_0,packet_sizes_out,204.000000|||204.000000|||249.000000
+14,OmnetSim-0.node_0,packets_dropped,7.0
+14,OmnetSim-0.node_0,latencies_out,0.047868|||0.097586|||0.166158
+14,OmnetSim-0.node_0,packets_received,41.0
+14,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=14"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t14""}"
+14,OmnetSim-0.node_0,packets_sent,41.0
 14,OmnetSim-0.node_0,status,idle
-14,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=14"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t14""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t1""}"
-14,OmnetSim-0.node_0,packets_dropped,2.0
-14,OmnetSim-0.node_0,packets_received,19.0
-14,OmnetSim-0.node_0,packet_sizes_out,203.000000|||249.000000|||203.000000
-14,OmnetSim-0.node_0,latencies_out,0.117769|||0.139214|||0.144525
-15,OmnetSim-0.node_0,jitters_out,0.065296|||0.002697|||0.017351|||0.023903
-15,OmnetSim-0.node_0,packets_sent,23.0
+14,OmnetSim-0.node_0,jitters_out,0.111058|||0.049718|||0.068572
+15,OmnetSim-0.node_0,packet_sizes_out,204.000000|||204.000000|||204.000000|||249.000000
+15,OmnetSim-0.node_0,packets_dropped,7.0
+15,OmnetSim-0.node_0,latencies_out,0.049541|||0.054450|||0.061588|||0.105370
+15,OmnetSim-0.node_0,packets_received,45.0
+15,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=15"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t15""}"
+15,OmnetSim-0.node_0,packets_sent,45.0
 15,OmnetSim-0.node_0,status,idle
-15,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=15"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t15""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t2""}"
-15,OmnetSim-0.node_0,packets_dropped,2.0
-15,OmnetSim-0.node_0,packets_received,23.0
-15,OmnetSim-0.node_0,packet_sizes_out,203.000000|||249.000000|||203.000000|||203.000000
-15,OmnetSim-0.node_0,latencies_out,0.079228|||0.081925|||0.099277|||0.123180
-16,OmnetSim-0.node_0,jitters_out,0.072964|||0.024348|||0.004807|||0.014180|||0.093649
-16,OmnetSim-0.node_0,packets_sent,28.0
+15,OmnetSim-0.node_0,jitters_out,0.116616|||0.004909|||0.007138|||0.043782
+16,OmnetSim-0.node_0,packet_sizes_out,249.000000|||204.000000
+16,OmnetSim-0.node_0,packets_dropped,7.0
+16,OmnetSim-0.node_0,latencies_out,0.072445|||0.084861
+16,OmnetSim-0.node_0,packets_received,47.0
+16,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=16"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t16""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}"
+16,OmnetSim-0.node_0,packets_sent,47.0
 16,OmnetSim-0.node_0,status,idle
-16,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t4""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t3""}"
-16,OmnetSim-0.node_0,packets_dropped,4.0
-16,OmnetSim-0.node_0,packets_received,28.0
-16,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||203.000000|||203.000000
-16,OmnetSim-0.node_0,latencies_out,0.050216|||0.074565|||0.079371|||0.093552|||0.187201
-17,OmnetSim-0.node_0,jitters_out,0.137457|||0.004939|||0.000370|||0.005098|||0.006758|||0.023641|||0.018695
-17,OmnetSim-0.node_0,packets_sent,35.0
+16,OmnetSim-0.node_0,jitters_out,0.032925|||0.012416
+17,OmnetSim-0.node_0,packet_sizes_out,204.000000|||204.000000
+17,OmnetSim-0.node_0,packets_dropped,8.0
+17,OmnetSim-0.node_0,latencies_out,0.092934|||0.202287
+17,OmnetSim-0.node_0,packets_received,49.0
+17,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}"
+17,OmnetSim-0.node_0,packets_sent,49.0
 17,OmnetSim-0.node_0,status,idle
-17,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t7""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=17"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t17""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t6""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t5""}"
-17,OmnetSim-0.node_0,packets_dropped,6.0
-17,OmnetSim-0.node_0,packets_received,35.0
-17,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||249.000000|||203.000000|||203.000000|||203.000000
-17,OmnetSim-0.node_0,latencies_out,0.049744|||0.054682|||0.055052|||0.060150|||0.066908|||0.090549|||0.109245
-18,OmnetSim-0.node_0,jitters_out,0.061536|||0.024659|||0.017587|||0.007471|||0.000584|||0.060788|||0.007488
-18,OmnetSim-0.node_0,packets_sent,42.0
+17,OmnetSim-0.node_0,jitters_out,0.008072|||0.109354
+18,OmnetSim-0.node_0,packet_sizes_out,204.000000
+18,OmnetSim-0.node_0,packets_dropped,9.0
+18,OmnetSim-0.node_0,latencies_out,0.054355
+18,OmnetSim-0.node_0,packets_received,50.0
+18,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t13""}"
+18,OmnetSim-0.node_0,packets_sent,50.0
 18,OmnetSim-0.node_0,status,idle
-18,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t9""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t8""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=18"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t18""}"
-18,OmnetSim-0.node_0,packets_dropped,7.0
-18,OmnetSim-0.node_0,packets_received,42.0
-18,OmnetSim-0.node_0,packet_sizes_out,203.000000|||203.000000|||203.000000|||203.000000|||203.000000|||203.000000|||249.000000
-18,OmnetSim-0.node_0,latencies_out,0.047708|||0.072367|||0.089955|||0.097426|||0.098010|||0.158798|||0.166286
-19,OmnetSim-0.node_0,jitters_out,0.116744|||0.004814|||0.007233|||0.000062|||0.003595|||0.019616|||0.008072|||0.109354
-19,OmnetSim-0.node_0,packets_sent,50.0
-19,OmnetSim-0.node_0,status,idle
-19,OmnetSim-0.node_0,val_out,"{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t11""}|||{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=19"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t19""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_1@0.0.0.0:5679"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_1"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_2@0.0.0.0:5680"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_2"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t12""}|||{""performative"": ""inform"", ""sender"": ""AgenteP_3@0.0.0.0:5681"", ""receivers"": [""AgenteCentral@0.0.0.0:5678""], ""content"": ""Status OK: AgenteP_3"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t10""}"
+18,OmnetSim-0.node_0,jitters_out,0.147932
+19,OmnetSim-0.node_0,packet_sizes_out,249.000000
 19,OmnetSim-0.node_0,packets_dropped,9.0
-19,OmnetSim-0.node_0,packets_received,50.0
-19,OmnetSim-0.node_0,packet_sizes_out,204.000000|||204.000000|||204.000000|||249.000000|||204.000000|||204.000000|||204.000000|||204.000000
-19,OmnetSim-0.node_0,latencies_out,0.049541|||0.054355|||0.061588|||0.061650|||0.065245|||0.084861|||0.092934|||0.202287
+19,OmnetSim-0.node_0,latencies_out,0.058636
+19,OmnetSim-0.node_0,packets_received,51.0
+19,OmnetSim-0.node_0,val_out,"{""performative"": ""request"", ""sender"": ""AgenteCentral@0.0.0.0:5678"", ""receivers"": [""AgenteP_1@0.0.0.0:5679"", ""AgenteP_2@0.0.0.0:5680"", ""AgenteP_3@0.0.0.0:5681""], ""content"": ""Status? t=19"", ""ontology"": ""telemetria_rede"", ""conversation_id"": ""poll-t19""}"
+19,OmnetSim-0.node_0,packets_sent,51.0
+19,OmnetSim-0.node_0,status,idle
+19,OmnetSim-0.node_0,jitters_out,0.004281
