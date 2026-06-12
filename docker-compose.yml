@@ -9,7 +9,7 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      - NUM_PERIFERICOS=50     # <--- CONTROLE DE ESCALA
+      - NUM_PERIFERICOS=3    # <--- CONTROLE DE ESCALA
     stdin_open: true
     tty: true
     command: python3 pade_star.py
@@ -36,7 +36,7 @@ services:
     volumes:
       - ./mosaik-dir:/app
     environment:
-      - NUM_PERIFERICOS=50     # <--- CONTROLE DE ESCALA AQUI
+      - NUM_PERIFERICOS=3     # <--- CONTROLE DE ESCALA AQUI
     command: sh -c "pip install pandas matplotlib && echo 'Aguardando...' && sleep 3 && python star.py && python plot_results_star.py"
 
 networks:
