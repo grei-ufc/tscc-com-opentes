@@ -22,7 +22,7 @@ services:
     expose:
       - "5555"
     volumes:
-      - ./omnet-dir:/root/models 
+      - ./omnet-dir:/root/models
     command: /bin/bash -c "source /root/omnetpp/setenv && opp_makemake -f --deep -O out -o sim_exec -lzmq && make && ./sim_exec -u Cmdenv -c General"
 
   mosaik_master:
@@ -30,6 +30,11 @@ services:
     container_name: mosaik_master
     networks:
       - sim_net
+    # Porta 5556: ROUTER ZMQ embutido no omnet_wrapper.py (Super Wrapper).
+    # Os agentes PADE (container 'pade') conectam aqui via DEALER
+    # para trocar mensagens FIPA com latência/jitter/drop do OMNeT++.
+    expose:
+      - "5556"
     depends_on:
       - omnet_sim
       - pade
@@ -37,7 +42,7 @@ services:
       - ./mosaik-dir:/app
     environment:
       - NUM_PERIFERICOS=50     # <--- CONTROLE DE ESCALA AQUI
-    command: sh -c "pip install pandas matplotlib && echo 'Aguardando...' && sleep 3 && python star.py && python plot_results_star.py"
+    command: sh -c "pip install pandas matplotlib pyzmq && echo 'Aguardando...' && sleep 3 && python star.py && python plot_results_star.py"
 
 networks:
   sim_net:
