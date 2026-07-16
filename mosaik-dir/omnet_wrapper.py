@@ -18,9 +18,12 @@ import json
 META = {
     'type': 'time-based',
     'models': {
-        'NetworkNode': {
+        # ==========================================================
+        # NOVO MODELO (Substitui o NetworkNode)
+        # ==========================================================
+        'AgentNode': {
             'public': True,
-            'params': ['node_type'],
+            'params': ['node_type', 'eid'], # Adicionado 'eid' aos parâmetros permitidos
             'attrs': [
                 'val_in', 'val_out', 'status', 'packets_sent', 
                 'packets_received', 'packets_dropped', 
@@ -57,7 +60,7 @@ class OmnetAdapter(mosaik_api.Simulator):
     def create(self, num, model, **model_params):
         entities = []
 
-        # ---- Conexões (cabos) ----
+        # ---- Conexões (cabos lógicos via Mosaik - Opcional se for Mosaik->Mosaik) ----
         if model == 'Connection':
             for i in range(num):
                 payload = {
@@ -77,9 +80,15 @@ class OmnetAdapter(mosaik_api.Simulator):
                     print(f"[MOSAIK] ERRO ao conectar: {response.get('reason')}")
             return entities
 
-        # ---- Nós ----
+        # ---- Nós (AgentNodes) ----
         for i in range(num):
-            eid     = f'node_{i}'
+            # ==========================================================
+            # A GRANDE CORREÇÃO: Respeitar o 'eid' passado pelo star.py!
+            # Se o star.py mandou eid='agent_central', nós usamos isso.
+            # Se não, usamos um fallback automático.
+            # ==========================================================
+            eid = model_params.get('eid', f'{model}_{i}')
+            
             payload = {
                 'action': 'create',
                 'eid':    eid,

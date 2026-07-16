@@ -80,18 +80,28 @@ void MosaikBridge::initialize() {
         if (j["action"] == "create") {
             std::string modelName = j["params"]["node_type"];
             std::string entityId = j["eid"];
-
-            cModuleType *moduleType = cModuleType::find(modelName.c_str());
             json response;
 
-            if (moduleType) {
-                cModule *newModule = moduleType->create(entityId.c_str(), getParentModule());
-                newModule->finalizeParameters();
-                newModule->buildInside();
-                newModule->scheduleStart(simTime());
+            // ==============================================================================
+            // NOVA LÓGICA: O Python já criou o nó e os cabos no arquivo NED dinâmico!
+            // ==============================================================================
+            cModule *existingNode = getParentModule()->getSubmodule(entityId.c_str());
+
+            if (existingNode) {
+                // O nó já existe na topologia conectada. Apenas validamos para o Mosaik.
                 response = {{"status", "ok"}};
             } else {
-                response = {{"status", "error", "reason", "Modulo nao encontrado"}};
+                // Fallback de segurança: Se por algum motivo o nó não estiver no NED, cria dinamicamente
+                cModuleType *moduleType = cModuleType::find(modelName.c_str());
+                if (moduleType) {
+                    cModule *newModule = moduleType->create(entityId.c_str(), getParentModule());
+                    newModule->finalizeParameters();
+                    newModule->buildInside();
+                    newModule->scheduleStart(simTime());
+                    response = {{"status", "ok"}};
+                } else {
+                    response = {{"status", "error", "reason", "Modulo nao encontrado no NED e nem nos tipos registrados."}};
+                }
             }
             socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
         } 
@@ -103,7 +113,7 @@ void MosaikBridge::initialize() {
             
             scenario_ready = true;
             stepMsg = new cMessage("next_step");
-            scheduleAt(simTime() + 1.0, stepMsg);
+            scheduleAt(simTime() + 1.0, stepMsg); // Mantém o avanço de tempo do Mosaik
         }
     }
 }
@@ -112,6 +122,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
     if (msg == stepMsg) {
         json data_json = json::object();
 
+        // O seu iterador dinâmico já é perfeito para lidar com N agentes!
         for (cModule::SubmoduleIterator it(getParentModule()); !it.end(); ++it) {
             cModule *submod = *it;
             if (submod == this) continue; 
@@ -127,7 +138,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             }
 
             // ==============================================================
-            // EXPORTAÇÃO DA TELEMETRIA DE ALTA RESOLUÇÃO (AS NOVAS GAVETAS!)
+            // EXPORTAÇÃO DA TELEMETRIA DE ALTA RESOLUÇÃO
             // ==============================================================
             if (submod->hasPar("packet_sizes_out")) {
                 node_data["packet_sizes_out"] = submod->par("packet_sizes_out").stdstringValue();
@@ -142,7 +153,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
                 submod->par("jitters_out").setStringValue("");
             }
 
-            // Métricas globais (As do gráfico de pizza)
+            // Métricas globais
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
             if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();

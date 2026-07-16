@@ -18,8 +18,19 @@ def gerar_grafico():
         print("📊 Desempacotando dados multiplexados e montando Dashboard Estrela...")
         df = pd.read_csv('results.csv')
         
-        node_data = df[df['Origem'] == 'OmnetSim-0.node_0'].copy()
-        time_data = node_data.pivot_table(index='Tempo', columns='Atributo', values='Valor', aggfunc='first').reset_index()
+        # =================================================================
+        # CORREÇÃO: Agora filtramos TODOS os agentes dinamicamente, 
+        # e não apenas o antigo "node_0".
+        # =================================================================
+        node_data = df[df['Origem'].str.startswith('OmnetSim-0.agent_')].copy()
+        
+        # Pivotamos agrupando por Tempo E por Origem (pois agora são múltiplos nós)
+        time_data = node_data.pivot_table(
+            index=['Tempo', 'Origem'], 
+            columns='Atributo', 
+            values='Valor', 
+            aggfunc='first'
+        ).reset_index()
 
         # Garante que as colunas existem
         for col in ['packets_sent', 'packets_received', 'packets_dropped']:
@@ -27,12 +38,13 @@ def gerar_grafico():
             time_data[col] = pd.to_numeric(time_data[col], errors='coerce').fillna(0)
 
         # =================================================================
-        # DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA
+        # DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA DE TODOS OS NÓS
         # =================================================================
         dados_expandidos = []
         
         for index, row in time_data.iterrows():
             t = row['Tempo']
+            origem = row['Origem']
             
             val_out = str(row.get('val_out', ''))
             sizes_str = str(row.get('packet_sizes_out', ''))
@@ -56,6 +68,7 @@ def gerar_grafico():
                     
                     dados_expandidos.append({
                         'Tempo': t,
+                        'Nó_Físico': origem,
                         'Agente': agente,
                         'last_packet_size': size,
                         'last_latency': lat,
@@ -74,7 +87,7 @@ def gerar_grafico():
 
         # Prepara a Figura
         fig = plt.figure(figsize=(16, 11))
-        fig.suptitle('Dashboard Analítico: Topologia em Estrela (Telemetria Alta Resolução)', fontsize=18, fontweight='bold')
+        fig.suptitle('Dashboard Analítico: Topologia em Estrela Descentralizada', fontsize=18, fontweight='bold')
         gs = gridspec.GridSpec(2, 2, figure=fig)
         ax1, ax2, ax3, ax4 = fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[0, 1]), fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[1, 1])
 
@@ -98,10 +111,14 @@ def gerar_grafico():
         ax3.set_xlabel('Tempo'); ax3.set_ylabel('Tamanho (Bytes)')
         ax3.legend(); ax3.grid(True, linestyle=':', alpha=0.7)
 
-        # PAINEL 4: Confiabilidade Global
-        p_enviados = time_data['packets_sent'].max()
-        p_recebidos = time_data['packets_received'].max()
-        p_descartados = time_data['packets_dropped'].max()
+        # =================================================================
+        # PAINEL 4: Confiabilidade Global (Múltiplos Nós)
+        # Como cada nó conta seus próprios pacotes, somamos o valor MÁXIMO 
+        # que cada placa de rede atingiu no fim da simulação.
+        # =================================================================
+        p_enviados = time_data.groupby('Origem')['packets_sent'].max().sum()
+        p_recebidos = time_data.groupby('Origem')['packets_received'].max().sum()
+        p_descartados = time_data.groupby('Origem')['packets_dropped'].max().sum()
         em_transito = max(0, p_enviados - p_recebidos - p_descartados)
 
         labels = ['Entregues', 'Dropados', 'Em Trânsito']
@@ -114,7 +131,7 @@ def gerar_grafico():
         if sum(tamanhos_f) > 0:
             ax4.pie(tamanhos_f, labels=labels_f, colors=cores_f, autopct='%1.1f%%', startangle=140, wedgeprops={'edgecolor': 'black'})
         
-        ax4.set_title(f'4. Integridade da Estrela (Total: {int(p_enviados)} pacotes)', fontsize=14, fontweight='bold')
+        ax4.set_title(f'4. Integridade da Rede (Total: {int(p_enviados)} pacotes enviados)', fontsize=14, fontweight='bold')
         
         qtd_agentes = len(df_perifericos['Agente'].unique())
         kpi_text = (f"Escala Analisada: 1 Central -> {qtd_agentes} Periféricos\n\n"

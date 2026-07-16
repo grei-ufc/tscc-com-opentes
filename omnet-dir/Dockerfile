@@ -15,3 +15,7 @@ RUN git clone https://github.com/zeromq/cppzmq.git /tmp/cppzmq && \
     rm -rf /tmp/cppzmq
 
 WORKDIR /root/models
+
+# Apenas copia os arquivos. A compilação vai acontecer 
+# via docker-compose.yml no momento que o contêiner iniciar.
+COPY . /root/models
