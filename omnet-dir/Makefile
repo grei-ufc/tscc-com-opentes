@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for sim_exec
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -o sim_exec -lzmq
+#  opp_makemake -f --deep -o sim_exec -lzmq
 #
 
 # Name of target to be created (-o option)
@@ -33,10 +33,11 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/MosaikBridge.o $O/NetworkNode.o
+OBJS = $O/AgentNode.o $O/MosaikBridge.o $O/AgentPacket_m.o
 
 # Message files
-MSGFILES =
+MSGFILES = \
+    AgentPacket.msg
 
 # SM files
 SMFILES =

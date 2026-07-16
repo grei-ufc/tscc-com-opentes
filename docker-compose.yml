@@ -9,7 +9,7 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      - NUM_PERIFERICOS=3    # <--- CONTROLE DE ESCALA
+      - NUM_PERIFERICOS=50   # <--- CONTROLE DE ESCALA
     stdin_open: true
     tty: true
     command: python3 pade_star.py
@@ -23,7 +23,16 @@ services:
       - "5555"
     volumes:
       - ./omnet-dir:/root/models 
-    command: /bin/bash -c "source /root/omnetpp/setenv && opp_makemake -f --deep -O out -o sim_exec -lzmq && make && ./sim_exec -u Cmdenv -c General"
+    # AJUSTE 1: OMNeT++ agora compila e ESPERA o arquivo DynamicNetwork.ned existir antes de rodar
+    command: >
+      /bin/bash -c "
+      source /root/omnetpp/setenv && 
+      opp_makemake -f --deep -o sim_exec -lzmq && 
+      make && 
+      echo 'Aguardando mosaik gerar DynamicNetwork.ned...' &&
+      while [ ! -f DynamicNetwork.ned ]; do sleep 1; done && 
+      echo 'Rede encontrada! Iniciando simulação...' &&
+      ./sim_exec -u Cmdenv -c General"
 
   mosaik_master:
     build: ./mosaik-dir
@@ -35,9 +44,18 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
+      # AJUSTE 2: Mosaik precisa mapear a pasta do OMNeT para poder injetar o .ned lá dentro
+      - ./omnet-dir:/omnet-dir
     environment:
-      - NUM_PERIFERICOS=3     # <--- CONTROLE DE ESCALA AQUI
-    command: sh -c "pip install pandas matplotlib && echo 'Aguardando...' && sleep 3 && python star.py && python plot_results_star.py"
+      - NUM_PERIFERICOS=50    # <--- CONTROLE DE ESCALA AQUI
+    # AJUSTE 3: Aumentei o sleep, pois o OMNeT++ leva um tempo para compilar no start do container
+    command: >
+      sh -c "
+      pip install pandas matplotlib && 
+      echo 'Aguardando OMNeT++ compilar...' && 
+      sleep 3 && 
+      python star.py && 
+      python plot_results_star.py"
 
 networks:
   sim_net:
