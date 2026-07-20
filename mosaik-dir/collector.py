@@ -42,7 +42,7 @@ class Coletor(mosaik_api.Simulator):
         # Força a gravação no disco para podermos ver em tempo real
         self.csv_file.flush()
         
-        # "Fico a dormir até chegar nova mensagem"
+        # Fica esperando nova mensagem
         return None 
 
     def finalize(self):

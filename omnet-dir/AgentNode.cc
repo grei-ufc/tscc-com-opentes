@@ -23,7 +23,7 @@ class AgentNode : public cSimpleModule
     std::map<int, cPacketQueue*> txQueues;
     std::map<int, cMessage*> endTxMsgs;
     
-    // Dicionário para rastrear a última latência de cada remetente!
+    // Dicionário para rastrear a última latência de cada remetente
     std::map<std::string, double> lastLatencies;
 
   protected:
@@ -42,7 +42,7 @@ Define_Module(AgentNode);
 
 void AgentNode::initialize()
 {
-    // O nó agora descobre seu próprio nome automaticamente!
+    // O nó descobre seu próprio nome automaticamente
     myAgentId = getName(); 
     EV << "AgentNode " << myAgentId << " inicializado." << std::endl;
 
@@ -66,7 +66,6 @@ void AgentNode::initialize()
 }
 
 AgentNode::~AgentNode() {
-    // Corrigido para C++ clássico (evita warnings do C++17)
     for (auto const& pair : txQueues) delete pair.second;
     for (auto const& pair : endTxMsgs) cancelAndDelete(pair.second);
 }
@@ -93,7 +92,7 @@ void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
         send(pkt, "port$o", portIndex); 
         
         // ==============================================================
-        // CORREÇÃO: Cast seguro para extrair o Delay do Canal
+        // Cast seguro para extrair o Delay do Canal
         // ==============================================================
         cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
         double baseDelay = delayChannel ? delayChannel->getDelay().dbl() : 0.0;
@@ -172,7 +171,7 @@ void AgentNode::handleMessage(cMessage *msg)
             cChannel *channel = gate("port$o", portIndex)->getTransmissionChannel();
             
             // ==============================================================
-            // CORREÇÃO: Cast seguro para os pacotes saindo da fila
+            // Cast seguro para os pacotes saindo da fila
             // ==============================================================
             cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
             double baseDelay = delayChannel ? delayChannel->getDelay().dbl() : 0.0;

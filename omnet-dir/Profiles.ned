@@ -1,7 +1,7 @@
 
 
 // ============================================================================
-// BIBLIOTECA DE PERFIS DE REDE (Substitui a lógica matemática do antigo .cc)
+// BIBLIOTECA DE PERFIS DE REDE
 // ============================================================================
 
 // 1. Conexão Cabeada (Fibra/Ethernet): Extremamente rápida e confiável

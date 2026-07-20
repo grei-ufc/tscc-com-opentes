@@ -1,6 +1,4 @@
-// AgentPacket.msg
 
-// Garante que o C++ saiba que esta classe herda do pacote básico do OMNeT++
 cplusplus {{
 #include <omnetpp.h>
 }}

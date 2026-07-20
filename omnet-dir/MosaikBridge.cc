@@ -82,9 +82,6 @@ void MosaikBridge::initialize() {
             std::string entityId = j["eid"];
             json response;
 
-            // ==============================================================================
-            // NOVA LÓGICA: O Python já criou o nó e os cabos no arquivo NED dinâmico!
-            // ==============================================================================
             cModule *existingNode = getParentModule()->getSubmodule(entityId.c_str());
 
             if (existingNode) {
@@ -122,7 +119,6 @@ void MosaikBridge::handleMessage(cMessage *msg) {
     if (msg == stepMsg) {
         json data_json = json::object();
 
-        // O seu iterador dinâmico já é perfeito para lidar com N agentes!
         for (cModule::SubmoduleIterator it(getParentModule()); !it.end(); ++it) {
             cModule *submod = *it;
             if (submod == this) continue; 
