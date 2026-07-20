@@ -1,6 +1,4 @@
-//
-// Generated file, do not edit! Created by opp_msgtool 6.0 from AgentPacket.msg.
-//
+
 
 #ifndef __AGENTPACKET_M_H
 #define __AGENTPACKET_M_H

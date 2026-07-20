@@ -10,7 +10,7 @@ sim_config = {
 }
 
 # ==============================================================================
-# NOVA FUNÇÃO: Escreve a topologia do OMNeT++ antes do simulador iniciar
+# Escreve a topologia do OMNeT++ antes do simulador iniciar
 # ==============================================================================
 def gerar_topologia_ned(agentes, links, arquivo_saida="/omnet-dir/DynamicNetwork.ned"):
     with open(arquivo_saida, 'w') as f:
@@ -39,7 +39,7 @@ def create_scenario(world):
     perifericos_ids = [f'agent_p_{i}' for i in range(1, NUM_PERIFERICOS + 1)]
     todos_agentes_omnet = [agente_central_id] + perifericos_ids
     
-    # 2. Distribuindo as redes (Mostrando a magia da nova arquitetura!)
+    # 2. Distribuindo as redes
     tipos_redes = ['Link_5G', 'Link_4G', 'Link_Wired', 'Link_IoT']
     links = []
     
@@ -49,7 +49,7 @@ def create_scenario(world):
         links.append({'origem': agente_central_id, 'destino': pid, 'tipo': tipo_escolhido})
         print(f"   🔌 {agente_central_id} conectado ao {pid} via {tipo_escolhido}")
 
-    # 3. GERA O ARQUIVO QUE O OMNeT++ ESTÁ ESPERANDO!
+    # 3. GERA O ARQUIVO QUE O OMNeT++ ESTÁ ESPERANDO
     print("⚙️ Gerando DynamicNetwork.ned para o OMNeT++...")
     gerar_topologia_ned(todos_agentes_omnet, links)
 

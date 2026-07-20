@@ -18,10 +18,6 @@ def gerar_grafico():
         print("📊 Desempacotando dados multiplexados e montando Dashboard Estrela...")
         df = pd.read_csv('results.csv')
         
-        # =================================================================
-        # CORREÇÃO: Agora filtramos TODOS os agentes dinamicamente, 
-        # e não apenas o antigo "node_0".
-        # =================================================================
         node_data = df[df['Origem'].str.startswith('OmnetSim-0.agent_')].copy()
         
         # Pivotamos agrupando por Tempo E por Origem (pois agora são múltiplos nós)
@@ -38,7 +34,7 @@ def gerar_grafico():
             time_data[col] = pd.to_numeric(time_data[col], errors='coerce').fillna(0)
 
         # =================================================================
-        # DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA DE TODOS OS NÓS
+        # DESEMPACOTAMENTO DA TELEMETRIA DE TODOS OS NÓS
         # =================================================================
         dados_expandidos = []
         
@@ -113,8 +109,6 @@ def gerar_grafico():
 
         # =================================================================
         # PAINEL 4: Confiabilidade Global (Múltiplos Nós)
-        # Como cada nó conta seus próprios pacotes, somamos o valor MÁXIMO 
-        # que cada placa de rede atingiu no fim da simulação.
         # =================================================================
         p_enviados = time_data.groupby('Origem')['packets_sent'].max().sum()
         p_recebidos = time_data.groupby('Origem')['packets_received'].max().sum()
