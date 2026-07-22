@@ -16,6 +16,9 @@ simple AgentNode // (Substitui o NetworkNode)
         // ==========================================================
         // MÉTRICAS E TELEMETRIA
         // ==========================================================
+        double xPos = default(0.0);
+        double yPos = default(0.0);
+
         double packets_sent @mutable = default(0);
         double packets_received @mutable = default(0);
         double packets_dropped @mutable = default(0);

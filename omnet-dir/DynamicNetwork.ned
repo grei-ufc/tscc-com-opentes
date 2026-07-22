@@ -4,157 +4,208 @@ network DynamicNetwork
         mosaikBridge: MosaikBridge;
 
         agent_central: AgentNode {
-            agent_id = "agent_central";
+            xPos = 500.0;
+            yPos = 500.0;
         }
         agent_p_1: AgentNode {
-            agent_id = "agent_p_1";
+            xPos = 987.51;
+            yPos = 390.12;
         }
         agent_p_2: AgentNode {
-            agent_id = "agent_p_2";
+            xPos = 289.77;
+            yPos = 680.81;
         }
         agent_p_3: AgentNode {
-            agent_id = "agent_p_3";
+            xPos = 947.11;
+            yPos = 133.59;
         }
         agent_p_4: AgentNode {
-            agent_id = "agent_p_4";
+            xPos = 353.22;
+            yPos = 211.11;
         }
         agent_p_5: AgentNode {
-            agent_id = "agent_p_5";
+            xPos = 244.42;
+            yPos = 263.82;
         }
         agent_p_6: AgentNode {
-            agent_id = "agent_p_6";
+            xPos = 29.98;
+            yPos = 377.11;
         }
         agent_p_7: AgentNode {
-            agent_id = "agent_p_7";
+            xPos = 672.77;
+            yPos = 193.91;
         }
         agent_p_8: AgentNode {
-            agent_id = "agent_p_8";
+            xPos = 319.65;
+            yPos = 204.06;
         }
         agent_p_9: AgentNode {
-            agent_id = "agent_p_9";
+            xPos = 86.92;
+            yPos = 722.61;
         }
         agent_p_10: AgentNode {
-            agent_id = "agent_p_10";
+            xPos = 56.09;
+            yPos = 913.68;
         }
         agent_p_11: AgentNode {
-            agent_id = "agent_p_11";
+            xPos = 137.72;
+            yPos = 568.15;
         }
         agent_p_12: AgentNode {
-            agent_id = "agent_p_12";
+            xPos = 334.15;
+            yPos = 21.95;
         }
         agent_p_13: AgentNode {
-            agent_id = "agent_p_13";
+            xPos = 718.1;
+            yPos = 704.52;
         }
         agent_p_14: AgentNode {
-            agent_id = "agent_p_14";
+            xPos = 23.87;
+            yPos = 42.68;
         }
         agent_p_15: AgentNode {
-            agent_id = "agent_p_15";
+            xPos = 30.09;
+            yPos = 134.36;
         }
         agent_p_16: AgentNode {
-            agent_id = "agent_p_16";
+            xPos = 311.24;
+            yPos = 438.76;
         }
         agent_p_17: AgentNode {
-            agent_id = "agent_p_17";
+            xPos = 483.23;
+            yPos = 975.64;
         }
         agent_p_18: AgentNode {
-            agent_id = "agent_p_18";
+            xPos = 524.18;
+            yPos = 65.94;
         }
         agent_p_19: AgentNode {
-            agent_id = "agent_p_19";
+            xPos = 624.97;
+            yPos = 778.66;
         }
         agent_p_20: AgentNode {
-            agent_id = "agent_p_20";
+            xPos = 645.4;
+            yPos = 238.46;
         }
         agent_p_21: AgentNode {
-            agent_id = "agent_p_21";
+            xPos = 729.5;
+            yPos = 492.17;
         }
         agent_p_22: AgentNode {
-            agent_id = "agent_p_22";
+            xPos = 200.87;
+            yPos = 747.24;
         }
         agent_p_23: AgentNode {
-            agent_id = "agent_p_23";
+            xPos = 666.34;
+            yPos = 504.03;
         }
         agent_p_24: AgentNode {
-            agent_id = "agent_p_24";
+            xPos = 661.31;
+            yPos = 382.76;
         }
         agent_p_25: AgentNode {
-            agent_id = "agent_p_25";
+            xPos = 962.13;
+            yPos = 864.91;
         }
         agent_p_26: AgentNode {
-            agent_id = "agent_p_26";
+            xPos = 351.55;
+            yPos = 146.61;
         }
         agent_p_27: AgentNode {
-            agent_id = "agent_p_27";
+            xPos = 193.98;
+            yPos = 134.84;
         }
         agent_p_28: AgentNode {
-            agent_id = "agent_p_28";
+            xPos = 337.56;
+            yPos = 416.83;
         }
         agent_p_29: AgentNode {
-            agent_id = "agent_p_29";
+            xPos = 788.95;
+            yPos = 579.12;
         }
         agent_p_30: AgentNode {
-            agent_id = "agent_p_30";
+            xPos = 911.33;
+            yPos = 192.43;
         }
         agent_p_31: AgentNode {
-            agent_id = "agent_p_31";
+            xPos = 619.1;
+            yPos = 307.88;
         }
         agent_p_32: AgentNode {
-            agent_id = "agent_p_32";
+            xPos = 491.51;
+            yPos = 750.58;
         }
         agent_p_33: AgentNode {
-            agent_id = "agent_p_33";
+            xPos = 141.34;
+            yPos = 924.25;
         }
         agent_p_34: AgentNode {
-            agent_id = "agent_p_34";
+            xPos = 96.66;
+            yPos = 495.25;
         }
         agent_p_35: AgentNode {
-            agent_id = "agent_p_35";
+            xPos = 220.67;
+            yPos = 585.96;
         }
         agent_p_36: AgentNode {
-            agent_id = "agent_p_36";
+            xPos = 493.14;
+            yPos = 840.24;
         }
         agent_p_37: AgentNode {
-            agent_id = "agent_p_37";
+            xPos = 931.39;
+            yPos = 585.85;
         }
         agent_p_38: AgentNode {
-            agent_id = "agent_p_38";
+            xPos = 462.49;
+            yPos = 285.63;
         }
         agent_p_39: AgentNode {
-            agent_id = "agent_p_39";
+            xPos = 790.74;
+            yPos = 267.8;
         }
         agent_p_40: AgentNode {
-            agent_id = "agent_p_40";
+            xPos = 529.93;
+            yPos = 925.17;
         }
         agent_p_41: AgentNode {
-            agent_id = "agent_p_41";
+            xPos = 262.66;
+            yPos = 165.56;
         }
         agent_p_42: AgentNode {
-            agent_id = "agent_p_42";
+            xPos = 990.23;
+            yPos = 751.46;
         }
         agent_p_43: AgentNode {
-            agent_id = "agent_p_43";
+            xPos = 980.13;
+            yPos = 337.08;
         }
         agent_p_44: AgentNode {
-            agent_id = "agent_p_44";
+            xPos = 852.02;
+            yPos = 566.75;
         }
         agent_p_45: AgentNode {
-            agent_id = "agent_p_45";
+            xPos = 239.81;
+            yPos = 13.66;
         }
         agent_p_46: AgentNode {
-            agent_id = "agent_p_46";
+            xPos = 71.48;
+            yPos = 811.6;
         }
         agent_p_47: AgentNode {
-            agent_id = "agent_p_47";
+            xPos = 843.19;
+            yPos = 341.41;
         }
         agent_p_48: AgentNode {
-            agent_id = "agent_p_48";
+            xPos = 1.56;
+            yPos = 862.97;
         }
         agent_p_49: AgentNode {
-            agent_id = "agent_p_49";
+            xPos = 878.81;
+            yPos = 6.3;
         }
         agent_p_50: AgentNode {
-            agent_id = "agent_p_50";
+            xPos = 21.25;
+            yPos = 511.1;
         }
 
     connections:

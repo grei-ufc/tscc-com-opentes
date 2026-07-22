@@ -1,4 +1,8 @@
+//
+// Generated file, do not edit! Created by opp_msgtool 6.0 from AgentPacket.msg.
+//
 
+// Disable warnings about unused variables, empty switch stmts, etc:
 #ifdef _MSC_VER
 #  pragma warning(disable:4101)
 #  pragma warning(disable:4065)
