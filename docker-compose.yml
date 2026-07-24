@@ -9,7 +9,7 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      - NUM_PERIFERICOS=50   # <--- CONTROLE DE ESCALA
+      - NUM_PERIFERICOS=50  # <--- CONTROLE DE ESCALA
     stdin_open: true
     tty: true
     command: python3 pade_star.py
