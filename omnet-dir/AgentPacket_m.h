@@ -1,4 +1,6 @@
-
+//
+// Generated file, do not edit! Created by opp_msgtool 6.0 from AgentPacket.msg.
+//
 
 #ifndef __AGENTPACKET_M_H
 #define __AGENTPACKET_M_H
@@ -20,7 +22,7 @@ class AgentPacket;
 // }}
 
 /**
- * Class generated from <tt>AgentPacket.msg:9</tt> by opp_msgtool.
+ * Class generated from <tt>AgentPacket.msg:7</tt> by opp_msgtool.
  * <pre>
  * // Define o pacote customizado
  * packet AgentPacket

@@ -1,177 +1,123 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.colors as mcolors
+import matplotlib.cm as cm
 import json
+import os
 
-def extrair_remetente(msg_str):
-    """Lê a string JSON desempacotada para extrair quem enviou a mensagem."""
-    try:
-        if pd.isna(msg_str) or str(msg_str).strip() == "":
-            return "Rede"
-        msg_json = json.loads(msg_str)
-        sender = msg_json.get("sender", "")
-        if sender: 
-            return sender.split('@')[0] # Extrai "AgenteA" ou "AgenteB"
-        return "Rede"
+def gerar_dashboard_ponto_a_ponto():
+    print("📊 Iniciando Painel Executivo CPS Ponto-a-Ponto...")
+    
+    try: df = pd.read_csv('results.csv')
     except: 
-        return "Rede"
+        print("❌ Arquivo 'results.csv' não encontrado.")
+        return
 
-def gerar_grafico():
-    try:
-        print("📊 Desempacotando dados multiplexados e montando Dashboard (Ponto-a-Ponto)...")
-        df = pd.read_csv('results.csv')
+    node_data = df[df['Origem'].str.startswith('OmnetSim-0.agent_')].copy()
+    time_data = node_data.pivot_table(index=['Tempo', 'Origem'], columns='Atributo', values='Valor', aggfunc='first').reset_index()
+
+    for col in ['packets_sent', 'packets_received', 'packets_dropped']:
+        if col not in time_data.columns: time_data[col] = 0.0
+        time_data[col] = pd.to_numeric(time_data[col], errors='coerce').fillna(0)
+
+    dados_expandidos = []
+    for index, row in time_data.iterrows():
+        t, origem = row['Tempo'], row['Origem']
+        val_out, sizes_str, lats_str, jits_str = str(row.get('val_out', '')), str(row.get('packet_sizes_out', '')), str(row.get('latencies_out', '')), str(row.get('jitters_out', ''))
         
-        # 1. FILTRAR O NÓ OMNeT++
-        node_data = df[df['Origem'] == 'OmnetSim-0.node_0'].copy()
-
-        # 2. PIVOTAR OS DADOS
-        time_data = node_data.pivot_table(index='Tempo', columns='Atributo', values='Valor', aggfunc='first').reset_index()
-
-        # Garantir colunas globais de pacotes
-        for col in ['packets_sent', 'packets_received', 'packets_dropped']:
-            if col not in time_data.columns: time_data[col] = 0.0
-            time_data[col] = pd.to_numeric(time_data[col], errors='coerce').fillna(0)
-
-        # =================================================================
-        # 3. DESEMPACOTAMENTO CIRÚRGICO DA TELEMETRIA
-        # =================================================================
-        dados_expandidos = []
-        
-        for index, row in time_data.iterrows():
-            t = row['Tempo']
+        if val_out and val_out != 'nan':
+            msgs = val_out.split('|||')
+            sizes = sizes_str.split('|||') if sizes_str and sizes_str != 'nan' else []
+            lats = lats_str.split('|||') if lats_str and lats_str != 'nan' else []
+            jits = jits_str.split('|||') if jits_str and jits_str != 'nan' else []
             
-            val_out = str(row.get('val_out', ''))
-            sizes_str = str(row.get('packet_sizes_out', ''))
-            lats_str = str(row.get('latencies_out', ''))
-            jits_str = str(row.get('jitters_out', ''))
-            
-            if val_out and val_out != 'nan':
-                msgs = val_out.split('|||')
-                sizes = sizes_str.split('|||') if sizes_str and sizes_str != 'nan' else []
-                lats = lats_str.split('|||') if lats_str and lats_str != 'nan' else []
-                jits = jits_str.split('|||') if jits_str and jits_str != 'nan' else []
+            for i in range(len(msgs)):
+                size = float(sizes[i]) if i < len(sizes) and sizes[i] else 0.0
+                lat = float(lats[i]) if i < len(lats) and lats[i] else 0.0
+                jit = float(jits[i]) if i < len(jits) and jits[i] else 0.0
                 
-                for i in range(len(msgs)):
-                    msg = msgs[i]
-                    size = float(sizes[i]) if i < len(sizes) and sizes[i] else 0.0
-                    lat = float(lats[i]) if i < len(lats) and lats[i] else 0.0
-                    jit = float(jits[i]) if i < len(jits) and jits[i] else 0.0
-                    
-                    agente = extrair_remetente(msg)
-                    
-                    dados_expandidos.append({
-                        'Tempo': t,
-                        'Agente': agente,
-                        'last_packet_size': size,
-                        'last_latency': lat,
-                        'current_jitter': jit
-                    })
+                # Classifica quem enviou
+                agente_nome = 'Agente 1' if 'agent_1' in origem else 'Agente 2'
+                cor = '#1f77b4' if agente_nome == 'Agente 1' else '#ff7f0e'
+                
+                dados_expandidos.append({
+                    'Tempo': t, 'Agente': agente_nome, 'Cor': cor,
+                    'Tamanho': size, 'Latencia': lat, 'Jitter': jit
+                })
 
-        df_expandido = pd.DataFrame(dados_expandidos)
+    df_expandido = pd.DataFrame(dados_expandidos)
+    if df_expandido.empty:
+        print("⚠️ Nenhuma mensagem encontrada no CSV.")
+        return
 
-        if df_expandido.empty:
-            print("⚠️ Nenhuma mensagem FIPA registada no CSV. O gráfico estará vazio.")
-            return
+    # Cálculos Globais
+    p_enviados = time_data.groupby('Origem')['packets_sent'].max().sum()
+    p_recebidos = time_data.groupby('Origem')['packets_received'].max().sum()
+    p_descartados = time_data.groupby('Origem')['packets_dropped'].max().sum()
+    
+    pdr_global = (p_recebidos / p_enviados * 100) if p_enviados > 0 else 0
+    drop_rate_global = (p_descartados / p_enviados * 100) if p_enviados > 0 else 0
+    lat_media = df_expandido['Latencia'].mean() * 1000
+    jit_media = df_expandido['Jitter'].mean() * 1000000 
 
-        # Sub-tabelas para colorir os pontos (Cenário de 2 Agentes)
-        df_a = df_expandido[df_expandido['Agente'] == 'AgenteA']
-        df_b = df_expandido[df_expandido['Agente'] == 'AgenteB']
+    # ================= PLOTAGEM =================
+    fig = plt.figure(figsize=(22, 12))
+    fig.suptitle("Painel Executivo CPS: Enlace Ponto-a-Ponto (Point-to-Point)", fontsize=24, fontweight='bold', y=0.98)
+    gs = gridspec.GridSpec(3, 3, figure=fig, height_ratios=[0.3, 2, 1.5], width_ratios=[1, 1, 1.5]) 
+    
+    # --- Header ---
+    ax_kpi = fig.add_subplot(gs[0, :]); ax_kpi.axis('off')
+    kpi_text = (f"  |  Total Mensagens: {int(p_enviados)}  |  Delivery Ratio: {pdr_global:.1f}%  |  "
+                f"Drop Rate: {drop_rate_global:.1f}%  |  Latência Média: {lat_media:.2f} ms  |  Jitter Médio: {jit_media:.2f} μs  |")
+    ax_kpi.text(0.5, 0.5, kpi_text, ha='center', va='center', fontsize=16, fontweight='bold', bbox=dict(boxstyle='round,pad=0.5', facecolor='#f0f0f0'))
 
-        # ==========================================
-        # 4. PREPARAR A FIGURA (Dashboard 2x2)
-        # ==========================================
-        fig = plt.figure(figsize=(16, 11))
-        fig.suptitle('Dashboard Analítico: Co-simulação FIPA-ACL (Agente A <-> Agente B)', fontsize=18, fontweight='bold')
-        gs = gridspec.GridSpec(2, 2, figure=fig)
+    ax_lat = fig.add_subplot(gs[1, 0]); ax_pay = fig.add_subplot(gs[1, 1])
+    ax_int = fig.add_subplot(gs[2, 0:2]); ax_map = fig.add_subplot(gs[1:, 2])
 
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax3 = fig.add_subplot(gs[1, 0])
-        ax4 = fig.add_subplot(gs[1, 1])
+    # --- 1. Latência ---
+    for ag in ['Agente 1', 'Agente 2']:
+        df_sub = df_expandido[df_expandido['Agente'] == ag]
+        if not df_sub.empty:
+            agg = df_sub.groupby('Tempo')['Latencia'].mean().reset_index()
+            ax_lat.plot(agg['Tempo'], agg['Latencia'] * 1000, color=df_sub['Cor'].iloc[0], label=f'Tx {ag}', marker='o')
+    ax_lat.set_title('1. Latência Temporal do Link', fontweight='bold', fontsize=14)
+    ax_lat.set_ylabel('Latência (ms)'); ax_lat.set_xlabel('Tempo (s)'); ax_lat.legend(); ax_lat.grid(ls='--', alpha=0.5)
 
-        # ----------------------------------------------------
-        # PAINEL 1: Latência Total
-        # ----------------------------------------------------
-        # Agrupamento para gerar a linha e a área sombreada do Jitter
-        df_resumo = df_expandido.groupby('Tempo').agg({'last_latency': 'mean', 'current_jitter': 'mean'}).reset_index()
-        limite_inferior = (df_resumo['last_latency'] - df_resumo['current_jitter']).clip(lower=0)
-        limite_superior = df_resumo['last_latency'] + df_resumo['current_jitter']
+    # --- 2. Payload ---
+    pay_1 = df_expandido[df_expandido['Agente'] == 'Agente 1']['Tamanho'].mean()
+    pay_2 = df_expandido[df_expandido['Agente'] == 'Agente 2']['Tamanho'].mean()
+    pay_1 = pay_1 if not pd.isna(pay_1) else 0; pay_2 = pay_2 if not pd.isna(pay_2) else 0
+    ax_pay.bar(['Agente 1', 'Agente 2'], [pay_1, pay_2], color=['#1f77b4', '#ff7f0e'])
+    ax_pay.set_title('2. Payload Médio (Bytes)', fontweight='bold', fontsize=14); ax_pay.grid(axis='y', ls='--', alpha=0.5)
+
+    # --- 3. Integridade ---
+    ax_int.barh(['Global'], [pdr_global], color='#2ca02c', edgecolor='black', label='Entregues')
+    ax_int.barh(['Global'], [drop_rate_global], left=[pdr_global], color='#d62728', edgecolor='black', label='Dropados')
+    ax_int.text(pdr_global/2, 0, f"{pdr_global:.1f}%", va='center', ha='center', color='white', fontweight='bold', fontsize=14)
+    if drop_rate_global >= 1.0: ax_int.text(pdr_global + drop_rate_global/2, 0, f"{drop_rate_global:.1f}%", va='center', ha='center', color='white', fontweight='bold')
+    ax_int.set_title('3. Taxa de Entrega de Pacotes (PDR)', fontweight='bold', fontsize=14); ax_int.set_xlim(0, 100)
+
+    # --- 4. Mapa Espacial ---
+    caminho_posicoes = '/omnet-dir/posicoes.json' if os.path.exists('/omnet-dir/posicoes.json') else 'posicoes.json'
+    if os.path.exists(caminho_posicoes):
+        with open(caminho_posicoes, 'r') as f: posicoes = json.load(f)
+        pos_df = pd.DataFrame(posicoes)
         
-        ax1.fill_between(df_resumo['Tempo'], limite_inferior, limite_superior, color='#ff7f0e', alpha=0.2, label='Flutuação Estocástica')
-        ax1.plot(df_resumo['Tempo'], df_resumo['last_latency'], color='gray', linestyle='--', alpha=0.5)
+        ax_map.scatter(pos_df['x'], pos_df['y'], color=['#1f77b4', '#ff7f0e'], s=800, zorder=10, edgecolors='black')
+        ax_map.plot(pos_df['x'], pos_df['y'], color='black', linestyle='--', linewidth=2, zorder=1, label="Link 5G Físico")
         
-        ax1.scatter(df_a['Tempo'], df_a['last_latency'], color='#1f77b4', s=90, marker='o', label='Agente A (Requests)', zorder=5)
-        ax1.scatter(df_b['Tempo'], df_b['last_latency'], color='#2ca02c', s=90, marker='s', label='Agente B (Informs)', zorder=5)
-        
-        ax1.set_title('1. Latência Temporal por Agente', fontsize=14, fontweight='bold')
-        ax1.set_xlabel('Tempo (Passos do Mosaik)')
-        ax1.set_ylabel('Latência Exata (Segundos)')
-        ax1.legend()
-        ax1.grid(True, linestyle=':', alpha=0.7)
+        for i, row in pos_df.iterrows():
+            ax_map.text(row['x'], row['y'] + 30, row['tipo'].replace('_', ' '), fontsize=14, fontweight='bold', ha='center')
 
-        # ----------------------------------------------------
-        # PAINEL 2: Picos de Jitter (Barras)
-        # ----------------------------------------------------
-        jitter_plot = df_expandido.groupby('Tempo')['current_jitter'].mean().reset_index()
-        ax2.bar(jitter_plot['Tempo'], jitter_plot['current_jitter'], color='#ff7f0e', edgecolor='black', alpha=0.7)
-        
-        ax2.set_title('2. Saturação de Jitter Exponencial por Passo', fontsize=14, fontweight='bold')
-        ax2.set_xlabel('Tempo (Passos do Mosaik)')
-        ax2.set_ylabel('Atraso Adicional (Segundos)')
-        ax2.grid(axis='y', linestyle=':', alpha=0.7)
+        ax_map.set_title('4. Disposição Geográfica (600 Metros)', fontsize=16, fontweight='bold')
+        ax_map.set_xlabel('Coordenada X (Metros)'); ax_map.set_ylabel('Coordenada Y (Metros)')
+        ax_map.grid(True, linestyle=':', alpha=0.7); ax_map.legend()
 
-        # ----------------------------------------------------
-        # PAINEL 3: Tamanho do Pacote FIPA (Dispersão)
-        # ----------------------------------------------------
-        size_plot = df_expandido.groupby('Tempo')['last_packet_size'].mean().reset_index()
-        ax3.plot(size_plot['Tempo'], size_plot['last_packet_size'], color='gray', linestyle='-', alpha=0.3)
-        
-        ax3.scatter(df_a['Tempo'], df_a['last_packet_size'], color='#1f77b4', s=100, marker='^', label='Payload Agente A', zorder=5)
-        ax3.scatter(df_b['Tempo'], df_b['last_packet_size'], color='#2ca02c', s=100, marker='v', label='Payload Agente B', zorder=5)
-
-        ax3.set_title('3. Tamanho das Mensagens FIPA-ACL (Bytes)', fontsize=14, fontweight='bold')
-        ax3.set_xlabel('Tempo (Passos do Mosaik)')
-        ax3.set_ylabel('Tamanho do Envelope (Bytes)')
-        
-        min_y, max_y = df_expandido['last_packet_size'].min(), df_expandido['last_packet_size'].max()
-        if min_y != max_y: ax3.set_ylim(min_y - 20, max_y + 20)
-        ax3.legend()
-        ax3.grid(True, linestyle=':', alpha=0.7)
-
-        # ----------------------------------------------------
-        # PAINEL 4: Gráfico de Pizza de Confiabilidade
-        # ----------------------------------------------------
-        p_enviados = time_data['packets_sent'].max() if 'packets_sent' in time_data.columns else 0
-        p_recebidos = time_data['packets_received'].max() if 'packets_received' in time_data.columns else 0
-        p_descartados = time_data['packets_dropped'].max() if 'packets_dropped' in time_data.columns else 0
-        em_transito = max(0, p_enviados - p_recebidos - p_descartados)
-
-        labels = ['Entregues com Sucesso', 'Perdidos (Dropados)', 'Em Trânsito no Cabo']
-        tamanhos = [p_recebidos, p_descartados, em_transito]
-        cores = ['#2ca02c', '#d62728', '#7f7f7f']
-
-        labels_filtrados = [l for l, s in zip(labels, tamanhos) if s > 0]
-        tamanhos_filtrados = [s for s in tamanhos if s > 0]
-        cores_filtradas = [c for c, s in zip(cores, tamanhos) if s > 0]
-
-        if sum(tamanhos_filtrados) > 0:
-            wedges, texts, autotexts = ax4.pie(tamanhos_filtrados, labels=labels_filtrados, colors=cores_filtradas, 
-                                               autopct='%1.1f%%', startangle=140, 
-                                               wedgeprops={'edgecolor': 'black', 'linewidth': 1})
-            for text in texts + autotexts:
-                text.set_fontsize(11)
-                text.set_fontweight('bold')
-        
-        ax4.set_title(f'4. Eficiência de Rede OMNeT++ (Total: {int(p_enviados)} pacotes)', fontsize=14, fontweight='bold')
-
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig('grafico_trafego.png', dpi=300)
-        print("✅ Sucesso! Dashboard perfeitamente adaptado salvo como 'grafico_trafego.png'.")
-        
-    except FileNotFoundError:
-        print("❌ Erro: O arquivo 'results.csv' não foi encontrado.")
-    except Exception as e:
-        print(f"❌ Erro inesperado: {e}")
+    plt.tight_layout(rect=[0, 0.02, 1, 0.96])
+    plt.savefig('grafico_ponto_a_ponto.png', dpi=300)
+    print("✅ Salvo: grafico_ponto_a_ponto.png")
 
 if __name__ == '__main__':
-    gerar_grafico()
+    gerar_dashboard_ponto_a_ponto()
