@@ -1,7 +1,7 @@
 /**
  * @file AgentNode.cc
- * @brief Física de Redes Realista: Filas de Roteamento, Atraso de Propagação Espacial, 
- * Jitter por Ruído e Perda de Pacotes por Atenuação de Distância.
+ * @brief Física de Redes Realista: Filas, Atraso Espacial, Jitter por Ruído 
+ * e Perda de Pacotes no Receptor (Demodulação) via Atenuação de Distância.
  */
 
 #include <omnetpp.h>
@@ -26,8 +26,8 @@ class AgentNode : public cSimpleModule
     std::map<std::string, double> lastLatencies;
     std::map<int, double> baseChannelDelays; 
     
-    // NOVO: Guarda a chance de perda do sinal no ar por causa da distância
-    std::map<int, double> baseDropChances; 
+    // Novo: Mapeia a chance do pacote ser destruído ao chegar deste vizinho
+    std::map<std::string, double> inDropChances; 
 
   protected:
     virtual void initialize() override;
@@ -74,21 +74,17 @@ void AgentNode::initialize()
                 if (delayChannel) {
                     double currentDelay = delayChannel->getDelay().dbl();
                     double propagationDelay = dist * 0.00005; 
-                    double finalDelay = currentDelay + propagationDelay;
-                    
-                    delayChannel->setDelay(finalDelay);
-                    baseChannelDelays[i] = finalDelay; 
-                    
-                    // ==============================================================
-                    // FÍSICA DE ATENUAÇÃO: A cada 100m, o pacote tem 1% a mais de 
-                    // chance de virar lixo no ar (Drop).
-                    // ==============================================================
-                    double distanceDropChance = (dist / 100.0) * 0.01;
-                    baseDropChances[i] = distanceDropChance;
+                    baseChannelDelays[i] = currentDelay + propagationDelay;
+                    delayChannel->setDelay(baseChannelDelays[i]);
                 } else {
                     baseChannelDelays[i] = 0.0;
-                    baseDropChances[i] = 0.0;
                 }
+                
+                // ==============================================================
+                // ATENUAÇÃO NA RECEPÇÃO: O nó calcula a distância deste vizinho
+                // e define a taxa de erro (1.5% de chance de drop a cada 100m)
+                // ==============================================================
+                inDropChances[neighborId] = (dist / 100.0) * 0.015;
             }
         }
     }
@@ -99,12 +95,9 @@ AgentNode::~AgentNode() {
     for (auto const& pair : endTxMsgs) cancelAndDelete(pair.second);
 }
 
-void AgentNode::handleParameterChange(const char *parname)
-{
-    if (std::string(parname) == "val_in") {
-        if (!std::string(par("val_in").stdstringValue()).empty()) {
-            processInjectedData();
-        }
+void AgentNode::handleParameterChange(const char *parname) {
+    if (std::string(parname) == "val_in" && !std::string(par("val_in").stdstringValue()).empty()) {
+        processInjectedData();
     }
 }
 
@@ -116,25 +109,13 @@ std::string AgentNode::mapPadeToOmnet(const std::string& padeId) {
 
 void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
     cChannel *channel = gate("port$o", portIndex)->getTransmissionChannel();
-    
     if (!channel->isBusy() && txQueues[portIndex]->isEmpty()) {
-        
-        // ====================================================================
-        // AVALIAÇÃO DE DROP: O pacote sofre atenuação no ar e se perde?
-        // ====================================================================
-        if (uniform(0, 1) < baseDropChances[portIndex]) {
-            par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
-            delete pkt; // O pacote é destruído!
-            return; // Encerra a transmissão aqui.
-        }
-
         cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
         if (delayChannel) {
             double baseDelay = baseChannelDelays[portIndex];
-            double noise = (baseDelay > 0.0015) ? normal(0.0, baseDelay * 0.25) : 0.0;
+            double noise = (baseDelay > 0.0015) ? uniform(0, baseDelay * 0.25) : 0.0;
             delayChannel->setDelay(std::max(0.0001, baseDelay + noise)); 
         }
-        
         send(pkt, "port$o", portIndex); 
         scheduleAt(channel->getTransmissionFinishTime(), endTxMsgs[portIndex]);
     } else {
@@ -142,78 +123,49 @@ void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
     }
 }
 
-void AgentNode::processInjectedData()
-{
+void AgentNode::processInjectedData() {
     std::string current_in = par("val_in").stdstringValue();
-    if (current_in.empty()) return;
     par("val_in").setStringValue(""); 
-
     std::vector<std::string> messages = splitString(current_in, "|||");
 
     for (const std::string& msg_str : messages) {
-        if (msg_str.empty()) continue;
-
         try {
             json jMsg = json::parse(msg_str);
-            std::vector<std::string> destIds;
-
-            if (jMsg.contains("receivers") && jMsg["receivers"].is_array()) {
+            if (jMsg.contains("receivers")) {
                 for (auto& rec : jMsg["receivers"]) {
                     std::string rawReceiver = rec.get<std::string>();
-                    size_t atPos = rawReceiver.find('@');
-                    std::string padeId = (atPos != std::string::npos) ? rawReceiver.substr(0, atPos) : rawReceiver;
+                    std::string padeId = rawReceiver.substr(0, rawReceiver.find('@'));
+                    std::string destId = mapPadeToOmnet(padeId);
                     
-                    std::string omnetId = mapPadeToOmnet(padeId);
-                    if (!omnetId.empty()) destIds.push_back(omnetId);
+                    if (destId.empty() || destId == myAgentId) continue;
+
+                    if (routingTable.find(destId) != routingTable.end()) {
+                        AgentPacket *pkt = new AgentPacket(msg_str.c_str());
+                        pkt->setSrcAgent(myAgentId.c_str());
+                        pkt->setDestAgent(destId.c_str());
+                        pkt->setPayload(msg_str.c_str()); 
+                        pkt->setByteLength(msg_str.length());
+                        transmitPacket(pkt, routingTable[destId]);
+                        par("packets_sent") = par("packets_sent").doubleValue() + 1;
+                    }
                 }
             }
-
-            if (destIds.empty()) continue;
-
-            for (const std::string& destId : destIds) {
-                if (routingTable.find(destId) != routingTable.end()) {
-                    int portIndex = routingTable[destId];
-                    AgentPacket *pkt = new AgentPacket(msg_str.c_str());
-                    pkt->setSrcAgent(myAgentId.c_str());
-                    pkt->setDestAgent(destId.c_str());
-                    pkt->setPayload(msg_str.c_str()); 
-                    pkt->setByteLength(msg_str.length());
-
-                    transmitPacket(pkt, portIndex);
-                    par("packets_sent") = par("packets_sent").doubleValue() + 1;
-                } else {
-                    par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
-                }
-            }
-        } catch (json::parse_error& e) {
-            EV << "Erro JSON no AgentNode " << myAgentId << ": " << e.what() << '\n';
-        }
+        } catch (...) {}
     }
 }
 
-void AgentNode::handleMessage(cMessage *msg)
-{
+void AgentNode::handleMessage(cMessage *msg) {
     if (msg->isSelfMessage()) {
         int portIndex = (int)(intptr_t)msg->getContextPointer();
         if (!txQueues[portIndex]->isEmpty()) {
             AgentPacket *pkt = check_and_cast<AgentPacket *>(txQueues[portIndex]->pop());
-            
-            // Avalia o drop de distância também para pacotes que saem da fila!
-            if (uniform(0, 1) < baseDropChances[portIndex]) {
-                par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
-                delete pkt;
-                scheduleAt(simTime() + SimTime(0.0001), endTxMsgs[portIndex]); 
-                return;
-            }
-
             cChannel *channel = gate("port$o", portIndex)->getTransmissionChannel();
             cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
             if (delayChannel) {
                 double baseDelay = baseChannelDelays[portIndex];
-                double noise = (baseDelay > 0.0015) ? normal(0.0, baseDelay * 0.25) : 0.0;
+                double noise = (baseDelay > 0.0015) ? uniform(0, baseDelay * 0.25) : 0.0;
                 delayChannel->setDelay(std::max(0.0001, baseDelay + noise));
             }
-
             send(pkt, "port$o", portIndex); 
             scheduleAt(channel->getTransmissionFinishTime(), endTxMsgs[portIndex]);
         }
@@ -223,9 +175,20 @@ void AgentNode::handleMessage(cMessage *msg)
     if (msg->isPacket()) {
         AgentPacket *pkt = check_and_cast<AgentPacket *>(msg);
         if (std::string(pkt->getDestAgent()) == myAgentId) {
+            
+            std::string srcId = pkt->getSrcAgent();
+            
+            // ==============================================================
+            // FÍSICA DE RECEPTOR: Rola os dados para ver se o pacote sobreviveu!
+            // ==============================================================
+            if (uniform(0, 1) < inDropChances[srcId]) {
+                par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+                delete pkt; 
+                return; // Morreu na praia!
+            }
+
             double latency = (simTime() - pkt->getCreationTime()).dbl();
             double size = pkt->getByteLength();
-            std::string srcId = pkt->getSrcAgent();
             double previous_latency = lastLatencies[srcId];
             double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
             
@@ -234,8 +197,7 @@ void AgentNode::handleMessage(cMessage *msg)
             
             std::string payload = pkt->getPayload();
             std::string current_out = par("val_out").stdstringValue();
-            if (current_out.empty()) par("val_out").setStringValue(payload.c_str());
-            else par("val_out").setStringValue((current_out + "|||" + payload).c_str());
+            par("val_out").setStringValue(current_out.empty() ? payload.c_str() : (current_out + "|||" + payload).c_str());
             
             std::string cur_sizes = par("packet_sizes_out").stdstringValue();
             std::string cur_lats = par("latencies_out").stdstringValue();
@@ -263,7 +225,6 @@ std::vector<std::string> AgentNode::splitString(const std::string& s, const std:
         pos_start = pos_end + delim_len;
         if (!token.empty()) res.push_back(token);
     }
-    std::string lastToken = s.substr(pos_start);
-    if (!lastToken.empty()) res.push_back(lastToken);
+    res.push_back(s.substr(pos_start));
     return res;
 }
