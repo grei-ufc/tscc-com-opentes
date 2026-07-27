@@ -1,201 +1,245 @@
 
-# 🚀 TSCC: Co-Simulação PADE + OMNeT++ + Mosaik
+# TSCC Co-Simulação PADE + OMNeT++ + mosaik
 
-![Docker](https://img.shields.io/badge/Docker-%E2%89%A5%2024.x-blue)
-![Compose](https://img.shields.io/badge/Docker%20Compose-V2-blue)
-![Status](https://img.shields.io/badge/status-active-success)
+Esse repositório contém uma plataforma de co-simulação baseada em containers, unindo três subsistemas:
 
-Ambiente de **co-simulação distribuída** que integra:
+- **PADE**: agentes FIPA em Python que produzem e processam eventos.
+- **mosaik**: orquestração e sincronização entre simuladores.
+- **OMNeT++**: simulação de rede usando topologias geradas dinamicamente.
 
-- 🤖 **PADE (Python)** → Agentes inteligentes
-- 🌐 **OMNeT++ (C++)** → Simulação de rede
-- 🔄 **Mosaik** → Orquestração e sincronização
+O objetivo é suportar experimentos distribuídos em lock-step, com comunicação estruturada entre agentes, orquestrador e simulação de rede.
 
-A comunicação é realizada via **ZeroMQ (ZMQ)** com sincronização em **lock-step**, garantindo consistência temporal entre os simuladores.
+## Visão geral da arquitetura
 
----
-
-## 📑 Sumário
-
-- [🧠 Arquitetura](#-arquitetura)
-- [📂 Estrutura do Projeto](#-estrutura-do-projeto)
-- [🛠️ Pré-requisitos](#️-pré-requisitos)
-- [⚙️ Instalação](#️-instalação)
-- [🚀 Execução](#-execução)
-- [📊 Resultados](#-resultados)
-- [🧰 Comandos Úteis](#-comandos-úteis)
-
----
-
-## 🧠 Arquitetura
-
-O sistema executa uma co-simulação sincronizada entre:
-
-1. **PADE**: agentes Python que produzem e consomem eventos.
-2. **Mosaik**: orquestra a simulação e injeção de rede.
-3. **OMNeT++**: simula a topologia de rede e o comportamento de pacotes.
-
-### 🔄 Fluxo da Simulação
-
-1. **PADE → Mosaik**
-   - Agentes enviam mensagens e eventos para o orquestrador.
-2. **Mosaik → OMNeT++**
-   - A rede dinâmica é gerada/injetada em `omnet-dir`.
-3. **OMNeT++**
-   - Compila/simula `sim_exec` e processa a entrega de pacotes.
-4. **Resultado**
-   - `mosaik_master` coleta dados, gera `results.csv` e plota o tráfego.
-
----
-
-## 📂 Estrutura do Projeto
-
-```text
-tscc-com-opentes/
-├── docker-compose.yml
-├── mosaik-dir/
-│   ├── collector.py
-│   ├── first.py
-│   ├── omnet_wrapper.py
-│   ├── plot_results.py
-│   ├── plot_results_star.py
-│   ├── results.csv
-│   ├── star.py
-│   └── grafico_trafego.png
-├── pade-dir/
-│   ├── Dockerfile
-│   └── pade_agents/
-│       ├── agent_a.py
-│       ├── agent_example_1_mosaik_updated.py
-│       ├── pade_sim.py
-│       └── pade_star.py
-└── omnet-dir/
-    ├── Dockerfile
-    ├── AgentNode.cc
-    ├── AgentNode.ned
-    ├── AgentPacket.msg
-    ├── AgentPacket_m.cc
-    ├── AgentPacket_m.h
-    ├── DynamicNetwork.ned
-    ├── Makefile
-    ├── MosaikBridge.cc
-    ├── Network.ned
-    ├── Profiles.ned
-    ├── omnetpp.ini
-    ├── sim_exec
-    └── out/
+```
+[PADE agents] <--> [mosaik_master] <--> [OMNeT++ sim] 
+       |                          |             ^
+       v                          v             |
+  Telemetria / Controle      Topologia NED      |  Dados de rede
+                               gerados          |  enviados para
+                                                 +-- [Coletor] --> CSV
 ```
 
----
+- `pade` gera tráfego e responde a eventos de rede.
+- `mosaik_master` cria a topologia `DynamicNetwork.ned`, alcança o OMNeT++ e conecta os simuladores.
+- `omnet_sim` compila e executa a simulação OMNeT++.
+- `mosaik-dir/collector.py` salva métricas em `results.csv`.
 
-## 🛠️ Pré-requisitos
+## Estrutura do repositório
 
-| Ferramenta     | Versão | Obrigatório |
-| -------------- | ------ | ----------- |
-| Docker         | ≥ 24.x | ✅           |
-| Docker Compose | V2     | ✅           |
-| Git            | -      | ❌           |
+- `docker-compose.yml` - orquestra os serviços e volumes.
+- `mosaik-dir/` - scripts mosaik, coleta e plotagem de resultados.
+- `pade-dir/` - Dockerfile e agentes PADE.
+- `omnet-dir/` - código OMNeT++, configuração e executável.
 
-> 💡 Todo o ambiente é containerizado — não é necessário instalar Python, C++ ou OMNeT++ localmente.
+## Pré-requisitos
 
----
+- Docker
+- Docker Compose V2
 
-## ⚙️ Instalação
+> Não é necessário instalar OMNeT++ ou ferramentas Python localmente: tudo roda em containers.
 
-### 🪟 Windows
+## Execução rápida
 
-```powershell
-winget install Git.Git
-winget install Docker.DockerDesktop
-```
-
-> ⚠️ Certifique-se de que o Docker Desktop está em execução.
-
----
-
-### 🐧 Linux (Ubuntu/Debian)
-
-```bash
-sudo apt-get update
-sudo apt-get install git docker.io docker-compose-plugin
-```
-
-**(Opcional) Rodar sem sudo:**
-
-```bash
-sudo usermod -aG docker $USER
-```
-
----
-
-## 🚀 Execução
-
-### 1. Clonar repositório
+1. Clone o repositório:
 
 ```bash
 git clone https://github.com/grei-ufc/tscc-com-opentes.git
 cd tscc-com-opentes
 ```
 
-### 2. Subir o ambiente
+2. Inicie os containers:
 
 ```bash
 docker compose up --build
 ```
 
-### 3. Como funciona
+3. Aguarde a simulação.
+4. Verifique os resultados em `mosaik-dir/results.csv`.
 
-- `pade`
-  - Executa `python3 pade_star.py` dentro do container.
-  - Expõe a porta `5678`.
-  - Usa a variável `NUM_PERIFERICOS=50` para controlar escala.
-- `omnet_sim`
-  - Compila o modelo OMNeT++ com `opp_makemake` e `make`.
-  - Aguarda até que `DynamicNetwork.ned` seja gerado em `omnet-dir`.
-  - Executa `./sim_exec -u Cmdenv -c General`.
-- `mosaik_master`
-  - Instala `pandas` e `matplotlib` em runtime.
-  - Executa `star.py` e `plot_results_star.py`.
-  - Mapeia `omnet-dir` para permitir a geração de `DynamicNetwork.ned`.
+## Exemplos de execução
 
----
-
-## 📊 Resultados
-
-Após a execução, os principais artefatos gerados são:
-
-- `mosaik-dir/results.csv`
-- `mosaik-dir/grafico_trafego.png`
-
-### Métricas típicas
-
-- Latência
-- Tamanho de pacote
-
-### Observação
-
-O `mosaik_master` também gera gráficos de tráfego e processa os resultados após a simulação.
-
----
-
-## 🧰 Comandos Úteis
-
-### ▶️ Executar novamente
+### Iniciar em modo interativo
 
 ```bash
-docker compose up
+docker compose up --build
 ```
 
-### 🛑 Parar e limpar
+### Iniciar em modo detached
+
+```bash
+docker compose up -d --build
+```
+
+### Parar e remover containers
 
 ```bash
 docker compose down
 ```
 
----
+### Ver logs em tempo real
 
-## 📌 Observações
+```bash
+docker compose logs -f pade
+```
 
-- `NUM_PERIFERICOS=50` pode ser ajustado no `docker-compose.yml` para variar a escala.
-- `omnet_sim` depende de `DynamicNetwork.ned` para iniciar a simulação de rede.
-- O serviço `mosaik_master` usa o volume `./omnet-dir:/omnet-dir` para injetar arquivos de rede.
+```bash
+docker compose logs -f omnet_sim
+```
+
+```bash
+docker compose logs -f mosaik_master
+```
+
+### Ajustar o número de agentes
+
+Edite `docker-compose.yml` e altere `NUM_PERIFERICOS` em `pade` e `mosaik_master`, depois reinicie:
+
+```bash
+docker compose down
+
+docker compose up --build
+```
+
+### Ver resultados gerados
+
+```bash
+ls -l mosaik-dir/
+cat mosaik-dir/results.csv | head
+```
+
+## Como funciona a execução
+
+1. `omnet_sim` inicia e compila o código OMNeT++ em `omnet-dir/`.
+2. `pade` inicia os agentes PADE e expõe a porta `5678` para comunicação.
+3. `mosaik_master` inicia o script `mosaik-dir/star.py`.
+4. O `star.py` gera uma topologia estrela em `omnet-dir/DynamicNetwork.ned` com um nó central e `NUM_PERIFERICOS` periféricos.
+5. O `omnet_sim` detecta o arquivo `DynamicNetwork.ned`, executa `sim_exec` e passa dados para o mosaik.
+6. O coletor grava métricas em `mosaik-dir/results.csv`.
+7. `mosaik-dir/plot_results_star.py` gera gráficos a partir de `results.csv`.
+
+## Serviços do Docker Compose
+
+### pade
+- build: `./pade-dir`
+- expõe: `5678:5678`
+- volume: `./pade-dir/pade_agents:/app`
+- comando: `python3 pade_star.py`
+- variável: `NUM_PERIFERICOS` controla quantos agentes periféricos são criados.
+
+### omnet_sim
+- build: `./omnet-dir`
+- volume: `./omnet-dir:/root/models`
+- executa:
+  - ambiente OMNeT++
+  - `opp_makemake -f --deep -o sim_exec -lzmq`
+  - `make`
+  - aguarda `DynamicNetwork.ned`
+  - roda `./sim_exec -u Cmdenv -c General`
+
+### mosaik_master
+- build: `./mosaik-dir`
+- depende de `omnet_sim` e `pade`
+- volumes:
+  - `./mosaik-dir:/app`
+  - `./omnet-dir:/omnet-dir`
+- comando:
+  - instala `pandas` e `matplotlib`
+  - roda `python star.py`
+  - roda `python plot_results_star.py`
+
+## Componentes-chave
+
+### `mosaik-dir/star.py`
+- monta um cenário em estrela com um nó central e `NUM_PERIFERICOS` periféricos.
+- gera `omnet-dir/DynamicNetwork.ned` com posições e tipos de links (`Link_5G`, `Link_4G`, `Link_Wired`, `Link_IoT`).
+- inicia os simuladores `OmnetSim`, `ColetorSim` e `PadeSim`.
+- conecta agentes OMNeT++ ao PADE e ao coletor.
+- executa `world.run(until=20)`.
+
+### `mosaik-dir/collector.py`
+- simula um coletor mosaik que escreve todas as mensagens recebidas em `results.csv`.
+- atributos gravados: tempo, origem, atributo e valor.
+- flush automático para persistência em tempo real.
+
+### `mosaik-dir/plot_results_star.py`
+- lê `results.csv` com pandas.
+- extrai métricas de latência, jitter, throughput e entregas.
+- gera painéis de análise por tipo de link e topologia.
+- detecta `posicoes.json` para apresentar mapa espacial dos nós.
+
+### `pade-dir/pade_agents/pade_star.py`
+- cria um agente central (`AgenteCentral`) e vários agentes periféricos (`AgenteP_i`).
+- o agente central envia `telemetria_rede` para todos os periféricos.
+- periféricos respondem com mensagem de status.
+- mensagens de simulação são convertidas para JSON e transmitidas via mosaik.
+- o PADE trata mensagens de controle internamente e não envia tráfego de sistema para OMNeT++.
+
+### `omnet-dir/omnetpp.ini`
+- usa `network = DynamicNetwork`.
+- scheduler sequencial padrão.
+- sim-time-limit configurado em `1000s`.
+- parâmetro coringa `**.agent_id = ""` para evitar falhas de validação quando o NED é gerado dinamicamente.
+
+## Arquivos importantes
+
+- `docker-compose.yml`
+- `omnet-dir/DynamicNetwork.ned`
+- `omnet-dir/omnetpp.ini`
+- `omnet-dir/Makefile`
+- `omnet-dir/sim_exec`
+- `mosaik-dir/star.py`
+- `mosaik-dir/collector.py`
+- `mosaik-dir/plot_results_star.py`
+- `pade-dir/Dockerfile`
+- `pade-dir/pade_agents/pade_star.py`
+- `pade-dir/pade_agents/pade_sim.py`
+- `omnet-dir/AgentNode.cc`, `omnet-dir/AgentNode.ned`, `omnet-dir/MosaikBridge.cc` - adaptadores e wrappers OMNeT++.
+
+## Saída e análise
+
+- `mosaik-dir/results.csv`: CSV principal com métricas de simulação.
+- `mosaik-dir/posicoes.json`: posições dos nós usadas pelo plot.
+- O script de plot tenta gerar painéis de performance por rede e por tipo de link.
+
+## Personalização
+
+### Ajustar escala
+
+Altere `NUM_PERIFERICOS` em `docker-compose.yml` para aumentar ou reduzir o número de agentes.
+
+### Topologia
+
+O script `mosaik-dir/star.py` gera um cenário em estrela:
+- `agent_central`
+- `agent_p_1` a `agent_p_N`
+
+Para criar outra topologia, edite `create_scenario(world)`.
+
+### Parâmetros OMNeT++
+
+Edite `omnet-dir/omnetpp.ini` para alterar tempo de simulação, scheduler ou parâmetros globais.
+
+## Comandos úteis
+
+- `docker compose up --build`
+- `docker compose up -d --build`
+- `docker compose down`
+- `docker compose logs -f pade`
+- `docker compose logs -f omnet_sim`
+- `docker compose logs -f mosaik_master`
+
+## Troubleshooting
+
+- Se `omnet_sim` falhar antes de encontrar `DynamicNetwork.ned`, o serviço compila OMNeT++ mas aguarda o arquivo.
+- Se `mosaik_master` falhar por falta de `pandas`/`matplotlib`, a imagem instala dependências no comando de inicialização.
+- Caso `results.csv` esteja vazio, verifique se `mosaik_master` criou o cenário e se `omnet_sim` iniciou a simulação.
+- Problemas de permissão podem ocorrer ao montar `./omnet-dir` e `./mosaik-dir` como volumes.
+
+## Próximos passos
+
+- adicionar cenários variados (malha, anéis, clusters).
+- refinar coleta de métricas para cada fluxo de pacote.
+- incluir suporte a simulações maiores e comparação de tecnologias de link.
+- criar uma interface de análise baseada em dashboards.
+
