@@ -1,7 +1,7 @@
 /**
  * @file AgentNode.cc
- * @brief Física de Redes Realista: Filas, Atraso Espacial, Jitter por Ruído 
- * e Perda de Pacotes no Receptor (Demodulação) via Atenuação de Distância.
+ * @brief Física de Redes Realista: Filas Finitas (Buffer Overflow), Atraso Espacial, 
+ * Jitter por Ruído e Perda de Pacotes no Receptor escalonada por Payload (BER) com Hardware RNG.
  */
 
 #include <omnetpp.h>
@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <random>
 #include <nlohmann/json.hpp>
 #include "AgentPacket_m.h"
 
@@ -25,9 +26,11 @@ class AgentNode : public cSimpleModule
     
     std::map<std::string, double> lastLatencies;
     std::map<int, double> baseChannelDelays; 
-    
-    // Novo: Mapeia a chance do pacote ser destruído ao chegar deste vizinho
     std::map<std::string, double> inDropChances; 
+    
+    // Gerador de aleatoriedade real via hardware do servidor
+    std::mt19937 rng;
+    std::uniform_real_distribution<double> dist_prob;
 
   protected:
     virtual void initialize() override;
@@ -47,6 +50,10 @@ void AgentNode::initialize()
 {
     myAgentId = getName(); 
     EV << "AgentNode " << myAgentId << " inicializado." << std::endl;
+    
+    std::random_device rd;
+    rng.seed(rd());
+    dist_prob = std::uniform_real_distribution<double>(0.0, 1.0);
     
     double myX = par("xPos").doubleValue();
     double myY = par("yPos").doubleValue();
@@ -80,10 +87,7 @@ void AgentNode::initialize()
                     baseChannelDelays[i] = 0.0;
                 }
                 
-                // ==============================================================
-                // ATENUAÇÃO NA RECEPÇÃO: O nó calcula a distância deste vizinho
-                // e define a taxa de erro (1.5% de chance de drop a cada 100m)
-                // ==============================================================
+                // Chance base de erro fixa pela distância: ~1.5% a cada 100m.
                 inDropChances[neighborId] = (dist / 100.0) * 0.015;
             }
         }
@@ -113,13 +117,22 @@ void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
         cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
         if (delayChannel) {
             double baseDelay = baseChannelDelays[portIndex];
-            double noise = (baseDelay > 0.0015) ? uniform(0, baseDelay * 0.25) : 0.0;
+            double noise = (baseDelay > 0.0015) ? dist_prob(rng) * baseDelay * 0.25 : 0.0;
             delayChannel->setDelay(std::max(0.0001, baseDelay + noise)); 
         }
         send(pkt, "port$o", portIndex); 
         scheduleAt(channel->getTransmissionFinishTime(), endTxMsgs[portIndex]);
     } else {
-        txQueues[portIndex]->insert(pkt);
+        // ==============================================================
+        // FILA FINITA (BUFFER OVERFLOW): Rádios rurais não suportam 
+        // acumular dezenas de mensagens pesadas.
+        // ==============================================================
+        if (txQueues[portIndex]->getLength() > 5) {
+            par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+            delete pkt; // O hardware joga fora o pacote excedente!
+        } else {
+            txQueues[portIndex]->insert(pkt);
+        }
     }
 }
 
@@ -163,7 +176,7 @@ void AgentNode::handleMessage(cMessage *msg) {
             cDelayChannel *delayChannel = dynamic_cast<cDelayChannel*>(channel);
             if (delayChannel) {
                 double baseDelay = baseChannelDelays[portIndex];
-                double noise = (baseDelay > 0.0015) ? uniform(0, baseDelay * 0.25) : 0.0;
+                double noise = (baseDelay > 0.0015) ? dist_prob(rng) * baseDelay * 0.25 : 0.0;
                 delayChannel->setDelay(std::max(0.0001, baseDelay + noise));
             }
             send(pkt, "port$o", portIndex); 
@@ -177,18 +190,24 @@ void AgentNode::handleMessage(cMessage *msg) {
         if (std::string(pkt->getDestAgent()) == myAgentId) {
             
             std::string srcId = pkt->getSrcAgent();
+            double packetSize = pkt->getByteLength();
             
             // ==============================================================
-            // FÍSICA DE RECEPTOR: Rola os dados para ver se o pacote sobreviveu!
+            // FÍSICA DE BER (Bit Error Rate): 
+            // O peso do pacote é penalizado no ar. Pacotes monstruosos 
+            // multiplicam a chance de corrupção do sinal!
             // ==============================================================
-            if (uniform(0, 1) < inDropChances[srcId]) {
+            double sizeFactor = std::max(1.0, packetSize / 15000.0);
+            double baseDropChance = inDropChances[srcId];
+            double finalDropChance = std::min(0.99, baseDropChance * sizeFactor);
+            
+            if (dist_prob(rng) < finalDropChance) {
                 par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
                 delete pkt; 
-                return; // Morreu na praia!
+                return; // Morreu na praia devido ao tamanho e/ou distância!
             }
 
             double latency = (simTime() - pkt->getCreationTime()).dbl();
-            double size = pkt->getByteLength();
             double previous_latency = lastLatencies[srcId];
             double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
             
@@ -203,7 +222,7 @@ void AgentNode::handleMessage(cMessage *msg) {
             std::string cur_lats = par("latencies_out").stdstringValue();
             std::string cur_jits = par("jitters_out").stdstringValue();
 
-            par("packet_sizes_out").setStringValue(cur_sizes.empty() ? std::to_string(size).c_str() : (cur_sizes + "|||" + std::to_string(size)).c_str());
+            par("packet_sizes_out").setStringValue(cur_sizes.empty() ? std::to_string(packetSize).c_str() : (cur_sizes + "|||" + std::to_string(packetSize)).c_str());
             par("latencies_out").setStringValue(cur_lats.empty() ? std::to_string(latency).c_str() : (cur_lats + "|||" + std::to_string(latency)).c_str());
             par("jitters_out").setStringValue(cur_jits.empty() ? std::to_string(jitter).c_str() : (cur_jits + "|||" + std::to_string(jitter)).c_str());
             
