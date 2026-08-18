@@ -106,9 +106,13 @@ void AgentNode::handleParameterChange(const char *parname) {
 }
 
 std::string AgentNode::mapPadeToOmnet(const std::string& padeId) {
+    // Mantém compatibilidade com a simulação antiga Estrela
     if (padeId == "AgenteCentral") return "agent_central";
     if (padeId.find("AgenteP_") == 0) return "agent_p_" + padeId.substr(8);
-    return "";
+    
+    // NOVO: Se for a topologia em Anel (ou malha futura), 
+    // apenas aceita e retorna o próprio nome universal do agente!
+    return padeId; 
 }
 
 void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {

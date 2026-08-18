@@ -9,10 +9,10 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      - NUM_PERIFERICOS=50  # <--- CONTROLE DE ESCALA
+      - NUM_PERIFERICOS=4  # <--- CONTROLE DE ESCALA
     stdin_open: true
     tty: true
-    command: python3 pade_star.py
+    command: python3 pade_anel.py
 
   omnet_sim:
     build: ./omnet-dir
@@ -47,15 +47,15 @@ services:
       # AJUSTE 2: Mosaik precisa mapear a pasta do OMNeT para poder injetar o .ned lá dentro
       - ./omnet-dir:/omnet-dir
     environment:
-      - NUM_PERIFERICOS=50    # <--- CONTROLE DE ESCALA AQUI
+      - NUM_PERIFERICOS=4    # <--- CONTROLE DE ESCALA AQUI
     # AJUSTE 3: Aumentei o sleep, pois o OMNeT++ leva um tempo para compilar no start do container
     command: >
       sh -c "
       pip install pandas matplotlib && 
       echo 'Aguardando OMNeT++ compilar...' && 
       sleep 3 && 
-      python star.py && 
-      python plot_results_star.py"
+      python mosaik_anel.py && 
+      python plot_results_anel.py"
 
 networks:
   sim_net:

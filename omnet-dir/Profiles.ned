@@ -26,9 +26,9 @@ channel Link_4G extends ned.DatarateChannel {
     per = 0.005;             // Probabilidade de perda: 0.5%
 }
 
-// 4. Rede IoT (LoRaWAN / NB-IoT): Atraso alto, muita perda, baixa banda
-channel Link_IoT extends ned.DatarateChannel {
+// 4. Rede 2G/GPRS: Atraso alto, muita perda, baixa banda (Antigo IoT)
+channel Link_2G extends ned.DatarateChannel {
     delay = exponential(200ms); // Atraso estocástico agressivo
     datarate = 250kbps;
-    per = 0.15;                 // 15% de perda (Similar ao seu cenário original)
+    per = 0.15;                 // 15% de perda
 }
