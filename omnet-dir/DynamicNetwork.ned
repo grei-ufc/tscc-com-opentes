@@ -3,30 +3,25 @@ network DynamicNetwork
     submodules:
         mosaikBridge: MosaikBridge;
 
-        agente_1: AgentNode {
-            agent_id = "agente_1";
-            xPos = 200.0;
+        agent_central: AgentNode {
+            xPos = 500.0;
             yPos = 500.0;
         }
-        agente_2: AgentNode {
-            agent_id = "agente_2";
-            xPos = 500.0;
-            yPos = 800.0;
+        agent_p_1: AgentNode {
+            xPos = 868.38;
+            yPos = 122.41;
         }
-        agente_3: AgentNode {
-            agent_id = "agente_3";
-            xPos = 800.0;
-            yPos = 500.0;
+        agent_p_2: AgentNode {
+            xPos = 125.72;
+            yPos = 246.44;
         }
-        agente_4: AgentNode {
-            agent_id = "agente_4";
-            xPos = 500.0;
-            yPos = 200.0;
+        agent_p_3: AgentNode {
+            xPos = 165.5;
+            yPos = 923.4;
         }
 
     connections:
-        agente_1.port++ <--> Link_Wired <--> agente_2.port++;
-        agente_2.port++ <--> Link_4G <--> agente_3.port++;
-        agente_3.port++ <--> Link_5G <--> agente_4.port++;
-        agente_4.port++ <--> Link_2G <--> agente_1.port++;
+        agent_central.port++ <--> Link_5G <--> agent_p_1.port++;
+        agent_central.port++ <--> Link_4G <--> agent_p_2.port++;
+        agent_central.port++ <--> Link_Wired <--> agent_p_3.port++;
 }

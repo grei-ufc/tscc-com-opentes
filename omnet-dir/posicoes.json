@@ -1,22 +1,26 @@
 [
     {
-        "id": "agente_1",
-        "x": 200.0,
-        "y": 500.0
-    },
-    {
-        "id": "agente_2",
+        "id": "agent_central",
         "x": 500.0,
-        "y": 800.0
+        "y": 500.0,
+        "tipo": "Central"
     },
     {
-        "id": "agente_3",
-        "x": 800.0,
-        "y": 500.0
+        "id": "agent_p_1",
+        "x": 868.38,
+        "y": 122.41,
+        "tipo": "Periferico"
     },
     {
-        "id": "agente_4",
-        "x": 500.0,
-        "y": 200.0
+        "id": "agent_p_2",
+        "x": 125.72,
+        "y": 246.44,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_3",
+        "x": 165.5,
+        "y": 923.4,
+        "tipo": "Periferico"
     }
 ]

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   pade:
     build: ./pade-dir
@@ -9,10 +11,13 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      - NUM_PERIFERICOS=4  # <--- CONTROLE DE ESCALA
+      # Recebe as variáveis do menu.py (com valores fallback)
+      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
+      - TOPOLOGY=${TOPOLOGY:-estrela}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
     stdin_open: true
     tty: true
-    command: python3 pade_anel.py
+    command: python3 pade_star.py
 
   omnet_sim:
     build: ./omnet-dir
@@ -23,7 +28,7 @@ services:
       - "5555"
     volumes:
       - ./omnet-dir:/root/models 
-    # AJUSTE 1: OMNeT++ agora compila e ESPERA o arquivo DynamicNetwork.ned existir antes de rodar
+    # OMNeT++ compila e espera o arquivo DynamicNetwork.ned existir antes de rodar
     command: >
       /bin/bash -c "
       source /root/omnetpp/setenv && 
@@ -44,18 +49,21 @@ services:
       - pade
     volumes:
       - ./mosaik-dir:/app
-      # AJUSTE 2: Mosaik precisa mapear a pasta do OMNeT para poder injetar o .ned lá dentro
+      # Mosaik mapeia a pasta do OMNeT para poder injetar o .ned lá dentro
       - ./omnet-dir:/omnet-dir
     environment:
-      - NUM_PERIFERICOS=4    # <--- CONTROLE DE ESCALA AQUI
-    # AJUSTE 3: Aumentei o sleep, pois o OMNeT++ leva um tempo para compilar no start do container
+      # Recebe as variáveis do menu.py para que o Mosaik gere o cenário corretamente
+      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
+      - TOPOLOGY=${TOPOLOGY:-estrela}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
+    # Tempo de sleep adaptado para o OMNeT++ compilar no start do container
     command: >
       sh -c "
       pip install pandas matplotlib && 
       echo 'Aguardando OMNeT++ compilar...' && 
       sleep 3 && 
-      python mosaik_anel.py && 
-      python plot_results_anel.py"
+      python star.py && 
+      python plot_results_star.py"
 
 networks:
   sim_net:
