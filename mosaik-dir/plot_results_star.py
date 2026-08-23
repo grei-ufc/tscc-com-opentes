@@ -7,6 +7,51 @@ import matplotlib.cm as cm
 import json
 import os
 
+# =================================================================
+# TIPOS DE REDE — lidos dinamicamente de config.json
+# =================================================================
+# O scenario.py grava, a cada rodada, quais tipos de enlace (TIPOS_REDE)
+# foram realmente usados e em que ordem. É essa MESMA ordem que
+# gerar_links_estrela() usa para ciclar os enlaces (agent_p_1 recebe o
+# tipo[0], agent_p_2 o tipo[1], ...). Antes esse mapeamento estava
+# hardcoded aqui (['5G','4G','Cabeada','IoT']) e SÓ funcionava por
+# coincidência com a ordem fixa do antigo star.py — com o menu agora
+# permitindo escolher subconjuntos/ordens diferentes de redes, um
+# mapeamento fixo rotula os gráficos errado. Por isso lemos o
+# config.json gerado na mesma rodada.
+NED_PARA_LABEL = {
+    'Link_Wired':    'Cabeada',
+    'Link_5G':       '5G',
+    'Link_4G':       '4G',
+    'Link_2G':       '2G',
+    'Link_Wireless': 'Wireless',
+}
+
+def _carregar_tipos_rede():
+    caminho = '/omnet-dir/config.json' if os.path.exists('/omnet-dir/config.json') else 'config.json'
+    try:
+        with open(caminho, 'r') as f:
+            config = json.load(f)
+        brutos = config.get('tipos_rede', [])
+        labels = [NED_PARA_LABEL.get(t, t) for t in brutos]
+        # remove duplicatas mantendo a ordem
+        vistos = set()
+        labels_unicos = [x for x in labels if not (x in vistos or vistos.add(x))]
+        if labels_unicos:
+            return labels_unicos
+    except Exception:
+        pass
+    # fallback (compatibilidade com execuções sem config.json)
+    return ['Cabeada', '5G', '4G', '2G', 'Wireless']
+
+TIPOS_REDE_ATIVOS = _carregar_tipos_rede()
+
+# Paleta fixa por tipo de enlace, com cor extra reservada para o caso de
+# o usuário adicionar um tipo de rede novo no futuro.
+_PALETA = ['#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b', '#17becf']
+CORES_POR_TIPO = {tipo: _PALETA[i % len(_PALETA)] for i, tipo in enumerate(TIPOS_REDE_ATIVOS)}
+
+
 def extrair_remetente(msg_str):
     try:
         if pd.isna(msg_str) or str(msg_str).strip() == "": return "Rede"
@@ -19,8 +64,7 @@ def classificar_rede(agente):
     if 'Central' in agente or 'central' in agente: return 'Central'
     try:
         num = int(agente.split('_')[-1])
-        tipos = ['5G', '4G', 'Cabeada', 'IoT']
-        return tipos[(num - 1) % 4]
+        return TIPOS_REDE_ATIVOS[(num - 1) % len(TIPOS_REDE_ATIVOS)]
     except: return 'Desconhecido'
 
 def descobrir_rede_do_link(origem, sender):
@@ -28,11 +72,11 @@ def descobrir_rede_do_link(origem, sender):
     else: return classificar_rede(origem)
 
 def gerar_graficos():
-    print("📊 Iniciando geração de Painel Executivo Científico...")
+    print("Iniciando geração de Painel Executivo Científico...")
     
     try: df = pd.read_csv('results.csv')
     except: 
-        print("❌ Arquivo 'results.csv' não encontrado.")
+        print("Arquivo 'results.csv' não encontrado.")
         return
 
     node_data = df[df['Origem'].str.startswith('OmnetSim-0.agent_')].copy()
@@ -70,7 +114,7 @@ def gerar_graficos():
 
     df_expandido = pd.DataFrame(dados_expandidos)
     if df_expandido.empty:
-        print("⚠️ Nenhuma mensagem encontrada no CSV.")
+        print("Nenhuma mensagem encontrada no CSV.")
         return
 
     # =================================================================
@@ -88,7 +132,7 @@ def gerar_graficos():
     jit_media = df_expandido['Jitter'].mean() * 1000000 # em us
 
     tabela_resumo = []
-    for tipo in ['Cabeada', '5G', '4G', 'IoT']:
+    for tipo in TIPOS_REDE_ATIVOS:
         df_tipo = df_expandido[df_expandido['RedeLink'] == tipo]
         if not df_tipo.empty:
             l_mean = df_tipo['Latencia'].mean() * 1000
@@ -101,8 +145,8 @@ def gerar_graficos():
     # =================================================================
     # PLOTAGEM DO PAINEL EXECUTIVO
     # =================================================================
-    redes_para_plotar = ['Geral', 'Cabeada', '5G', '4G', 'IoT']
-    cores = {'Cabeada': '#1f77b4', '5G': '#2ca02c', '4G': '#ff7f0e', 'IoT': '#9467bd'}
+    redes_para_plotar = ['Geral'] + TIPOS_REDE_ATIVOS
+    cores = CORES_POR_TIPO
     
     for rede_foco in redes_para_plotar:
         fig = plt.figure(figsize=(26, 14))
@@ -132,7 +176,7 @@ def gerar_graficos():
         ax_tab = fig.add_subplot(gs[3, 0:2])
         ax_map = fig.add_subplot(gs[1:, 2])
 
-        redes_ativas = ['Cabeada', '5G', '4G', 'IoT'] if rede_foco == 'Geral' else [rede_foco]
+        redes_ativas = TIPOS_REDE_ATIVOS if rede_foco == 'Geral' else [rede_foco]
         
         # --- PAINEL 1: Latência ---
         for tipo in redes_ativas:
@@ -175,7 +219,7 @@ def gerar_graficos():
                 
         if dados_jitter:
             # Correção Matplotlib: Removido 'labels' e inserido via set_yticklabels
-            ax_jit.boxplot(dados_jitter, vert=False, patch_artist=True, 
+            ax_jit.boxplot(dados_jitter, orientation='horizontal', patch_artist=True, 
                            boxprops=dict(facecolor='#ffbf0e', color='black'), medianprops=dict(color='red', linewidth=2))
             ax_jit.set_yticks(range(1, len(labels_jitter) + 1))
             ax_jit.set_yticklabels(labels_jitter)
@@ -242,7 +286,7 @@ def gerar_graficos():
             norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
             cmap = cm.RdYlGn_r
 
-            for tipo in ['Cabeada', '5G', '4G', 'IoT']:
+            for tipo in TIPOS_REDE_ATIVOS:
                 subset = perif[perif['TipoRedeOrigem'] == tipo]
                 if not subset.empty:
                     if rede_foco == 'Geral' or rede_foco == tipo:
@@ -268,7 +312,7 @@ def gerar_graficos():
         plt.tight_layout(rect=[0, 0.02, 1, 0.96])
         nome_arquivo = f'grafico_trafego_{rede_foco}.png'
         plt.savefig(nome_arquivo, dpi=300)
-        print(f"✅ Salvo: {nome_arquivo}")
+        print(f"Salvo: {nome_arquivo}")
         plt.close(fig) 
 
 if __name__ == '__main__':

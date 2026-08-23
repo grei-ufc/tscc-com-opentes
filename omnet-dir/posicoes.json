@@ -7,20 +7,122 @@
     },
     {
         "id": "agent_p_1",
-        "x": 868.38,
-        "y": 122.41,
+        "x": 151.94,
+        "y": 278.38,
         "tipo": "Periferico"
     },
     {
         "id": "agent_p_2",
-        "x": 125.72,
-        "y": 246.44,
+        "x": 647.9,
+        "y": 619.32,
         "tipo": "Periferico"
     },
     {
         "id": "agent_p_3",
-        "x": 165.5,
-        "y": 923.4,
+        "x": 419.64,
+        "y": 56.14,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_4",
+        "x": 114.31,
+        "y": 377.81,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_5",
+        "x": 204.64,
+        "y": 719.6,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_6",
+        "x": 69.61,
+        "y": 570.38,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_7",
+        "x": 872.35,
+        "y": 391.01,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_8",
+        "x": 700.0,
+        "y": 308.49,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_9",
+        "x": 62.41,
+        "y": 436.75,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_10",
+        "x": 87.18,
+        "y": 360.17,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_11",
+        "x": 245.89,
+        "y": 495.67,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_12",
+        "x": 266.91,
+        "y": 612.46,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_13",
+        "x": 700.91,
+        "y": 563.95,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_14",
+        "x": 733.32,
+        "y": 231.82,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_15",
+        "x": 83.93,
+        "y": 627.52,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_16",
+        "x": 602.26,
+        "y": 946.08,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_17",
+        "x": 426.44,
+        "y": 759.68,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_18",
+        "x": 379.4,
+        "y": 69.64,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_19",
+        "x": 866.91,
+        "y": 507.27,
+        "tipo": "Periferico"
+    },
+    {
+        "id": "agent_p_20",
+        "x": 755.57,
+        "y": 302.31,
         "tipo": "Periferico"
     }
 ]

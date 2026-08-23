@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
@@ -21,12 +22,38 @@ MOSAIK_MODELS = {
 # =================================================================
 # MAPA GLOBAL DA REDE (Nome -> Porta e Vizinhos)
 # =================================================================
-CONFIG_REDE = {
-        'agente_1': {'port': 5678, 'vizinhos': ['agente_2', 'agente_4']},
-        'agente_2': {'port': 5679, 'vizinhos': ['agente_1', 'agente_3']},
-        'agente_3': {'port': 5680, 'vizinhos': ['agente_2', 'agente_4']},
-        'agente_4': {'port': 5681, 'vizinhos': ['agente_1', 'agente_3']}
-}
+# Escalável via NUM_PERIFERICOS (mesma variável usada pelo scenario.py):
+# o anel passa a ter TOTAL_AGENTES = NUM_PERIFERICOS + 1 agentes
+# (agente_1 .. agente_M), cada um conectado apenas ao anterior e ao
+# próximo, fechando o ciclo — reproduzindo, de forma dinâmica, o
+# desenho fixo de 4 agentes que existia antes.
+NUM_PERIFERICOS = int(os.environ.get('NUM_PERIFERICOS', 3))
+TOTAL_AGENTES   = NUM_PERIFERICOS + 1
+PORTA_BASE      = 5678
+
+
+def _gerar_config_rede(total_agentes):
+    """Monta CONFIG_REDE dinamicamente para um anel de `total_agentes`
+    agentes (agente_1..agente_N), cada um com porta própria e vizinhos
+    definidos pela adjacência no ciclo."""
+    nomes = [f'agente_{i}' for i in range(1, total_agentes + 1)]
+    config = {}
+    n = len(nomes)
+    for i, nome in enumerate(nomes):
+        if n == 1:
+            vizinhos = []
+        elif n == 2:
+            # só existe um vizinho possível (o outro agente)
+            vizinhos = [nomes[(i + 1) % n]]
+        else:
+            anterior = nomes[(i - 1) % n]
+            proximo  = nomes[(i + 1) % n]
+            vizinhos = [proximo, anterior] if proximo != anterior else [proximo]
+        config[nome] = {'port': PORTA_BASE + i, 'vizinhos': vizinhos}
+    return config
+
+
+CONFIG_REDE = _gerar_config_rede(TOTAL_AGENTES)
 
 def acl_to_json(acl_msg):
     msg_dict = {

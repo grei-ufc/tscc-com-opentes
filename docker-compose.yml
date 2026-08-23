@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   pade:
     build: ./pade-dir
@@ -11,13 +9,26 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      # Recebe as variáveis do menu.py (com valores fallback)
+      # Recebe as variáveis do menu-streamlit.py (com valores fallback)
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
     stdin_open: true
     tty: true
-    command: python3 pade_star.py
+    # Escolhe automaticamente o script PADE de acordo com a topologia
+    # vinda do menu-streamlit.py: 'anel' usa pade_anel.py (vizinhança em ciclo),
+    # qualquer outra topologia (estrela/malha) usa pade_star.py
+    # (central + periféricos, difere apenas nas ligações do OMNeT++).
+    command: >
+      sh -c '
+      if [ "$$TOPOLOGY" = "anel" ]; then
+        echo "Topologia ANEL detectada -> iniciando pade_anel.py";
+        python3 pade_anel.py;
+      else
+        echo "Topologia $$TOPOLOGY detectada -> iniciando pade_star.py";
+        python3 pade_star.py;
+      fi
+      '
 
   omnet_sim:
     build: ./omnet-dir
@@ -52,7 +63,7 @@ services:
       # Mosaik mapeia a pasta do OMNeT para poder injetar o .ned lá dentro
       - ./omnet-dir:/omnet-dir
     environment:
-      # Recebe as variáveis do menu.py para que o Mosaik gere o cenário corretamente
+      # Recebe as variáveis do menu-streamlit.py para que o Mosaik gere o cenário corretamente
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
@@ -62,7 +73,7 @@ services:
       pip install pandas matplotlib && 
       echo 'Aguardando OMNeT++ compilar...' && 
       sleep 3 && 
-      python star.py && 
+      python scenario.py && 
       python plot_results_star.py"
 
 networks:
