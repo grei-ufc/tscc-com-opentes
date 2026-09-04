@@ -1,6 +1,7 @@
 import mosaik
 import os
 import json
+import math
 
 sim_config = {
     'OmnetSim': {'python': 'omnet_wrapper:OmnetAdapter'},
@@ -27,26 +28,50 @@ def gerar_topologia_ned(agentes_info, links, arquivo_saida="/omnet-dir/DynamicNe
         f.write("}\n")
 
 def create_scenario(world):
-    print("🌍 Montando topologia ANEL (Malha Parcial): 4 Agentes Interligados...")
+    NUM_AGENTES = int(os.environ.get('NUM_PERIFERICOS', 4))
     
-    # 1. Posicionamento espacial em formato de quadrado/anel
-    agentes_info = [
-        {'id': 'agente_1', 'x': 200.0, 'y': 500.0},
-        {'id': 'agente_2', 'x': 500.0, 'y': 800.0},
-        {'id': 'agente_3', 'x': 800.0, 'y': 500.0},
-        {'id': 'agente_4', 'x': 500.0, 'y': 200.0}
-    ]
+    # Captura os tipos de rede selecionados no Menu Streamlit
+    tipos_env = os.environ.get('TIPOS_REDE', '')
+    if tipos_env:
+        TIPOS_REDE = [t.strip() for t in tipos_env.split(',') if t.strip()]
+    else:
+        # Fallback caso rode fora do menu
+        TIPOS_REDE = ['Link_Wired', 'Link_5G', 'Link_4G', 'Link_2G', 'Link_Wireless']
+    
+    print(f"🌍 Montando topologia ANEL Dinâmica: {NUM_AGENTES} Agentes Interligados...")
+    print(f"📡 Redes ativas no ciclo: {', '.join(TIPOS_REDE)}")
+    
+    # MATEMÁTICA 1: Posições em Círculo (Trigonometria)
+    # ... (mantenha o restante do código idêntico)
+    
+    # MATEMÁTICA 1: Posições em Círculo (Trigonometria)
+    # Divide 360 graus (2 * pi) pela quantidade de agentes para espaçá-los perfeitamente.
+    agentes_info = []
+    centro_x, centro_y, raio = 500.0, 500.0, 350.0
+
+    for i in range(NUM_AGENTES):
+        angulo = 2 * math.pi * i / NUM_AGENTES
+        agentes_info.append({
+            'id': f'agente_{i+1}',
+            'x': round(centro_x + raio * math.cos(angulo), 2),
+            'y': round(centro_y + raio * math.sin(angulo), 2),
+            'tipo': 'Anel'
+        })
     
     with open('/omnet-dir/posicoes.json', 'w') as f:
         json.dump(agentes_info, f, indent=4)
         
-    # 2. Definição rígida das vizinhanças e dos canais, conforme o seu diagrama
-    links = [
-    {'origem': 'agente_1', 'destino': 'agente_2', 'tipo': 'Link_Wired'},
-    {'origem': 'agente_2', 'destino': 'agente_3', 'tipo': 'Link_4G'},
-    {'origem': 'agente_3', 'destino': 'agente_4', 'tipo': 'Link_5G'},
-    {'origem': 'agente_4', 'destino': 'agente_1', 'tipo': 'Link_2G'} # <--- Correção aqui
-    ]
+    with open('/omnet-dir/config.json', 'w') as f:
+        json.dump({'tipos_rede': TIPOS_REDE}, f)
+        
+    # MATEMÁTICA 2: Roteamento Cíclico (Aritmética Modular)
+    # Ex (8 agentes): Se i=7 (agente_8), destino = (7+1)%8 + 1 -> 0 + 1 = agente_1.
+    links = []
+    for i in range(NUM_AGENTES):
+        origem = f'agente_{i+1}'
+        destino = f'agente_{(i+1) % NUM_AGENTES + 1}'
+        tipo = TIPOS_REDE[i % len(TIPOS_REDE)]
+        links.append({'origem': origem, 'destino': destino, 'tipo': tipo})
 
     print("⚙️ Gerando DynamicNetwork.ned...")
     gerar_topologia_ned(agentes_info, links)
@@ -57,12 +82,10 @@ def create_scenario(world):
 
     monitor = coletor_sim.Monitor()
     
-    # 3. Conexão e injeção
-    # 3. Conexão e injeção
     for ag in agentes_info:
-        ag_id = ag['id'] # ex: 'Agente_1'
+        ag_id = ag['id'] 
         agente_pade = pade_sim.PadeAgent(agent_id=ag_id)
-        node_omnet = omnet_sim.AgentNode(node_type='AgentNode', eid=ag_id.lower())
+        node_omnet = omnet_sim.AgentNode(node_type='AgentNode', eid=ag_id)
         
         world.connect(agente_pade, node_omnet, ('val_out', 'val_in'))
         world.connect(node_omnet, agente_pade, ('val_out', 'val_in'), time_shifted=True, initial_data={'val_out': ''})
