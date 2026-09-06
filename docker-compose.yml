@@ -1,4 +1,8 @@
 services:
+
+  # ─────────────────────────────────────────────
+  # PADE: agentes multiagente (FIPA-ACL)
+  # ─────────────────────────────────────────────
   pade:
     build: ./pade-dir
     container_name: pade
@@ -9,27 +13,31 @@ services:
     volumes:
       - ./pade-dir/pade_agents:/app
     environment:
-      # Recebe as variáveis do menu-streamlit.py (com valores fallback)
-      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
       - TOPOLOGY=${TOPOLOGY:-estrela}
-      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
+      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
     stdin_open: true
     tty: true
-    # Escolhe automaticamente o script PADE de acordo com a topologia
-    # vinda do menu-streamlit.py: 'anel' usa pade_anel.py (vizinhança em ciclo),
-    # qualquer outra topologia (estrela/malha) usa pade_star.py
-    # (central + periféricos, difere apenas nas ligações do OMNeT++).
+    # Seleciona o script PADE correto conforme a topologia:
+    #   anel  → pade_anel.py  (vizinhança em ciclo)
+    #   malha → pade_malha.py (broadcast total entre todos)
+    #   demais→ pade_star.py  (central + periféricos)
     command: >
       sh -c '
       if [ "$$TOPOLOGY" = "anel" ]; then
-        echo "Topologia ANEL detectada -> iniciando pade_anel.py";
+        echo "Topologia ANEL -> pade_anel.py";
         python3 pade_anel.py;
+      elif [ "$$TOPOLOGY" = "malha" ]; then
+        echo "Topologia MALHA -> pade_malha.py";
+        python3 pade_malha.py;
       else
-        echo "Topologia $$TOPOLOGY detectada -> iniciando pade_star.py";
+        echo "Topologia $$TOPOLOGY -> pade_star.py";
         python3 pade_star.py;
-      fi
-      '
+      fi'
 
+  # ─────────────────────────────────────────────
+  # OMNET++: simulador de rede de comunicação (C++)
+  # ─────────────────────────────────────────────
   omnet_sim:
     build: ./omnet-dir
     container_name: omnet_sim
@@ -38,43 +46,51 @@ services:
     expose:
       - "5555"
     volumes:
-      - ./omnet-dir:/root/models 
-    # OMNeT++ compila e espera o arquivo DynamicNetwork.ned existir antes de rodar
+      - ./omnet-dir:/root/models
     command: >
       /bin/bash -c "
-      source /root/omnetpp/setenv && 
-      opp_makemake -f --deep -o sim_exec -lzmq && 
-      make && 
-      echo 'Aguardando mosaik gerar DynamicNetwork.ned...' &&
-      while [ ! -f DynamicNetwork.ned ]; do sleep 1; done && 
-      echo 'Rede encontrada! Iniciando simulação...' &&
+      source /root/omnetpp/setenv &&
+      rm -f /root/models/DynamicNetwork.ned &&
+      cd /root/models &&
+      opp_makemake -f --deep -o sim_exec -lzmq &&
+      make &&
+      echo 'Aguardando DynamicNetwork.ned...' &&
+      while [ ! -f /root/models/DynamicNetwork.ned ]; do sleep 1; done &&
+      echo 'Rede encontrada! Iniciando simulacao...' &&
       ./sim_exec -u Cmdenv -c General"
 
+  # ─────────────────────────────────────────────
+  # MOSAIK: orquestrador de co-simulação
+  # ─────────────────────────────────────────────
   mosaik_master:
     build: ./mosaik-dir
     container_name: mosaik_master
     networks:
       - sim_net
     depends_on:
-      - omnet_sim
       - pade
+      - omnet_sim
     volumes:
       - ./mosaik-dir:/app
-      # Mosaik mapeia a pasta do OMNeT para poder injetar o .ned lá dentro
       - ./omnet-dir:/omnet-dir
     environment:
-      # Recebe as variáveis do menu-streamlit.py para que o Mosaik gere o cenário corretamente
-      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-50}
       - TOPOLOGY=${TOPOLOGY:-estrela}
-      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired}
-    # Tempo de sleep adaptado para o OMNeT++ compilar no start do container
+      - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+    # Seleciona o script de plotagem correto conforme a topologia:
+    #   malha → plot_results_malha.py (Plotly interativo + animação)
+    #   demais→ plot_results_star.py  (matplotlib estático)
     command: >
       sh -c "
-      pip install pandas matplotlib && 
-      echo 'Aguardando OMNeT++ compilar...' && 
-      sleep 3 && 
-      python scenario.py && 
-      python plot_results_star.py"
+      pip install pandas matplotlib plotly kaleido &&
+      echo 'Aguardando OMNeT++ compilar...' &&
+      sleep 3 &&
+      python scenario.py &&
+      if [ \"$$TOPOLOGY\" = \"malha\" ]; then
+        python plot_results_malha.py;
+      else
+        python plot_results_star.py;
+      fi"
 
 networks:
   sim_net:
