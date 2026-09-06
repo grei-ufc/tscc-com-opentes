@@ -368,7 +368,7 @@ def main():
     min_val = 3 if topologia == "anel" else 1
     num_perifericos = st.number_input("Periféricos", min_value=min_val, max_value=500,
                                       value=max(4,min_val), step=1, label_visibility="collapsed")
-    total_agentes = num_perifericos + 1 if topologia == "estrela" else num_perifericos
+    total_agentes = num_perifericos + 1 if topologia == "estrela" else num_perifericos #novamente, faz sentido o +1 central somente na topologia estrela, ainda que nas demais topologias haja um master que seria a indicacao do que sai do mosaik 
     if topologia == "estrela":   detalhe = f"1 central + {num_perifericos} periféricos"
     elif topologia == "malha":   detalhe = f"{total_agentes} agentes, todos conectados entre si"
     else:                        detalhe = f"{total_agentes} agentes em ciclo fechado"
