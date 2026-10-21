@@ -11,9 +11,10 @@ PROTOCOLO CÍCLICO:
   get_data() → devolve last_results para o Mosaik
 """
 
+import json
+import os
 import mosaik_api_v3 as mosaik_api
 import zmq
-import json
 
 META = {
     'type': 'time-based',
@@ -41,14 +42,19 @@ class OmnetAdapter(mosaik_api.Simulator):
         super().__init__(META)
         self.context = zmq.Context()
         self.socket  = self.context.socket(zmq.REQ)
+        timeout_ms   = int(os.environ.get('OMNET_TIMEOUT_MS', 30000))
+        self.socket.setsockopt(zmq.RCVTIMEO, timeout_ms)
+        self.socket.setsockopt(zmq.SNDTIMEO, timeout_ms)
         self.sid     = None
         self.last_results   = {}
         # time_resolution é definido pelo Mosaik no init()
         self.time_resolution = 1.0
 
-    def init(self, sid, time_resolution, host='omnet_sim', port=5555):
+    def init(self, sid, time_resolution, host=None, port=None):
         self.sid             = sid
         self.time_resolution = time_resolution
+        host = host or os.environ.get('OMNET_HOST', 'omnet_sim')
+        port = int(port or os.environ.get('OMNET_PORT', 5555))
         self.socket.connect(f"tcp://{host}:{port}")
         print(f"[MOSAIK] Conectado ao OMNeT++ em tcp://{host}:{port} "
               f"(time_resolution={time_resolution}s/passo)")
@@ -136,6 +142,13 @@ class OmnetAdapter(mosaik_api.Simulator):
                 if eid in self.last_results:
                     data[eid][attr] = self.last_results[eid].get(attr)
         return data
+
+    def finalize(self):
+        try:
+            self.socket.close(linger=0)
+            self.context.term()
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':

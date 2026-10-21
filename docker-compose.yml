@@ -16,6 +16,7 @@ services:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - RANDOM_SEED=${RANDOM_SEED:-}
     stdin_open: true
     tty: true
     # Seleciona o script PADE correto conforme a topologia:
@@ -47,15 +48,16 @@ services:
       - "5555"
     volumes:
       - ./omnet-dir:/root/models
+    environment:
+      - RANDOM_SEED=${RANDOM_SEED:-}
     command: >
       /bin/bash -c "
       source /root/omnetpp/setenv &&
-      rm -f /root/models/DynamicNetwork.ned &&
       cd /root/models &&
       opp_makemake -f --deep -o sim_exec -lzmq &&
       make &&
       echo 'Aguardando DynamicNetwork.ned...' &&
-      while [ ! -f /root/models/DynamicNetwork.ned ]; do sleep 1; done &&
+      while [ ! -f /root/models/DynamicNetwork.ned ]; do sleep 0.5; done &&
       echo 'Rede encontrada! Iniciando simulacao...' &&
       ./sim_exec -u Cmdenv -c General"
 
@@ -77,17 +79,22 @@ services:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - RANDOM_SEED=${RANDOM_SEED:-}
+      - SIM_STEPS=${SIM_STEPS:-20}
     # Seleciona o script de plotagem correto conforme a topologia:
-    #   malha → plot_results_malha.py (Plotly interativo + animação)
-    #   demais→ plot_results_star.py  (matplotlib estático)
+    #   malha → plot_results_malha.py
+    #   anel  → plot_results_anel.py
+    #   demais→ plot_results_star.py
     command: >
       sh -c "
-      pip install pandas matplotlib plotly kaleido &&
+      rm -f /omnet-dir/DynamicNetwork.ned &&
       echo 'Aguardando OMNeT++ compilar...' &&
-      sleep 3 &&
+      sleep 2 &&
       python scenario.py &&
       if [ \"$$TOPOLOGY\" = \"malha\" ]; then
         python plot_results_malha.py;
+      elif [ \"$$TOPOLOGY\" = \"anel\" ]; then
+        python plot_results_anel.py;
       else
         python plot_results_star.py;
       fi"

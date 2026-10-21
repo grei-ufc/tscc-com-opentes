@@ -12,15 +12,27 @@ A diferença fundamental em relação ao pade_star.py:
 O AgenteCentral mantém o papel de "master" apenas por hospedar
 o MosaikSim (porta 5678 = entrada do Mosaik). Na comunicação da
 malha, ele não tem papel especial.
+Semântica de NUM_PERIFERICOS na malha: número TOTAL de agentes peers N (mínimo 2),
+composto por AgenteCentral + AgenteP_1..AgenteP_{N-1}.
 """
 
 import json
 import os
+import sys
+import types
+
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
+
+if sys.platform == 'win32' and 'fcntl' not in sys.modules:
+    _fcntl = types.ModuleType('fcntl')
+    _fcntl.LOCK_EX = 2
+    _fcntl.LOCK_UN = 8
+    _fcntl.flock = lambda *args, **kwargs: None
+    sys.modules['fcntl'] = _fcntl
 
 ACTIVE_AGENTS = {}
 
@@ -33,19 +45,21 @@ MOSAIK_MODELS = {
 }
 
 NUM_PERIFERICOS = int(os.environ.get('NUM_PERIFERICOS', 3))
-PORTA_BASE      = 5678
+PORTA_BASE      = int(os.environ.get('PADE_PORT', 5678))
+AMS_PORT        = int(os.environ.get('AMS_PORT', 8000))
 
 
 def _build_registry(n):
     """
-    Monta o mapa {nome: porta} de todos os agentes da malha.
-    AgenteCentral → 5678 (entrada do Mosaik)
-    AgenteP_i     → 5678 + i
+    Monta o mapa {nome: porta} de todos os N agentes da malha (total = N).
+    AgenteCentral → PORTA_BASE (entrada do Mosaik)
+    AgenteP_i     → PORTA_BASE + i (para i = 1 .. N-1)
     É o equivalente de uma tabela ARP: cada agente sabe onde encontrar
     todos os outros sem precisar de um servidor de nomes externo.
     """
+    total = max(2, n)
     reg = {'AgenteCentral': PORTA_BASE}
-    for i in range(1, n + 1):
+    for i in range(1, total):
         reg[f'AgenteP_{i}'] = PORTA_BASE + i
     return reg
 
@@ -141,25 +155,22 @@ class AgenteMalhaFIPA(Agent):
         Modelo correto da malha: cada agente envia para TODOS os outros
         a cada passo, sem intermediários. O REGISTRY é o "plano de
         controle" — cada agente conhece o endereço de todos os outros.
-        call_later(0.05) distribui a carga para não sobrecarregar o
-        Twisted com N*(N-1) mensagens simultâneas.
+        O envio é síncrono em memória (self.val_out) para manter sincronismo
+        estrito com o ciclo step(t) -> get_data() do Mosaik.
         """
         destinatarios = [(n, p) for n, p in REGISTRY.items()
                          if n != self.aid.localname]
         if not destinatarios:
             return
 
-        def _enviar():
-            msg = ACLMessage(ACLMessage.INFORM)
-            msg.set_sender(self.aid)
-            for nome, porta in destinatarios:
-                msg.add_receiver(AID(name=f'{nome}@0.0.0.0:{porta}'))
-            msg.set_ontology('telemetria_rede')
-            msg.set_conversation_id(f'malha-t{tempo}')
-            msg.set_content(f'Mesh update de {self.aid.localname} em t={tempo}')
-            self.send(msg)
-
-        self.call_later(0.05, _enviar)
+        msg = ACLMessage(ACLMessage.INFORM)
+        msg.set_sender(self.aid)
+        for nome, porta in destinatarios:
+            msg.add_receiver(AID(name=f'{nome}@0.0.0.0:{porta}'))
+        msg.set_ontology('telemetria_rede')
+        msg.set_conversation_id(f'malha-t{tempo}')
+        msg.set_content(f'Mesh update de {self.aid.localname} em t={tempo}')
+        self.send(msg)
 
     def receber_mensagem_da_rede(self, json_string):
         try:
@@ -182,7 +193,7 @@ class AgenteMalhaFIPA(Agent):
 
 if __name__ == '__main__':
     host       = '0.0.0.0'
-    ams_config = {'name': host, 'port': 8000}
+    ams_config = {'name': host, 'port': AMS_PORT}
     agentes    = []
 
     for nome, porta in REGISTRY.items():

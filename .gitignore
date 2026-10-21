@@ -1,0 +1,19 @@
+# Byte-compiled / cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Artefatos de compilação C++ / OMNeT++
+omnet-dir/out/
+omnet-dir/sim_exec
+omnet-dir/sim_exec.exe
+omnet-dir/*.o
+omnet-dir/*.d
+omnet-dir/.cmdenv-log
+omnet-dir/*.tmp
+
+# Ambientes virtuais
+.venv/
+venv/
+ENV/

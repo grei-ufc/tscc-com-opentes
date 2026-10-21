@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     mosaik-api-v3==3.0.14 \
     twisted==24.7.0 \
     autobahn==23.6.2 \
-    pyzmq==26.0.3
+    pyzmq==27.1.0
 
 # Instalação oficial do Framework PADE
 RUN pip install --no-cache-dir pade-agents

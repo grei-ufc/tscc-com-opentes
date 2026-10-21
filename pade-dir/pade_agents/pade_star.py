@@ -3,13 +3,25 @@
 
 import json
 import os
+import sys
+import types
+
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
 
+if sys.platform == 'win32' and 'fcntl' not in sys.modules:
+    _fcntl = types.ModuleType('fcntl')
+    _fcntl.LOCK_EX = 2
+    _fcntl.LOCK_UN = 8
+    _fcntl.flock = lambda *args, **kwargs: None
+    sys.modules['fcntl'] = _fcntl
+
 NUM_PERIFERICOS = int(os.environ.get('NUM_PERIFERICOS', 3))
+PORTA_BASE = int(os.environ.get('PADE_PORT', 5678))
+AMS_PORT = int(os.environ.get('AMS_PORT', 8000))
 
 MOSAIK_MODELS = {
     'api_version': '3.0',
@@ -142,7 +154,7 @@ class AgenteFIPA(Agent):
         msg = ACLMessage(ACLMessage.REQUEST)
         msg.set_sender(self.aid)
         for i in range(1, NUM_PERIFERICOS + 1):
-            msg.add_receiver(AID(name=f'AgenteP_{i}@0.0.0.0:{5678+i}')) 
+            msg.add_receiver(AID(name=f'AgenteP_{i}@0.0.0.0:{PORTA_BASE+i}')) 
         msg.set_ontology('telemetria_rede')
         msg.set_conversation_id(f'poll-t{tempo}')
         msg.set_content(f'Status? t={tempo}')
@@ -172,7 +184,7 @@ class AgenteFIPA(Agent):
         # 4. Proteção extra: Garante que o remetente tem um nome legível
         nome_remetente = message.sender.localname if message.sender else "Desconhecido"
 
-        # Lógica de negócio (agora 100% segura e assíncrona)
+        # Lógica de negócio (síncrona em memória com o passo Mosaik)
         if self.aid.localname.startswith('AgenteP_') and message.performative == ACLMessage.REQUEST:
             display_message(self.aid.localname, f"📥 Poll recebido ({message.conversation_id}).")
             reply = message.create_reply()
@@ -180,15 +192,16 @@ class AgenteFIPA(Agent):
             reply.set_content(f"Status OK: {self.aid.localname}")
             reply.set_sender(self.aid)
             
-            # Delay microscópico (0.1s) para não estrangular o Twisted/Mosaik com 50 respostas simultâneas
-            self.call_later(0.1, self.send, reply)
+            # Enfileira a resposta imediatamente em self.val_out para o get_data() do passo atual
+            self.send(reply)
                 
         elif self.aid.localname == 'AgenteCentral' and message.performative == ACLMessage.INFORM:
             display_message(self.aid.localname, f"✅ Confirmação de {nome_remetente}")
+
 if __name__ == '__main__':
     host = '0.0.0.0'
-    port = 5678 
-    ams_config = {'name': host, 'port': 8000}
+    port = PORTA_BASE 
+    ams_config = {'name': host, 'port': AMS_PORT}
     
     agentes = []
     

@@ -4,33 +4,31 @@
 scenario.py — Orquestrador único de cenário Mosaik.
 
 Substitui star.py. Lê TOPOLOGY, NUM_PERIFERICOS e TIPOS_REDE do ambiente
-(injetadas pelo menu.py via docker-compose.yml) e monta, num único lugar,
-QUALQUER uma das três topologias suportadas:
+(injetadas pelo menu.py / menu-streamlit.py via docker-compose.yml) e monta,
+num único lugar, QUALQUER uma das três topologias suportadas:
 
     estrela — 1 central  <-->  N periféricos          (pade_star.py)
-    malha   — 1 central  <-->  N periféricos, full mesh (pade_star.py)
-    anel    — N+1 agentes conectados em ciclo fechado   (pade_anel.py)
+    malha   — N agentes peers conectados em full mesh (pade_malha.py)
+    anel    — N agentes peers em ciclo fechado        (pade_anel.py)
 
-As três são escaláveis pela MESMA variável NUM_PERIFERICOS:
-    - estrela/malha: total de agentes = 1 (central) + NUM_PERIFERICOS
-    - anel         : total de agentes =  NUM_PERIFERICOS + 1
-                     (mantém a mesma contagem total de nós entre as
-                     topologias, só muda o papel/nomenclatura dos agentes)
+Semântica de NUM_PERIFERICOS (unificada com menu.py, menu-streamlit.py e PADE):
+    - estrela : número de periféricos N  → total de agentes = 1 (central) + N
+    - malha   : número TOTAL de agentes N → total de agentes = N (1 master + N-1 peers)
+    - anel    : número TOTAL de agentes N → total de agentes = N (agente_1..agente_N)
 
 Nomenclatura:
-    - estrela/malha → 'agent_central' / 'agent_p_1'..'agent_p_N' no OMNeT++
-                       e 'AgenteCentral' / 'AgenteP_1'..'AgenteP_N' no PADE
-                       (é o que pade_star.py espera).
-    - anel          → 'agente_1'..'agente_M' tanto no OMNeT++ quanto no
-                       PADE (é o que pade_anel.py espera — CONFIG_REDE
-                       usa exatamente esses nomes).
+    - estrela/malha → 'agent_central' / 'agent_p_1'..'agent_p_K' no OMNeT++
+                       e 'AgenteCentral' / 'AgenteP_1'..'AgenteP_K' no PADE.
+    - anel          → 'agente_1'..'agente_N' tanto no OMNeT++ quanto no PADE.
 """
 
+import json
 import math
-import mosaik
 import os
 import random
-import json
+import socket
+import time
+import mosaik
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO VIA VARIÁVEIS DE AMBIENTE
@@ -43,7 +41,22 @@ TOPOLOGY        = os.environ.get('TOPOLOGY', 'estrela').lower()
 # ou do docker-compose.yml; dividimos aqui para obter uma lista Python.
 # (IoT foi descontinuado -> usar Link_2G no lugar)
 _tipos_raw = os.environ.get('TIPOS_REDE', 'Link_Wired,Link_5G,Link_4G,Link_2G,Link_Wireless')
-TIPOS_REDE = [t.strip() for t in _tipos_raw.split(',')]
+TIPOS_REDE = [t.strip() for t in _tipos_raw.split(',') if t.strip()]
+
+RANDOM_SEED = os.environ.get('RANDOM_SEED')
+if RANDOM_SEED is not None and str(RANDOM_SEED).strip() != '':
+    random.seed(int(RANDOM_SEED))
+
+SIM_STEPS = int(os.environ.get('SIM_STEPS', 20))
+PADE_HOST = os.environ.get('PADE_HOST', 'pade')
+PADE_PORT = int(os.environ.get('PADE_PORT', 5678))
+
+_DEFAULT_OMNET_DIR = (
+    '/omnet-dir'
+    if os.path.isdir('/omnet-dir')
+    else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'omnet-dir'))
+)
+OMNET_DIR = os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR)
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO DOS SIMULADORES MOSAIK
@@ -52,16 +65,28 @@ TIPOS_REDE = [t.strip() for t in _tipos_raw.split(',')]
 sim_config = {
     'OmnetSim':   {'python': 'omnet_wrapper:OmnetAdapter'},
     'ColetorSim': {'python': 'collector:Coletor'},
-    'PadeSim':    {'connect': 'pade:5678'},
+    'PadeSim':    {'connect': f'{PADE_HOST}:{PADE_PORT}'},
 }
+
+
+def _aguardar_pade_pronto(host=PADE_HOST, port=PADE_PORT, timeout=30.0):
+    """Aguarda a porta TCP do PADE estar pronta antes do world.start('PadeSim')."""
+    inicio = time.time()
+    while time.time() - inicio < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=1.0):
+                return True
+        except OSError:
+            time.sleep(0.2)
+    print(f"[MOSAIK] ⚠ Timeout aguardando PADE em {host}:{port}; tentando conectar...")
+    return False
 
 
 # ══════════════════════════════════════════════════════════════
 # GERAÇÃO DO ARQUIVO NED  (agnóstica à topologia)
 # ══════════════════════════════════════════════════════════════
 
-def gerar_topologia_ned(agentes_info, links,
-                        arquivo_saida="/omnet-dir/DynamicNetwork.ned"):
+def gerar_topologia_ned(agentes_info, links, arquivo_saida=None):
     """
     Escreve o arquivo DynamicNetwork.ned a partir de listas genéricas.
 
@@ -77,7 +102,13 @@ def gerar_topologia_ned(agentes_info, links,
     Esta função é totalmente agnóstica à topologia — só descreve
     o que as listas mandam, então serve para estrela, malha e anel.
     """
-    with open(arquivo_saida, 'w') as f:
+    if arquivo_saida is None:
+        arquivo_saida = os.path.join(OMNET_DIR, "DynamicNetwork.ned")
+
+    os.makedirs(os.path.dirname(os.path.abspath(arquivo_saida)), exist_ok=True)
+    arquivo_tmp = arquivo_saida + ".tmp"
+
+    with open(arquivo_tmp, 'w', encoding='utf-8') as f:
         # Abertura da rede
         f.write("network DynamicNetwork\n{\n")
         f.write("    submodules:\n")
@@ -103,6 +134,8 @@ def gerar_topologia_ned(agentes_info, links,
 
         f.write("}\n")
 
+    os.replace(arquivo_tmp, arquivo_saida)
+
 
 # ══════════════════════════════════════════════════════════════
 # GERAÇÃO DE LINKS — ESTRELA
@@ -119,15 +152,6 @@ def gerar_links_estrela(agentes_info):
     O tipo de enlace (Link_5G, Link_4G, ...) é escolhido ciclicamente
     da lista TIPOS_REDE, garantindo distribuição balanceada entre
     as tecnologias disponíveis.
-
-    Parâmetros
-    ----------
-    agentes_info : list[dict]
-        agentes_info[0] é sempre o nó central.
-
-    Retorna
-    -------
-    list[dict]  — lista de enlaces no formato esperado por gerar_topologia_ned.
     """
     central_id = agentes_info[0]['id']   # 'agent_central'
     links = []
@@ -153,27 +177,8 @@ def gerar_links_malha(agentes_info):
     Cria a lista de enlaces para a topologia malha completa (full mesh):
     todo par de agentes (i, j) com i < j recebe um enlace bidirecional.
 
-    Por quê só o triângulo superior (i < j)?
-    No OMNeT++, a sintaxe:
-        A.port++ <--> Canal <--> B.port++
-    já declara comunicação bidirecional. Se também criássemos
-        B.port++ <--> Canal <--> A.port++
-    teríamos um enlace duplicado e erro de compilação do NED.
-
-    Para N+1 nós (1 central + N periféricos), o total de enlaces é:
-        (N+1) * N / 2
-    Exemplo: N=4 → 10 enlaces; N=10 → 55 enlaces.
-
-    O tipo de canal é escolhido ciclicamente de TIPOS_REDE,
-    assim cada tecnologia recebe aproximadamente o mesmo número de enlaces.
-
-    Parâmetros
-    ----------
-    agentes_info : list[dict]  — todos os agentes (central + periféricos).
-
-    Retorna
-    -------
-    list[dict]  — lista de enlaces no formato esperado por gerar_topologia_ned.
+    Para N nós (total = NUM_PERIFERICOS), o total de enlaces é:
+        N * (N - 1) / 2
     """
     links = []
     n = len(agentes_info)
@@ -200,23 +205,7 @@ def gerar_links_anel(agentes_info):
     """
     Cria a lista de enlaces para a topologia anel: cada agente conecta-se
     apenas ao próximo, fechando o ciclo no final:
-        agente_1 -> agente_2 -> agente_3 -> ... -> agente_M -> agente_1
-
-    Isso reproduz, de forma escalável, a mesma ideia da topologia fixa de
-    4 agentes que existia em mosaik_anel.py — só que agora para M
-    agentes quaisquer (M = NUM_PERIFERICOS + 1), o que é exatamente o
-    formato de vizinhança (CONFIG_REDE) que pade_anel.py monta em tempo
-    de execução a partir de NUM_PERIFERICOS.
-
-    O tipo de canal é escolhido ciclicamente de TIPOS_REDE.
-
-    Parâmetros
-    ----------
-    agentes_info : list[dict]  — todos os agentes do anel (agente_1..agente_M).
-
-    Retorna
-    -------
-    list[dict]  — lista de enlaces no formato esperado por gerar_topologia_ned.
+        agente_1 -> agente_2 -> agente_3 -> ... -> agente_N -> agente_1
     """
     links = []
     n = len(agentes_info)
@@ -248,33 +237,44 @@ def gerar_links_anel(agentes_info):
 
 def create_scenario(world):
     print(f"\nTopologia : {TOPOLOGY.upper()}")
-    print(f"   Periféricos: {NUM_PERIFERICOS}")
+    print(f"   Parâmetro N: {NUM_PERIFERICOS}")
     print(f"   Redes      : {', '.join(TIPOS_REDE)}\n")
 
-    omnet_sim   = world.start('OmnetSim')
-    coletor_sim = world.start('ColetorSim')
-    pade_sim    = world.start('PadeSim')
-    monitor     = coletor_sim.Monitor()
-
     if TOPOLOGY == 'anel':
-        _montar_anel(world, omnet_sim, pade_sim, monitor)
+        _montar_anel(world)
     else:
         # 'estrela', 'malha' ou qualquer outro valor cai aqui
-        _montar_central_periferico(world, omnet_sim, pade_sim, monitor)
+        _montar_central_periferico(world)
 
 
-def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
-    """Monta estrela OU malha — ambas usam o mesmo conjunto de agentes
-    (1 central + N periféricos, nomenclatura AgenteCentral/AgenteP_i),
-    diferindo apenas na lista de enlaces gerada no OMNeT++."""
+def _iniciar_simuladores(world):
+    """Inicia OmnetSim, ColetorSim e PadeSim após gerar DynamicNetwork.ned."""
+    omnet_sim   = world.start('OmnetSim')
+    coletor_sim = world.start('ColetorSim')
+    _aguardar_pade_pronto(PADE_HOST, PADE_PORT)
+    pade_sim    = world.start('PadeSim')
+    monitor     = coletor_sim.Monitor()
+    return omnet_sim, pade_sim, monitor
+
+
+def _montar_central_periferico(world):
+    """Monta estrela OU malha:
+      - estrela: 1 central + NUM_PERIFERICOS periféricos (total = N + 1)
+      - malha  : 1 master  + (NUM_PERIFERICOS - 1) peers (total = N)
+    """
+    num_peers_extras = (
+        max(1, NUM_PERIFERICOS - 1)
+        if TOPOLOGY == 'malha'
+        else NUM_PERIFERICOS
+    )
 
     # ── IDs dos agentes ──────────────────────────────────────
     agente_central_id = 'agent_central'
-    perifericos_ids    = [f'agent_p_{i}' for i in range(1, NUM_PERIFERICOS + 1)]
+    perifericos_ids   = [f'agent_p_{i}' for i in range(1, num_peers_extras + 1)]
 
     # ── Geolocalização ───────────────────────────────────────
     # O nó central é fixado no centro do grid (500, 500).
-    # Periféricos recebem posições aleatórias dentro de um
+    # Periféricos/peers recebem posições aleatórias dentro de um
     # grid de 1000 × 1000 metros.
     agentes_info = [{
         'id':   agente_central_id,
@@ -290,17 +290,18 @@ def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
             'tipo': 'Periferico',
         })
 
-    _persistir_mapa_e_config(agentes_info)
-
     # ── Gera os links de acordo com a topologia ──────────────
     if TOPOLOGY == 'malha':
         links = gerar_links_malha(agentes_info)
     else:                                           # 'estrela' ou fallback
         links = gerar_links_estrela(agentes_info)
 
-    print(f"   ↳ {len(links)} enlaces gerados para topologia '{TOPOLOGY}'.")
+    _persistir_mapa_e_config(agentes_info, links)
+    print(f"   ↳ {len(agentes_info)} agentes e {len(links)} enlaces gerados para topologia '{TOPOLOGY}'.")
     gerar_topologia_ned(agentes_info, links)
     print("   ↳ DynamicNetwork.ned gerado.\n")
+
+    omnet_sim, pade_sim, monitor = _iniciar_simuladores(world)
 
     # ── Entidade: nó central ─────────────────────────────────
     agente_central_pade = pade_sim.PadeAgent(agent_id='AgenteCentral')
@@ -317,8 +318,8 @@ def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
                   'status', 'packets_sent', 'packets_received', 'packets_dropped',
                   'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
-    # ── Entidades: nós periféricos ───────────────────────────
-    for i in range(1, NUM_PERIFERICOS + 1):
+    # ── Entidades: nós periféricos / peers ───────────────────
+    for i in range(1, num_peers_extras + 1):
         pid           = f'agent_p_{i}'
         agente_p_pade = pade_sim.PadeAgent(agent_id=f'AgenteP_{i}')
         node_p_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=pid)
@@ -333,17 +334,16 @@ def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
                       'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 
-def _montar_anel(world, omnet_sim, pade_sim, monitor):
-    """Monta a topologia anel — M = NUM_PERIFERICOS + 1 agentes, todos com
-    o mesmo papel, nomeados agente_1..agente_M (nomenclatura exigida por
+def _montar_anel(world):
+    """Monta a topologia anel — N = NUM_PERIFERICOS agentes, todos com
+    o mesmo papel, nomeados agente_1..agente_N (nomenclatura exigida por
     pade_anel.py, cujo CONFIG_REDE é construído dinamicamente a partir da
     mesma variável NUM_PERIFERICOS)."""
 
-    total_agentes = NUM_PERIFERICOS + 1
+    total_agentes = max(2, NUM_PERIFERICOS)
     ids = [f'agente_{i}' for i in range(1, total_agentes + 1)]
 
     # ── Geolocalização: distribui os agentes num círculo ─────
-    # (mesma ideia visual do anel de 4 nós original, mas para M nós)
     centro_x, centro_y, raio = 500.0, 500.0, 350.0
     agentes_info = []
     for i, aid in enumerate(ids):
@@ -355,13 +355,14 @@ def _montar_anel(world, omnet_sim, pade_sim, monitor):
             'tipo': 'Anel',
         })
 
-    _persistir_mapa_e_config(agentes_info)
-
     links = gerar_links_anel(agentes_info)
+    _persistir_mapa_e_config(agentes_info, links)
     print(f"   ↳ {len(links)} enlaces gerados para topologia 'anel' "
           f"({total_agentes} agentes).")
     gerar_topologia_ned(agentes_info, links)
     print("   ↳ DynamicNetwork.ned gerado.\n")
+
+    omnet_sim, pade_sim, monitor = _iniciar_simuladores(world)
 
     # ── Entidades: todos os agentes têm o mesmo papel ────────
     for ag in agentes_info:
@@ -379,13 +380,17 @@ def _montar_anel(world, omnet_sim, pade_sim, monitor):
                       'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 
-def _persistir_mapa_e_config(agentes_info):
-    """Persiste posições (para o dashboard) e a config da rodada
+def _persistir_mapa_e_config(agentes_info, links):
+    """Persiste posições, enlaces e a config da rodada
     (topologia/N/redes), comum às três topologias."""
-    with open('/omnet-dir/posicoes.json', 'w') as f:
+    os.makedirs(OMNET_DIR, exist_ok=True)
+    with open(os.path.join(OMNET_DIR, 'posicoes.json'), 'w', encoding='utf-8') as f:
         json.dump(agentes_info, f, indent=4)
 
-    with open('/omnet-dir/config.json', 'w') as f:
+    with open(os.path.join(OMNET_DIR, 'links.json'), 'w', encoding='utf-8') as f:
+        json.dump(links, f, indent=4)
+
+    with open(os.path.join(OMNET_DIR, 'config.json'), 'w', encoding='utf-8') as f:
         json.dump({
             'topologia':       TOPOLOGY,
             'num_perifericos': NUM_PERIFERICOS,
@@ -400,4 +405,4 @@ def _persistir_mapa_e_config(agentes_info):
 if __name__ == '__main__':
     world = mosaik.World(sim_config)
     create_scenario(world)
-    world.run(until=20)
+    world.run(until=SIM_STEPS)

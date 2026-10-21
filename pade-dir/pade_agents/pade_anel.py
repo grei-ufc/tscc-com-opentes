@@ -3,11 +3,21 @@
 
 import json
 import os
+import sys
+import types
+
 from pade.misc.utility import display_message, start_loop
 from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
+
+if sys.platform == 'win32' and 'fcntl' not in sys.modules:
+    _fcntl = types.ModuleType('fcntl')
+    _fcntl.LOCK_EX = 2
+    _fcntl.LOCK_UN = 8
+    _fcntl.flock = lambda *args, **kwargs: None
+    sys.modules['fcntl'] = _fcntl
 
 ACTIVE_AGENTS = {}
 MOSAIK_MODELS = {
@@ -17,7 +27,8 @@ MOSAIK_MODELS = {
 }
 
 NUM_AGENTES = int(os.environ.get('NUM_PERIFERICOS', 4))
-PORTA_BASE = 5678
+PORTA_BASE = int(os.environ.get('PADE_PORT', 5678))
+AMS_PORT = int(os.environ.get('AMS_PORT', 8000))
 
 # MATEMÁTICA 3: Mapeamento Lógico de Vizinhos bidirecional
 # Calcula quem está à frente e quem está atrás na roda, garantindo que o Agente 1 saiba que o Agente N está nas suas costas.
@@ -36,13 +47,17 @@ def _gerar_config_rede(total_agentes):
 CONFIG_REDE = _gerar_config_rede(NUM_AGENTES)
 
 def acl_to_json(acl_msg):
+    def safe(v):
+        if isinstance(v, bytes):
+            return v.decode('utf-8', errors='ignore')
+        return str(v) if v is not None else None
     msg_dict = {
         "performative": acl_msg.performative,
         "sender": acl_msg.sender.name if acl_msg.sender else "Unknown",
         "receivers": [r.name for r in acl_msg.receivers] if acl_msg.receivers else [],
-        "content": acl_msg.content,
-        "ontology": acl_msg.ontology,
-        "conversation_id": acl_msg.conversation_id
+        "content": safe(acl_msg.content),
+        "ontology": safe(acl_msg.ontology),
+        "conversation_id": safe(acl_msg.conversation_id)
     }
     return json.dumps(msg_dict)
 
@@ -70,7 +85,8 @@ class MosaikSim(MosaikCon):
                 if msg_recebida:
                     for msg in msg_recebida.split("|||"):
                         msg = msg.strip()
-                        if msg.startswith("{"): ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg)
+                        if msg.startswith("{") and msg.endswith("}"):
+                            ACTIVE_AGENTS[eid].receber_mensagem_da_rede(msg)
 
         for eid, agente in ACTIVE_AGENTS.items():
             agente.agir(time)
@@ -124,7 +140,8 @@ class AgenteAnelFIPA(Agent):
         try:
             msg = json_to_acl(json_string)
             if msg is not None: self.react(msg)
-        except: pass
+        except Exception:
+            pass
 
     def react(self, message):
         if message is None or getattr(message, 'ontology', None) != 'malha_restrita': return
@@ -132,7 +149,7 @@ class AgenteAnelFIPA(Agent):
 
 if __name__ == '__main__':
     host = '0.0.0.0'
-    ams_config = {'name': host, 'port': 8000}
+    ams_config = {'name': host, 'port': AMS_PORT}
     agentes = []
     
     for nome, dados in CONFIG_REDE.items():

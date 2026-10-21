@@ -1,11 +1,8 @@
-
-# TSCC Co-Simulação PADE + OMNeT++ + mosaik
-
 # Co-Simulação PADE + OMNeT++ + Mosaik
 
 **Grupo de Redes Elétricas Inteligentes (GREI) — Universidade Federal do Ceará (UFC)**
 
-Plataforma de co-simulação que integra três ferramentas de diferentes domínios em containers Docker: **PADE** (camada cognitiva de agentes), **OMNeT++** (simulação de rede de comunicação) e **Mosaik** (orquestrador). A comunicação entre camadas usa **ZeroMQ REQ/REP**.
+Plataforma de co-simulação que integra três ferramentas de diferentes domínios em containers Docker: **PADE** (camada cognitiva de agentes FIPA-ACL), **OMNeT++** (simulação de rede de comunicação por eventos discretos em C++) e **Mosaik** (orquestrador de co-simulação). A comunicação entre Mosaik e OMNeT++ usa **ZeroMQ REQ/REP**.
 
 ---
 
@@ -20,7 +17,8 @@ Plataforma de co-simulação que integra três ferramentas de diferentes domíni
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Interface web (Streamlit)](#interface-web-streamlit)
 - [Dashboards gerados](#dashboards-gerados)
-- [Débitos técnicos e acoplamentos implícitos](#débitos-técnicos-e-acoplamentos-implícitos)
+- [Validação e testes automatizados](#validação-e-testes-automatizados)
+- [Débitos técnicos resolvidos](#débitos-técnicos-resolvidos)
 
 ---
 
@@ -30,7 +28,7 @@ A co-simulação é composta por três containers que rodam simultaneamente e se
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  menu_streamlit.py  ──── env vars ────  docker compose up   │
+│  menu-streamlit.py / menu.py ── env vars ── docker compose  │
 └──────────────────────────────┬──────────────────────────────┘
                                │
         ┌──────────────────────┼───────────────────────┐
@@ -38,8 +36,8 @@ A co-simulação é composta por três containers que rodam simultaneamente e se
   ┌─────▼──────┐       ┌───────▼──────┐       ┌───────▼───────┐
   │    pade    │       │  omnet_sim   │       │ mosaik_master │
   │            │       │              │       │               │
-  │ PADE       │◄─────►│ OMNeT++      │◄─────►│ Mosaik 3.6    │
-  │ Twisted    │  ZMQ  │ C++ eventos  │  ZMQ  │ scenario.py   │
+  │ PADE       │◄─────►│ OMNeT++ 6.0  │◄─────►│ Mosaik 3.6    │
+  │ Twisted    │  TCP  │ C++ eventos  │  ZMQ  │ scenario.py   │
   │ FIPA-ACL   │       │ discretos    │       │ lock-step     │
   │ porta 5678 │       │ porta 5555   │       │               │
   └────────────┘       └──────────────┘       └───────────────┘
@@ -56,31 +54,31 @@ PADE (agentes)          Mosaik (orquestrador)         OMNeT++ (física)
     │                         │                             │
 ```
 
-1. Cada agente PADE serializa mensagens FIPA-ACL em JSON e escreve em `val_out`
+1. Cada agente PADE serializa mensagens FIPA-ACL em JSON e escreve de forma síncrona em `val_out`
 2. O Mosaik entrega `val_out` ao nó correspondente no OMNeT++ via `MosaikBridge.cc`
-3. O OMNeT++ simula latência, jitter, perda e buffer overflow do canal físico
+3. O OMNeT++ simula latência, atraso de propagação espacial, jitter, perda por PER/BER e buffer overflow do canal físico
 4. O resultado retorna em `val_in` para o agente PADE no próximo passo (`time_shifted=True`)
 
-O padrão **REQ/REP bloqueante** do ZeroMQ garante que Mosaik e OMNeT++ nunca avançam em passos diferentes — o sincronismo é garantido **por construção**, não por detecção posterior.
+O padrão **REQ/REP bloqueante** do ZeroMQ garante que Mosaik e OMNeT++ nunca avançam em passos diferentes — o sincronismo é garantido **por construção** e auditado passo a passo via `mosaik_step`.
 
 ---
 
 ## Topologias suportadas
 
-| Topologia | Script PADE | Script Mosaik | Agentes | Comportamento PADE |
-|---|---|---|---|---|
-| `estrela` | `pade_star.py` | `scenario.py` | 1 central + N periféricos | Central faz broadcast; periféricos respondem só ao central |
-| `malha` | `pade_malha.py` | `scenario.py` | N agentes peers | Todos enviam para todos a cada passo (full mesh) |
-| `anel` | `pade_anel.py` | `scenario.py` | N agentes peers | Cada agente envia só para os dois vizinhos adjacentes |
+| Topologia | Script PADE | Script Mosaik | Script de Plotagem | Agentes | Comportamento PADE |
+|---|---|---|---|---|---|
+| `estrela` | `pade_star.py` | `scenario.py` | `plot_results_star.py` | 1 central + N periféricos | Central faz broadcast; periféricos respondem ao central |
+| `malha` | `pade_malha.py` | `scenario.py` | `plot_results_malha.py` | N agentes peers | Todos enviam para todos a cada passo (full mesh) |
+| `anel` | `pade_anel.py` | `scenario.py` | `plot_results_anel.py` | N agentes peers | Cada agente envia para os dois vizinhos adjacentes |
 
 **Contagem de agentes:**
 - `estrela`: `NUM_PERIFERICOS` define os periféricos; total = `NUM_PERIFERICOS + 1`
-- `malha` e `anel`: `NUM_PERIFERICOS` define o **total** de agentes (sem +1 — todos são peers)
+- `malha` e `anel`: `NUM_PERIFERICOS` define o **total** de agentes (`N` peers)
 
 **Contagem de enlaces no OMNeT++:**
-- Estrela: N enlaces (linear)
-- Anel: N enlaces (linear, ciclo fechado)
-- Malha: N×(N-1)/2 enlaces (quadrático — atenção ao desempenho com N grande)
+- Estrela: $N$ enlaces (linear)
+- Anel: $N$ enlaces (linear, ciclo fechado bidirecional)
+- Malha: $N(N-1)/2$ enlaces (quadrático — atenção ao desempenho com $N$ grande)
 
 ---
 
@@ -96,16 +94,17 @@ Definidas em `omnet-dir/Profiles.ned` e selecionáveis pelo usuário:
 | 4G | `Link_4G` | 50 Mbps | truncnormal(35ms, 8ms) | 0,5% |
 | 2G | `Link_2G` | 250 kbps | exponential(200ms) | 15% |
 
-Os tipos de enlace são atribuídos **ciclicamente** aos enlaces gerados, garantindo distribuição equilibrada entre as tecnologias selecionadas.
+Os tipos de enlace são atribuídos ciclicamente aos enlaces gerados (ou individualmente por agente no menu web para Estrela e Anel) e persistidos em `omnet-dir/links.json`.
 
 ### Física de rede simulada (`AgentNode.cc`)
 
-O módulo C++ implementa quatro efeitos realistas:
+O módulo C++ implementa cinco efeitos físicos realistas:
 
 - **Buffer overflow**: fila limitada a 5 pacotes por porta; excedente é descartado e contabilizado em `packets_dropped`
-- **BER escalonado por payload**: `finalDropChance = min(0.99, baseDropChance × max(1.0, tamanho/15000))` — pacotes maiores têm mais chance de corrupção
-- **Atraso por distância**: `propagationDelay = dist × 0.00005` somado ao delay base do canal
-- **Hardware RNG**: `std::random_device → std::mt19937` para resultados não-determinísticos
+- **PER nativo do canal (`pkt->hasBitError()`)**: avalia a taxa de erro de pacote parametrizada em `Profiles.ned`
+- **BER espacial e escalonado por payload**: `finalDropChance = min(0.99, baseDropChance × max(1.0, tamanho/15000))`
+- **Atraso por distância e Jitter dinâmico**: `propagationDelay = dist × 0.00005` somado ao delay base do canal (`cDatarateChannel`/`cDelayChannel`), com variação estocástica de jitter por pacote
+- **RNG configurável**: `std::mt19937` inicializado via `RANDOM_SEED` (reprodutibilidade científica) ou `std::random_device` (entropia de hardware)
 
 ---
 
@@ -113,7 +112,8 @@ O módulo C++ implementa quatro efeitos realistas:
 
 ```
 tscc-com-opentes/
-├── menu_streamlit.py              # Interface web (Streamlit) — ponto de entrada recomendado
+├── menu-streamlit.py              # Interface web (Streamlit) — ponto de entrada recomendado
+├── menu.py                        # Interface interativa de linha de comando (CLI)
 ├── docker-compose.yml             # Orquestração dos três containers
 ├── server-svgrepo-com.svg         # Ícone servidor (usado na interface)
 ├── laptop-minimalistic-svgrepo-com.svg  # Ícone PC periférico
@@ -139,14 +139,18 @@ tscc-com-opentes/
 │   ├── config.json                # Metadados da execução (gerado)
 │   └── links.json                 # Mapeamento enlace→tecnologia (gerado)
 │
-└── mosaik-dir/
-    ├── Dockerfile
-    ├── scenario.py                # Orquestrador: monta qualquer topologia
-    ├── collector.py               # Coleta métricas de cada nó
-    ├── omnet_wrapper.py           # Adaptador Mosaik ↔ OMNeT++
-    ├── plot_results_star.py       # Dashboard matplotlib para estrela e anel
-    ├── plot_results_malha.py      # Dashboard matplotlib para malha
-    └── results.csv                # Dados brutos coletados (gerado)
+├── mosaik-dir/
+│   ├── Dockerfile
+│   ├── scenario.py                # Orquestrador: monta qualquer topologia
+│   ├── collector.py               # Coleta métricas de cada nó em results.csv
+│   ├── omnet_wrapper.py           # Adaptador Mosaik ↔ OMNeT++
+│   ├── plot_results_star.py       # Dashboard matplotlib para estrela
+│   ├── plot_results_malha.py      # Dashboard matplotlib para malha
+│   ├── plot_results_anel.py       # Dashboard matplotlib para anel
+│   └── results.csv                # Dados brutos coletados (gerado)
+│
+└── tests/
+    └── test_validation_suite.py   # Suíte de testes automatizados (C++ e co-simulação E2E)
 ```
 
 ---
@@ -154,7 +158,7 @@ tscc-com-opentes/
 ## Pré-requisitos
 
 - **Docker** ≥ 24 e **Docker Compose** ≥ 2.20
-- **Python** ≥ 3.10 (apenas para rodar a interface Streamlit no host)
+- **Python** ≥ 3.10 (para rodar a interface Streamlit/CLI ou os testes locais)
 - `streamlit`, `plotly` instalados no host: `pip install streamlit plotly`
 
 ---
@@ -164,17 +168,24 @@ tscc-com-opentes/
 ### Via interface web (recomendado)
 
 ```bash
-git clone <url-do-repositório>
+git clone https://github.com/grei-ufc/tscc-com-opentes.git
 cd tscc-com-opentes
-git switch development # atualmente estamos trabalhando com a development, pós testes faremos o pull request e mergimos as branchs 
 streamlit run menu-streamlit.py
 ```
 
-Acesse `http://localhost:8501`, configure topologia, número de agentes e tipos de enlace, e clique em **Iniciar simulação**. Os gráficos aparecem automaticamente na interface ao término.
+Acesse `http://localhost:8501`, configure topologia, número de agentes e tipos de enlace, e clique em **Iniciar simulação**. Os gráficos aparecem automaticamente na aba **Resultados** ao término.
 
 ### Via terminal (CLI)
 
- a prencher ainda 
+```bash
+python3 menu.py
+```
+
+O menu interativo em terminal permite escolher a topologia (`1=Estrela`, `2=Malha`, `3=Anel`), quantidade de agentes e tecnologias de enlace (`1..5`), exibindo o resumo antes de disparar `docker compose up --build`. Para encerrar os containers:
+
+```bash
+python3 menu.py --parar
+```
 
 ---
 
@@ -187,57 +198,43 @@ Injetadas via `docker-compose.yml` a partir das escolhas feitas no menu:
 | `TOPOLOGY` | `estrela`, `malha`, `anel` | `estrela` | Topologia da rede |
 | `NUM_PERIFERICOS` | 1 – 500 | `3` | Periféricos (estrela) ou total de agentes (malha/anel) |
 | `TIPOS_REDE` | Lista separada por vírgula | todos os 5 tipos | Tecnologias de enlace disponíveis na simulação |
-
----
-
-## Interface web (Streamlit)
-
-`menu_streamlit.py` oferece:
-
-- **Seleção de topologia** com descrição contextual
-- **Campo de agentes** com semântica correta por topologia (estrela: periféricos; malha/anel: total de peers)
-- **Multiselect de tecnologias** com cores consistentes entre a interface e os dashboards
-- **Ícones SVG** dos agentes (servidor, PC, roteador) coloridos na identidade visual do GREI
-- **Preview interativo** da topologia em Plotly — arestas coloridas por tecnologia, atualizado em tempo real a cada alteração
-- **Nota de bidirecionalidade** para anel (cada enlace físico transporta dados nos dois sentidos)
-- **Terminal embutido** com streaming do log do `docker compose` durante a simulação
-- **Dashboards automáticos** exibidos na interface ao fim da simulação; limpos ao iniciar nova rodada
+| `RANDOM_SEED` | Inteiro opcional | vazio (hardware RNG) | Semente determinística para reprodutibilidade em Python e C++ |
+| `SIM_STEPS` | Inteiro ≥ 2 | `20` | Quantidade de passos discretos da co-simulação no Mosaik |
 
 ---
 
 ## Dashboards gerados
 
-### Estrela e Anel — `plot_results_star.py`
-
-Gera um PNG por visão em `mosaik-dir/`:
+Todos os scripts de plotagem (`plot_results_star.py`, `plot_results_malha.py`, `plot_results_anel.py`) utilizam `links.json`, `posicoes.json` e `config.json` para gerar painéis executivos de 6 visões em `mosaik-dir/`:
 
 | Arquivo | Conteúdo |
 |---|---|
-| `grafico_trafego_Geral.png` | Visão consolidada de todas as tecnologias |
-| `grafico_trafego_Cabeada.png` | Latência, jitter, PDR e payload da rede Cabeada |
+| `grafico_trafego_Geral.png` | Visão consolidada de todas as tecnologias ativas |
+| `grafico_trafego_Cabeada.png` | Latência, payload, jitter, PDR, tabela e mapa da rede Cabeada |
 | `grafico_trafego_5G.png` | Idem para 5G |
 | `grafico_trafego_Wireless.png` | Idem para Wireless |
 | `grafico_trafego_4G.png` | Idem para 4G |
 | `grafico_trafego_2G.png` | Idem para 2G |
-
-### Malha — `plot_results_malha.py`
-
-Gera `mosaik-dir/grafico_malha.png` com quatro painéis:
-
-1. **Mapa da rede** — nós posicionados geograficamente, arestas coloridas por tecnologia
-2. **PDR por tecnologia** — barras horizontais com taxa de entrega de cada tipo de enlace
-3. **Latência por tecnologia** — barras verticais com média por tipo de enlace
-4. **PDR global** — barra empilhada: entregues / descartados / restantes
-
-> Se `links.json` não existir (versão anterior do `scenario.py`), o script reconstrói os enlaces automaticamente a partir de `posicoes.json` e `config.json`.
+| `grafico_trafego_Anel.png` | Visão dedicada por Agente Roteador P2P para a topologia em Anel |
 
 ---
 
-## Débitos técnicos e acoplamentos implícitos
+## Validação e testes automatizados
 
-| Acoplamento | Onde | Risco |
-|---|---|---|
-| `classificar_rede()` em `plot_results_star.py` reimplementa a lógica cíclica de `scenario.py` | Ambos os arquivos | Mudança na ordem de TIPOS_REDE quebra a classificação sem erro explícito |
-| `+1.0` hardcoded em `MosaikBridge.cc` deve bater com `time+1` em `omnet_wrapper.py` | C++ e Python | Dessincronismo silencioso se um lado mudar |
-| `TOTAL_AGENTES` deve ser consistente entre `scenario.py` e os scripts PADE | 4 arquivos | Topologia NED diferente da topologia PADE |
-| `mosaik_step` retornado pelo C++ é sempre `None` | `MosaikBridge.cc` | Auditoria formal de sincronismo pendente |
+Para executar a suíte de validação automatizada (compilação e teste da física C++ `AgentNode.cc`/`MosaikBridge.cc` + co-simulação integrada fim a fim para `estrela`, `malha` e `anel` + validação dos dashboards):
+
+```bash
+pytest -v tests/test_validation_suite.py
+```
+
+---
+
+## Débitos técnicos resolvidos
+
+| Item | Solução implementada |
+|---|---|
+| Classificação de enlace nos dashboards | `scenario.py` persiste `omnet-dir/links.json` e todos os scripts (`star`, `malha`, `anel`) consultam o mapa real de enlaces |
+| Alinhamento de `time_resolution` e `mosaik_step` | `MosaikBridge.cc` lê `time` e `time_resolution` do JSON de `step` e retorna `"mosaik_step": currentMosaikStep` no ACK ZMQ |
+| Semântica unificada de `NUM_PERIFERICOS` | Unificada entre `menu.py`, `menu-streamlit.py`, `scenario.py` e scripts PADE (`N+1` na estrela; `N` total na malha e no anel) |
+| Física de canal `cDatarateChannel` e `PER` | `AgentNode.cc` manipula `cDatarateChannel`/`cDelayChannel` via `par("delay")` e verifica `pkt->hasBitError()` além do BER espacial |
+| Sincronismo de envio em memória no PADE | Removidos timers `call_later` assíncronos de parede em `pade_star.py` e `pade_malha.py` em favor de escrita síncrona em `val_out` no passo `t` |

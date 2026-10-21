@@ -8,84 +8,84 @@ network DynamicNetwork
             yPos = 500.0;
         }
         agent_p_1: AgentNode {
-            xPos = 151.94;
-            yPos = 278.38;
+            xPos = 639.43;
+            yPos = 25.01;
         }
         agent_p_2: AgentNode {
-            xPos = 647.9;
-            yPos = 619.32;
+            xPos = 275.03;
+            yPos = 223.21;
         }
         agent_p_3: AgentNode {
-            xPos = 419.64;
-            yPos = 56.14;
+            xPos = 736.47;
+            yPos = 676.7;
         }
         agent_p_4: AgentNode {
-            xPos = 114.31;
-            yPos = 377.81;
+            xPos = 892.18;
+            yPos = 86.94;
         }
         agent_p_5: AgentNode {
-            xPos = 204.64;
-            yPos = 719.6;
+            xPos = 421.92;
+            yPos = 29.8;
         }
         agent_p_6: AgentNode {
-            xPos = 69.61;
-            yPos = 570.38;
+            xPos = 218.64;
+            yPos = 505.36;
         }
         agent_p_7: AgentNode {
-            xPos = 872.35;
-            yPos = 391.01;
+            xPos = 26.54;
+            yPos = 198.84;
         }
         agent_p_8: AgentNode {
-            xPos = 700.0;
-            yPos = 308.49;
+            xPos = 649.88;
+            yPos = 544.94;
         }
         agent_p_9: AgentNode {
-            xPos = 62.41;
-            yPos = 436.75;
+            xPos = 220.44;
+            yPos = 589.27;
         }
         agent_p_10: AgentNode {
-            xPos = 87.18;
-            yPos = 360.17;
+            xPos = 809.43;
+            yPos = 6.5;
         }
         agent_p_11: AgentNode {
-            xPos = 245.89;
-            yPos = 495.67;
+            xPos = 805.82;
+            yPos = 698.14;
         }
         agent_p_12: AgentNode {
-            xPos = 266.91;
-            yPos = 612.46;
+            xPos = 340.25;
+            yPos = 155.48;
         }
         agent_p_13: AgentNode {
-            xPos = 700.91;
-            yPos = 563.95;
+            xPos = 957.21;
+            yPos = 336.59;
         }
         agent_p_14: AgentNode {
-            xPos = 733.32;
-            yPos = 231.82;
+            xPos = 92.75;
+            yPos = 96.72;
         }
         agent_p_15: AgentNode {
-            xPos = 83.93;
-            yPos = 627.52;
+            xPos = 847.49;
+            yPos = 603.73;
         }
         agent_p_16: AgentNode {
-            xPos = 602.26;
-            yPos = 946.08;
+            xPos = 807.13;
+            yPos = 729.73;
         }
         agent_p_17: AgentNode {
-            xPos = 426.44;
-            yPos = 759.68;
+            xPos = 536.23;
+            yPos = 973.12;
         }
         agent_p_18: AgentNode {
-            xPos = 379.4;
-            yPos = 69.64;
+            xPos = 378.53;
+            yPos = 552.04;
         }
         agent_p_19: AgentNode {
-            xPos = 866.91;
-            yPos = 507.27;
+            xPos = 829.4;
+            yPos = 618.52;
         }
         agent_p_20: AgentNode {
-            xPos = 755.57;
-            yPos = 302.31;
+            xPos = 861.71;
+            yPos = 577.35;
         }
 
     connections:

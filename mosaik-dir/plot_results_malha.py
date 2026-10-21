@@ -16,14 +16,15 @@ Diferenças em relação ao star:
     O Painel 2 exibe o payload médio por tecnologia.
 """
 
-import pandas as pd
-import json, os
+import json
+import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
+import pandas as pd
 
 # ── Mapeamento NED → label legível ────────────────────────────
 NED_PARA_LABEL = {
@@ -41,13 +42,24 @@ _PALETA = ['#1f77b4', '#2ca02c', '#17becf', '#ff7f0e', '#9467bd', '#8c564b']
 # ══════════════════════════════════════════════════════════════
 
 def _path(nome):
-    p = f'/omnet-dir/{nome}'
-    return p if os.path.exists(p) else nome
+    omnet_env = os.environ.get('OMNET_DIR')
+    candidatos = []
+    if omnet_env:
+        candidatos.append(os.path.join(omnet_env, nome))
+    candidatos.extend([
+        f'/omnet-dir/{nome}',
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'omnet-dir', nome),
+        nome,
+    ])
+    for c in candidatos:
+        if os.path.exists(c):
+            return c
+    return nome
 
 
 def _carregar_tipos_rede():
     try:
-        with open(_path('config.json')) as f:
+        with open(_path('config.json'), encoding='utf-8') as f:
             config = json.load(f)
         brutos = config.get('tipos_rede', [])
         labels = [NED_PARA_LABEL.get(t, t) for t in brutos]
@@ -73,11 +85,11 @@ def carregar():
     if not os.path.exists('results.csv'):
         raise FileNotFoundError("results.csv não encontrado.")
     df = pd.read_csv('results.csv')
-    with open(_path('posicoes.json')) as f: posicoes = json.load(f)
-    with open(_path('config.json'))  as f: config   = json.load(f)
+    with open(_path('posicoes.json'), encoding='utf-8') as f: posicoes = json.load(f)
+    with open(_path('config.json'), encoding='utf-8')  as f: config   = json.load(f)
     p = _path('links.json')
     if os.path.exists(p):
-        with open(p) as f: links = json.load(f)
+        with open(p, encoding='utf-8') as f: links = json.load(f)
         print(f"links.json carregado ({len(links)} enlaces).")
     else:
         print("links.json ausente — reconstruindo malha completa.")
@@ -128,7 +140,7 @@ def _extrair_sender(msg_str):
 # ══════════════════════════════════════════════════════════════
 
 def gerar_graficos():
-    print("Iiciando geração de Painel Executivo Científico (Malha)...")
+    print("Iniciando geração de Painel Executivo Científico (Malha)...")
 
     try:
         df, posicoes, config, links = carregar()
@@ -208,7 +220,8 @@ def gerar_graficos():
             n   = len(df_t)
             nids_t = {nid for (a, b), tech in link_map.items()
                       if tech == tipo for nid in [a, b]}
-            d_t = td[td['NodeId'].isin(nids_t)]['packets_dropped'].max().sum()
+            sub_td = td[td['NodeId'].isin(nids_t)]
+            d_t = sub_td.groupby('NodeId')['packets_dropped'].max().sum() if not sub_td.empty else 0.0
             tot = n + d_t
             pdr_t = 100 - ((d_t / tot * 100) if tot > 0 else 0)
             tabela_resumo.append([tipo, f'{l_m:.1f} ms', f'{j_m:.1f} μs',
@@ -310,7 +323,8 @@ def gerar_graficos():
             n_am   = len(df_sub)
             nids_f = {nid for (a,b), tech in link_map.items()
                       if tech == rede_foco for nid in [a,b]}
-            d_f    = td[td['NodeId'].isin(nids_f)]['packets_dropped'].max().sum()
+            sub_td = td[td['NodeId'].isin(nids_f)]
+            d_f    = sub_td.groupby('NodeId')['packets_dropped'].max().sum() if not sub_td.empty else 0.0
             tot    = n_am + d_f
             ent_pct = (n_am / tot * 100) if tot > 0 else 0
             drp_pct = (d_f  / tot * 100) if tot > 0 else 0
@@ -348,7 +362,6 @@ def gerar_graficos():
                          fontweight='bold', fontsize=13)
 
         # ── 6. Mapa Espacial da Malha ──────────────────────────
-        # Arestas: coloridas se em foco, cinza transparente se não
         for lk in links:
             o = lk['origem']; d = lk['destino']
             if o not in pos_dict or d not in pos_dict: continue
@@ -360,12 +373,10 @@ def gerar_graficos():
                         alpha=0.70 if eh_foco else 0.12,
                         linewidth=1.8 if eh_foco else 0.7, zorder=1)
 
-        # Legenda de cores das tecnologias no mapa
         for tipo in (TIPOS_REDE_ATIVOS if rede_foco == 'Geral' else [rede_foco]):
             ax_map.plot([], [], color=CORES.get(tipo,'#888'),
                         linewidth=2.5, label=tipo)
 
-        # Nós: heatmap de latência média
         lat_nos = [avg_lat_no.get(nid, 0) for nid in ids_nos if nid in pos_dict]
         xs_nos  = [pos_dict[nid][0] for nid in ids_nos if nid in pos_dict]
         ys_nos  = [pos_dict[nid][1] for nid in ids_nos if nid in pos_dict]
