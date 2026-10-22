@@ -51,13 +51,20 @@ class OmnetAdapter(mosaik_api.Simulator):
         self.time_resolution = 1.0
 
     def init(self, sid, time_resolution, host=None, port=None):
+        import socket as _py_socket
         self.sid             = sid
         self.time_resolution = time_resolution
         host = host or os.environ.get('OMNET_HOST', 'omnet_sim')
         port = int(port or os.environ.get('OMNET_PORT', 5555))
+        try:
+            infos = _py_socket.getaddrinfo(host, None, _py_socket.AF_INET, _py_socket.SOCK_STREAM)
+            if infos:
+                host = infos[0][4][0]
+        except Exception:
+            pass
         self.socket.connect(f"tcp://{host}:{port}")
         print(f"[MOSAIK] Conectado ao OMNeT++ em tcp://{host}:{port} "
-              f"(time_resolution={time_resolution}s/passo)")
+              f"(time_resolution={time_resolution}s/passo)", flush=True)
         return self.meta
 
     def create(self, num, model, **model_params):
@@ -71,16 +78,16 @@ class OmnetAdapter(mosaik_api.Simulator):
                     'src':    model_params['src'],
                     'dest':   model_params['dest'],
                 }
-                print(f"\n[MOSAIK] ---> CONNECT:\n{json.dumps(payload, indent=4)}")
+                print(f"\n[MOSAIK] ---> CONNECT:\n{json.dumps(payload, indent=4)}", flush=True)
                 self.socket.send_json(payload)
                 response = self.socket.recv_json()
-                print(f"[MOSAIK] <--- CONNECT ACK:\n{json.dumps(response, indent=4)}")
+                print(f"[MOSAIK] <--- CONNECT ACK:\n{json.dumps(response, indent=4)}", flush=True)
 
                 if response.get('status') == 'ok':
                     conn_id = f"conn_{model_params['src']}_{model_params['dest']}_{i}"
                     entities.append({'eid': conn_id, 'type': model})
                 else:
-                    print(f"[MOSAIK] ERRO ao conectar: {response.get('reason')}")
+                    print(f"[MOSAIK] ERRO ao conectar: {response.get('reason')}", flush=True)
             return entities
 
         # ---- Nós (AgentNodes) ----
@@ -92,15 +99,15 @@ class OmnetAdapter(mosaik_api.Simulator):
                 'eid':    eid,
                 'params': model_params,
             }
-            print(f"\n[MOSAIK] ---> CREATE:\n{json.dumps(payload, indent=4)}")
+            print(f"\n[MOSAIK] ---> CREATE:\n{json.dumps(payload, indent=4)}", flush=True)
             self.socket.send_json(payload)
             response = self.socket.recv_json()
-            print(f"[MOSAIK] <--- CREATE ACK:\n{json.dumps(response, indent=4)}")
+            print(f"[MOSAIK] <--- CREATE ACK:\n{json.dumps(response, indent=4)}", flush=True)
 
             if response.get('status') == 'ok':
                 entities.append({'eid': eid, 'type': model})
             else:
-                print(f"[MOSAIK] ERRO ao criar {eid}: {response.get('reason')}")
+                print(f"[MOSAIK] ERRO ao criar {eid}: {response.get('reason')}", flush=True)
 
         return entities
 

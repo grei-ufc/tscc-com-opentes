@@ -59,26 +59,53 @@ _DEFAULT_OMNET_DIR = (
 OMNET_DIR = os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR)
 
 # ══════════════════════════════════════════════════════════════
-# CONFIGURAÇÃO DOS SIMULADORES MOSAIK
+# RESOLUÇÃO IPv4 E CONFIGURAÇÃO DOS SIMULADORES MOSAIK
 # ══════════════════════════════════════════════════════════════
+
+def _resolver_ipv4(host):
+    """
+    Resolve o hostname para endereço IPv4 explicitamente.
+    Evita que o glibc no Docker (ex: GitHub Codespaces / Azure VM) tente IPv6 (AAAA)
+    primeiro, o que causa timeout de 30s e travamento no asyncio.open_connection.
+    """
+    if not host:
+        return host
+    try:
+        infos = socket.getaddrinfo(host, None, socket.AF_INET, socket.SOCK_STREAM)
+        if infos:
+            ipv4 = infos[0][4][0]
+            print(f"[MOSAIK] Host '{host}' resolvido para IPv4: {ipv4}", flush=True)
+            return ipv4
+    except Exception as e:
+        print(f"[MOSAIK] ⚠ Falha ao resolver IPv4 para '{host}': {e}; mantendo original.", flush=True)
+    return host
+
+PADE_HOST_IPV4 = _resolver_ipv4(PADE_HOST)
+OMNET_HOST_IPV4 = _resolver_ipv4(os.environ.get('OMNET_HOST', 'omnet_sim'))
 
 sim_config = {
     'OmnetSim':   {'python': 'omnet_wrapper:OmnetAdapter'},
     'ColetorSim': {'python': 'collector:Coletor'},
-    'PadeSim':    {'connect': f'{PADE_HOST}:{PADE_PORT}'},
+    'PadeSim':    {'connect': f'{PADE_HOST_IPV4}:{PADE_PORT}'},
 }
 
 
-def _aguardar_pade_pronto(host=PADE_HOST, port=PADE_PORT, timeout=30.0):
+def _aguardar_pade_pronto(host=None, port=None, timeout=30.0):
     """Aguarda a porta TCP do PADE estar pronta antes do world.start('PadeSim')."""
+    host = host or PADE_HOST_IPV4
+    port = port or PADE_PORT
+    print(f"[MOSAIK] Aguardando PADE responder em {host}:{port}...", flush=True)
     inicio = time.time()
+    ultimo_erro = None
     while time.time() - inicio < timeout:
         try:
-            with socket.create_connection((host, port), timeout=1.0):
+            with socket.create_connection((host, port), timeout=0.5):
+                print(f"[MOSAIK] ✓ Conexão com PADE em {host}:{port} pronta!", flush=True)
                 return True
-        except OSError:
-            time.sleep(0.2)
-    print(f"[MOSAIK] ⚠ Timeout aguardando PADE em {host}:{port}; tentando conectar...")
+        except OSError as e:
+            ultimo_erro = e
+            time.sleep(0.3)
+    print(f"[MOSAIK] ⚠ Timeout ({timeout}s) aguardando PADE em {host}:{port} ({ultimo_erro}); tentando conectar...", flush=True)
     return False
 
 
@@ -236,9 +263,9 @@ def gerar_links_anel(agentes_info):
 # ══════════════════════════════════════════════════════════════
 
 def create_scenario(world):
-    print(f"\nTopologia : {TOPOLOGY.upper()}")
-    print(f"   Parâmetro N: {NUM_PERIFERICOS}")
-    print(f"   Redes      : {', '.join(TIPOS_REDE)}\n")
+    print(f"\nTopologia : {TOPOLOGY.upper()}", flush=True)
+    print(f"   Parâmetro N: {NUM_PERIFERICOS}", flush=True)
+    print(f"   Redes      : {', '.join(TIPOS_REDE)}\n", flush=True)
 
     if TOPOLOGY == 'anel':
         _montar_anel(world)
@@ -249,9 +276,9 @@ def create_scenario(world):
 
 def _iniciar_simuladores(world):
     """Inicia OmnetSim, ColetorSim e PadeSim após gerar DynamicNetwork.ned."""
-    omnet_sim   = world.start('OmnetSim')
+    omnet_sim   = world.start('OmnetSim', host=OMNET_HOST_IPV4)
     coletor_sim = world.start('ColetorSim')
-    _aguardar_pade_pronto(PADE_HOST, PADE_PORT)
+    _aguardar_pade_pronto(PADE_HOST_IPV4, PADE_PORT)
     pade_sim    = world.start('PadeSim')
     monitor     = coletor_sim.Monitor()
     return omnet_sim, pade_sim, monitor
@@ -297,9 +324,9 @@ def _montar_central_periferico(world):
         links = gerar_links_estrela(agentes_info)
 
     _persistir_mapa_e_config(agentes_info, links)
-    print(f"   ↳ {len(agentes_info)} agentes e {len(links)} enlaces gerados para topologia '{TOPOLOGY}'.")
+    print(f"   ↳ {len(agentes_info)} agentes e {len(links)} enlaces gerados para topologia '{TOPOLOGY}'.", flush=True)
     gerar_topologia_ned(agentes_info, links)
-    print("   ↳ DynamicNetwork.ned gerado.\n")
+    print("   ↳ DynamicNetwork.ned gerado.\n", flush=True)
 
     omnet_sim, pade_sim, monitor = _iniciar_simuladores(world)
 
@@ -358,9 +385,9 @@ def _montar_anel(world):
     links = gerar_links_anel(agentes_info)
     _persistir_mapa_e_config(agentes_info, links)
     print(f"   ↳ {len(links)} enlaces gerados para topologia 'anel' "
-          f"({total_agentes} agentes).")
+          f"({total_agentes} agentes).", flush=True)
     gerar_topologia_ned(agentes_info, links)
-    print("   ↳ DynamicNetwork.ned gerado.\n")
+    print("   ↳ DynamicNetwork.ned gerado.\n", flush=True)
 
     omnet_sim, pade_sim, monitor = _iniciar_simuladores(world)
 

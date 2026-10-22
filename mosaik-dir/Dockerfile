@@ -1,5 +1,7 @@
 FROM python:3.12.11-slim
 
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 # Instala dependências do orquestrador e dos dashboards científicos

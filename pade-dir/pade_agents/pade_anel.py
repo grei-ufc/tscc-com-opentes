@@ -81,7 +81,8 @@ class MosaikSim(MosaikCon):
     def step(self, time, inputs, max_advance=0):
         for eid, attrs in inputs.items():
             if eid in ACTIVE_AGENTS and 'val_in' in attrs:
-                msg_recebida = list(attrs['val_in'].values())[0]
+                vals = list(attrs['val_in'].values())
+                msg_recebida = vals[0] if vals else ""
                 if msg_recebida:
                     for msg in msg_recebida.split("|||"):
                         msg = msg.strip()

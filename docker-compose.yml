@@ -17,6 +17,8 @@ services:
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
       - RANDOM_SEED=${RANDOM_SEED:-}
+      - PADE_PORT=5678
+      - PYTHONUNBUFFERED=1
     stdin_open: true
     tty: true
     # Seleciona o script PADE correto conforme a topologia:
@@ -50,6 +52,7 @@ services:
       - ./omnet-dir:/root/models
     environment:
       - RANDOM_SEED=${RANDOM_SEED:-}
+      - PYTHONUNBUFFERED=1
     command: >
       /bin/bash -c "
       source /root/omnetpp/setenv &&
@@ -80,6 +83,11 @@ services:
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
       - RANDOM_SEED=${RANDOM_SEED:-}
+      - PADE_HOST=pade
+      - PADE_PORT=5678
+      - OMNET_HOST=omnet_sim
+      - OMNET_PORT=5555
+      - PYTHONUNBUFFERED=1
       - SIM_STEPS=${SIM_STEPS:-20}
     # Seleciona o script de plotagem correto conforme a topologia:
     #   malha → plot_results_malha.py
