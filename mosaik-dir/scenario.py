@@ -48,7 +48,7 @@ if RANDOM_SEED is not None and str(RANDOM_SEED).strip() != '':
     random.seed(int(RANDOM_SEED))
 
 SIM_STEPS = int(os.environ.get('SIM_STEPS', 20))
-PADE_HOST = os.environ.get('PADE_HOST', 'pade')
+PADE_HOST = os.environ.get('PADE_HOST', '127.0.0.1')
 PADE_PORT = int(os.environ.get('PADE_PORT', 5678))
 
 _DEFAULT_OMNET_DIR = (
@@ -81,7 +81,7 @@ def _resolver_ipv4(host):
     return host
 
 PADE_HOST_IPV4 = _resolver_ipv4(PADE_HOST)
-OMNET_HOST_IPV4 = _resolver_ipv4(os.environ.get('OMNET_HOST', 'omnet_sim'))
+OMNET_HOST_IPV4 = _resolver_ipv4(os.environ.get('OMNET_HOST', '127.0.0.1'))
 
 sim_config = {
     'OmnetSim':   {'python': 'omnet_wrapper:OmnetAdapter'},
@@ -94,18 +94,25 @@ def _aguardar_pade_pronto(host=None, port=None, timeout=30.0):
     """Aguarda a porta TCP do PADE estar pronta antes do world.start('PadeSim')."""
     host = host or PADE_HOST_IPV4
     port = port or PADE_PORT
-    print(f"[MOSAIK] Aguardando PADE responder em {host}:{port}...", flush=True)
+    candidatos = []
+    for h in [host, '127.0.0.1']:
+        if h and h not in candidatos:
+            candidatos.append(h)
+
+    print(f"[MOSAIK] Aguardando PADE responder em {candidatos}:{port}...", flush=True)
     inicio = time.time()
     ultimo_erro = None
     while time.time() - inicio < timeout:
-        try:
-            with socket.create_connection((host, port), timeout=0.5):
-                print(f"[MOSAIK] ✓ Conexão com PADE em {host}:{port} pronta!", flush=True)
-                return True
-        except OSError as e:
-            ultimo_erro = e
-            time.sleep(0.3)
-    print(f"[MOSAIK] ⚠ Timeout ({timeout}s) aguardando PADE em {host}:{port} ({ultimo_erro}); tentando conectar...", flush=True)
+        for h in candidatos:
+            try:
+                with socket.create_connection((h, port), timeout=0.5):
+                    print(f"[MOSAIK] ✓ Conexão com PADE em {h}:{port} pronta!", flush=True)
+                    sim_config['PadeSim']['connect'] = f'{h}:{port}'
+                    return True
+            except OSError as e:
+                ultimo_erro = f"{h}:{port} -> {e}"
+        time.sleep(0.3)
+    print(f"[MOSAIK] ⚠ Timeout ({timeout}s) aguardando PADE ({ultimo_erro}); tentando conectar...", flush=True)
     return False
 
 

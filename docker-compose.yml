@@ -44,10 +44,9 @@ services:
   omnet_sim:
     build: ./omnet-dir
     container_name: omnet_sim
-    networks:
-      - sim_net
-    expose:
-      - "5555"
+    network_mode: "service:pade"
+    depends_on:
+      - pade
     volumes:
       - ./omnet-dir:/root/models
     environment:
@@ -55,6 +54,7 @@ services:
       - PYTHONUNBUFFERED=1
     command: >
       /bin/bash -c "
+      rm -f /root/models/DynamicNetwork.ned &&
       source /root/omnetpp/setenv &&
       cd /root/models &&
       opp_makemake -f --deep -o sim_exec -lzmq &&
@@ -70,8 +70,7 @@ services:
   mosaik_master:
     build: ./mosaik-dir
     container_name: mosaik_master
-    networks:
-      - sim_net
+    network_mode: "service:pade"
     depends_on:
       - pade
       - omnet_sim
@@ -83,9 +82,9 @@ services:
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
       - RANDOM_SEED=${RANDOM_SEED:-}
-      - PADE_HOST=pade
+      - PADE_HOST=127.0.0.1
       - PADE_PORT=5678
-      - OMNET_HOST=omnet_sim
+      - OMNET_HOST=127.0.0.1
       - OMNET_PORT=5555
       - PYTHONUNBUFFERED=1
       - SIM_STEPS=${SIM_STEPS:-20}

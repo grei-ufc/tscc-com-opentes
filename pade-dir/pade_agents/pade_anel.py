@@ -74,6 +74,10 @@ def json_to_acl(json_str):
 class MosaikSim(MosaikCon):
     def __init__(self, agent):
         super().__init__(MOSAIK_MODELS, agent)
+
+    def init(self, sid, **kwargs):
+        display_message(self.agent.aid.localname, f'🔗 Mosaik conectado (sid={sid})')
+        return super().init(sid, **kwargs)
         
     def create(self, num, model, agent_id):
         return [{'eid': agent_id, 'type': model}]
@@ -113,8 +117,10 @@ class AgenteAnelFIPA(Agent):
             self.mosaik_sim = MosaikSim(self)
 
     def on_start(self):
+        self.system_behaviours.clear()
         super().on_start()
         ACTIVE_AGENTS[self.aid.localname] = self
+        display_message(self.aid.localname, '🌐 Online (Topologia Anel Bidirecional com Roteamento OMNeT++)')
 
     def send(self, message):
         if isinstance(message, ACLMessage) and message.ontology == 'malha_restrita':

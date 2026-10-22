@@ -54,7 +54,7 @@ class OmnetAdapter(mosaik_api.Simulator):
         import socket as _py_socket
         self.sid             = sid
         self.time_resolution = time_resolution
-        host = host or os.environ.get('OMNET_HOST', 'omnet_sim')
+        host = host or os.environ.get('OMNET_HOST', '127.0.0.1')
         port = int(port or os.environ.get('OMNET_PORT', 5555))
         try:
             infos = _py_socket.getaddrinfo(host, None, _py_socket.AF_INET, _py_socket.SOCK_STREAM)

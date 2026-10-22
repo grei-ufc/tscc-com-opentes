@@ -200,11 +200,19 @@ def rodar(topologia_id, num_agentes, tipos_rede):
     env["NUM_PERIFERICOS"] = str(num_agentes)
     env["TIPOS_REDE"]      = ",".join(tipos_rede)
 
+    # Remove DynamicNetwork.ned residual antes de subir os containers
+    ned_residual = os.path.join(RAIZ, "omnet-dir", "DynamicNetwork.ned")
+    if os.path.exists(ned_residual):
+        try:
+            os.remove(ned_residual)
+        except OSError:
+            pass
+
     print(f"\nIniciando docker compose...\n")
 
     resultado = subprocess.run(
         [
-            "docker", "compose", "up", "--build",
+            "docker", "compose", "up", "--build", "--force-recreate",
             "--abort-on-container-exit",
             "--exit-code-from", "mosaik_master",
         ],

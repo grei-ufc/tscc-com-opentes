@@ -371,8 +371,14 @@ def exibir_resultados(topologia):
 
 def rodar_docker_compose(env_extra, placeholder_log):
     env = os.environ.copy(); env.update(env_extra)
+    ned_residual = os.path.join(OMNET_DIR, "DynamicNetwork.ned")
+    if os.path.exists(ned_residual):
+        try:
+            os.remove(ned_residual)
+        except OSError:
+            pass
     proc = subprocess.Popen(
-        ["docker", "compose", "up", "--build",
+        ["docker", "compose", "up", "--build", "--force-recreate",
          "--abort-on-container-exit",
          "--exit-code-from", "mosaik_master"],
         cwd=RAIZ_PROJETO, env=env,
