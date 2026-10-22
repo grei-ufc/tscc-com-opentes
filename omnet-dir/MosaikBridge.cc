@@ -16,6 +16,8 @@ class MosaikBridge : public cSimpleModule {
     zmq::context_t context{1};
     zmq::socket_t socket{context, zmq::socket_type::rep};
     cMessage *stepMsg = nullptr;
+    long currentMosaikStep = 0;
+    double timeResolution = 1.0;
 
     void applyInputs(json j);
 
@@ -41,7 +43,7 @@ void MosaikBridge::applyInputs(json j) {
                                 totalValue += value.get<double>();
                             }
                             targetNode->par(attrName.c_str()).setDoubleValue(totalValue);
-                        } 
+                        }
                         else if (sources.begin().value().is_string()) {
                             std::string combined = "";
                             for (auto& [sourceEntity, value] : sources.items()) {
@@ -53,7 +55,7 @@ void MosaikBridge::applyInputs(json j) {
                             }
                             if (!combined.empty()) {
                                 std::string existing = targetNode->par(attrName.c_str()).stdstringValue();
-                                if(!existing.empty()) {
+                                if (!existing.empty()) {
                                     combined = existing + "|||" + combined;
                                 }
                                 targetNode->par(attrName.c_str()).setStringValue(combined.c_str());
@@ -69,11 +71,11 @@ void MosaikBridge::applyInputs(json j) {
 void MosaikBridge::initialize() {
     socket.bind("tcp://*:5555");
     bool scenario_ready = false;
-    
+
     while (!scenario_ready) {
         zmq::message_t request;
         socket.recv(request, zmq::recv_flags::none);
-        
+
         std::string msg_str(static_cast<char*>(request.data()), request.size());
         json j = json::parse(msg_str);
 
@@ -85,10 +87,8 @@ void MosaikBridge::initialize() {
             cModule *existingNode = getParentModule()->getSubmodule(entityId.c_str());
 
             if (existingNode) {
-                // O nó já existe na topologia conectada. Apenas validamos para o Mosaik.
                 response = {{"status", "ok"}};
             } else {
-                // Fallback de segurança: Se por algum motivo o nó não estiver no NED, cria dinamicamente
                 cModuleType *moduleType = cModuleType::find(modelName.c_str());
                 if (moduleType) {
                     cModule *newModule = moduleType->create(entityId.c_str(), getParentModule());
@@ -101,16 +101,18 @@ void MosaikBridge::initialize() {
                 }
             }
             socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
-        } 
+        }
         else if (j["action"] == "connect") {
             socket.send(zmq::buffer(json({{"status", "ok"}}).dump()), zmq::send_flags::none);
         }
         else if (j["action"] == "step") {
+            currentMosaikStep = j.value("time", 0L);
+            timeResolution = j.value("time_resolution", 1.0);
             applyInputs(j);
-            
+
             scenario_ready = true;
             stepMsg = new cMessage("next_step");
-            scheduleAt(simTime() + 1.0, stepMsg); // Mantém o avanço de tempo do Mosaik
+            scheduleAt(simTime() + timeResolution, stepMsg);
         }
     }
 }
@@ -121,21 +123,18 @@ void MosaikBridge::handleMessage(cMessage *msg) {
 
         for (cModule::SubmoduleIterator it(getParentModule()); !it.end(); ++it) {
             cModule *submod = *it;
-            if (submod == this) continue; 
+            if (submod == this) continue;
 
             std::string nodeName = submod->getName();
             json node_data = json::object();
 
             node_data["status"] = submod->hasPar("status") ? submod->par("status").stdstringValue() : "unknown";
-            
+
             if (submod->hasPar("val_out")) {
                 node_data["val_out"] = submod->par("val_out").stdstringValue();
                 submod->par("val_out").setStringValue("");
             }
 
-            // ==============================================================
-            // EXPORTAÇÃO DA TELEMETRIA DE ALTA RESOLUÇÃO
-            // ==============================================================
             if (submod->hasPar("packet_sizes_out")) {
                 node_data["packet_sizes_out"] = submod->par("packet_sizes_out").stdstringValue();
                 submod->par("packet_sizes_out").setStringValue("");
@@ -149,7 +148,6 @@ void MosaikBridge::handleMessage(cMessage *msg) {
                 submod->par("jitters_out").setStringValue("");
             }
 
-            // Métricas globais
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
             if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();
@@ -159,25 +157,28 @@ void MosaikBridge::handleMessage(cMessage *msg) {
 
         json response = {
             {"status", "ok"},
+            {"mosaik_step", currentMosaikStep},
             {"data", data_json}
         };
-        
+
         socket.send(zmq::buffer(response.dump()), zmq::send_flags::none);
 
         zmq::message_t next_request;
         socket.recv(next_request, zmq::recv_flags::none);
-        
+
         std::string msg_str(static_cast<char*>(next_request.data()), next_request.size());
         json j = json::parse(msg_str);
 
         if (j["action"] == "step") {
-            applyInputs(j); 
-            scheduleAt(simTime() + 1.0, stepMsg);
+            currentMosaikStep = j.value("time", currentMosaikStep + 1);
+            timeResolution = j.value("time_resolution", timeResolution);
+            applyInputs(j);
+            scheduleAt(simTime() + timeResolution, stepMsg);
         } else if (j["action"] == "stop") {
             endSimulation();
         }
     } else {
-        delete msg; 
+        delete msg;
     }
 }
 

@@ -1,0 +1,11 @@
+{
+    "topologia": "estrela",
+    "num_perifericos": 20,
+    "tipos_rede": [
+        "Link_Wired",
+        "Link_5G",
+        "Link_4G",
+        "Link_2G",
+        "Link_Wireless"
+    ]
+}

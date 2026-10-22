@@ -1,5 +1,7 @@
 
 
+
+
 // ============================================================================
 // BIBLIOTECA DE PERFIS DE REDE
 // ============================================================================
@@ -26,9 +28,19 @@ channel Link_4G extends ned.DatarateChannel {
     per = 0.005;             // Probabilidade de perda: 0.5%
 }
 
-// 4. Rede IoT (LoRaWAN / NB-IoT): Atraso alto, muita perda, baixa banda
-channel Link_IoT extends ned.DatarateChannel {
+// 4. Rede 2G/GPRS: Atraso alto, muita perda, baixa banda (Antigo IoT)
+channel Link_2G extends ned.DatarateChannel {
     delay = exponential(200ms); // Atraso estocástico agressivo
     datarate = 250kbps;
-    per = 0.15;                 // 15% de perda (Similar ao seu cenário original)
+    per = 0.15;                 // 15% de perda
+}
+
+// 5. Wireless (Wi-Fi / WLAN local): tecnologia sem fio diferente da
+//    celular (5G/4G/2G) — rede local tipo roteador, sem torre de operadora.
+//    Rápida e com baixa variação como a cabeada, mas ainda sofre um pouco
+//    de perda por interferência (paredes, outros dispositivos no ar etc.).
+channel Link_Wireless extends ned.DatarateChannel {
+    delay = truncnormal(2ms, 0.5ms); // baixo atraso, pequena variação
+    datarate = 300Mbps;
+    per = 0.001;                     // 0.1% de perda
 }
