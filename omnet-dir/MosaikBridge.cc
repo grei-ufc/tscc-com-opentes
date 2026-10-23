@@ -151,6 +151,7 @@ void MosaikBridge::handleMessage(cMessage *msg) {
             if (submod->hasPar("packets_sent")) node_data["packets_sent"] = submod->par("packets_sent").doubleValue();
             if (submod->hasPar("packets_received")) node_data["packets_received"] = submod->par("packets_received").doubleValue();
             if (submod->hasPar("packets_dropped")) node_data["packets_dropped"] = submod->par("packets_dropped").doubleValue();
+            if (submod->hasPar("packets_forwarded")) node_data["packets_forwarded"] = submod->par("packets_forwarded").doubleValue();
 
             data_json[nodeName] = node_data;
         }
