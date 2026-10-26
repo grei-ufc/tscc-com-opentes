@@ -46,6 +46,16 @@ class AgentNode : public cSimpleModule
         return 0.0;
     }
 
+    // Meio guiado (fibra ou cabo): sem atenuação espacial por distância e com
+    // atraso de propagação físico (~5 ns/m). O erro do canal continua vindo do PER
+    // de Profiles.ned (hasBitError). Os demais meios mantêm o modelo espacial original.
+    static bool isGuidedMedium(cChannel *channel) {
+        if (!channel) return false;
+        cComponentType *ct = channel->getComponentType();
+        std::string t = ct ? ct->getName() : "";
+        return t.find("Fibra") != std::string::npos || t.find("Wired") != std::string::npos;
+    }
+
     static void setChannelDelay(cChannel *channel, double delaySec) {
         if (auto *dr = dynamic_cast<cDatarateChannel*>(channel)) dr->setDelay(delaySec);
         else if (auto *dl = dynamic_cast<cDelayChannel*>(channel)) dl->setDelay(delaySec);
@@ -105,17 +115,20 @@ void AgentNode::initialize()
                 double dist = std::sqrt(std::pow(nX - myX, 2) + std::pow(nY - myY, 2));
 
                 cChannel *txChannel = outGate->getTransmissionChannel();
+                bool guided = isGuidedMedium(txChannel);
                 if (txChannel) {
                     double currentDelay = getChannelDelay(txChannel);
-                    double propagationDelay = dist * 0.00005;
+                    // Guiado: ~5 ns/m (velocidade de propagação ~2e8 m/s). Demais: modelo original.
+                    double propagationDelay = dist * (guided ? 5e-9 : 0.00005);
                     baseChannelDelays[i] = currentDelay + propagationDelay;
                     setChannelDelay(txChannel, baseChannelDelays[i]);
                 } else {
                     baseChannelDelays[i] = 0.0;
                 }
 
-                // Chance base de erro por atenuação espacial: ~1.5% a cada 100m.
-                inDropChances[neighborId] = (dist / 100.0) * 0.015;
+                // Chance base de erro por atenuação espacial: ~1.5% a cada 100m
+                // (não se aplica a fibra/cabo; ali só vale o PER do canal).
+                inDropChances[neighborId] = guided ? 0.0 : (dist / 100.0) * 0.015;
             }
         }
     }
