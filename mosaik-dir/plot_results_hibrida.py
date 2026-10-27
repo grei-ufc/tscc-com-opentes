@@ -4,9 +4,9 @@
 plot_results_hibrida.py — Dashboard Científico para Topologia Híbrida.
 
 Mesmo padrão visual do anel e da estrela. Arquivos gerados:
-  - grafico_trafego_Hibrida.png      (visão por Camada: CCO / Subestação / Concentrador / Medidor)
-  - grafico_trafego_Geral.png        (visão global por Tecnologia de Enlace)
-  - grafico_trafego_{Tecnologia}.png (visão individual por Tecnologia de Enlace)
+  - grafico_trafego_Hibrida.svg      (visão por Camada: CCO / Subestação / Concentrador / Medidor)
+  - grafico_trafego_Geral.svg        (visão global por Tecnologia de Enlace)
+  - grafico_trafego_{Tecnologia}.svg (visão individual por Tecnologia de Enlace)
 
 Notas de método
   * As tecnologias vêm de links.json (não de config.json, que nestas topologias
@@ -33,6 +33,37 @@ import matplotlib.cm as cm
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
+from matplotlib.transforms import Bbox
+
+# ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
+# 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
+# converter o texto em curvas (aparência idêntica em qualquer máquina, sem edição).
+matplotlib.rcParams['svg.fonttype'] = 'none'
+
+
+_TOPO_ROTULO = 'Topologia Híbrida'      # aparece no título de cada gráfico individual
+_TOPO_ARQ = 'Hibrida'                  # sufixo do nome do arquivo (evita colisão entre topologias)
+
+
+def _exportar_paineis_separados(fig, paineis, prefixo='grafico_trafego_Geral', pad_px=12):
+    """Salva cada painel do dashboard como um SVG próprio (título, legenda e colorbar
+    inclusos). O título ganha uma linha com o nome da topologia, para o gráfico fazer
+    sentido isolado. `paineis` = lista de (sufixo, [axes que compõem o painel])."""
+    inv = fig.dpi_scale_trans.inverted()
+    for sufixo, axs in paineis:
+        ax0 = axs[0]
+        titulo_orig = ax0.get_title()
+        ax0.set_title(f'{_TOPO_ROTULO}\n{titulo_orig}', fontweight='bold',
+                      fontsize=ax0.title.get_fontsize())
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        bb = Bbox.union([a.get_tightbbox(renderer) for a in axs])
+        bb = Bbox.from_extents(bb.x0 - pad_px, bb.y0 - pad_px, bb.x1 + pad_px, bb.y1 + pad_px)
+        nome = f'{prefixo}_{sufixo}_{_TOPO_ARQ}.svg'
+        fig.savefig(nome, format='svg', bbox_inches=bb.transformed(inv))
+        ax0.set_title(titulo_orig, fontweight='bold', fontsize=ax0.title.get_fontsize())
+        print(f'Salvo: {nome}')
+
 
 NED_PARA_LABEL = {
     'Fibra':         'Fibra',
@@ -419,7 +450,7 @@ def gerar_graficos():
     )
 
     # ══════════════════════════════════════════════════════════
-    # 1. DASHBOARD POR CAMADA (grafico_trafego_Hibrida.png)
+    # 1. DASHBOARD POR CAMADA (grafico_trafego_Hibrida.svg)
     # ══════════════════════════════════════════════════════════
     papeis = [p for p in _PAPEIS_ORDEM if any(_papel(n) == p for n in todos_nos)]
     tabela_papeis = []
@@ -478,8 +509,8 @@ def gerar_graficos():
     _desenhar_mapa(ax['map'], posicoes, links, avg_lat_no, CORES, rede_foco=None)
 
     plt.tight_layout(rect=[0, 0.02, 1, 0.96])
-    plt.savefig('grafico_trafego_Hibrida.png', dpi=300)
-    print('Salvo: grafico_trafego_Hibrida.png')
+    plt.savefig('grafico_trafego_Hibrida.svg')
+    print('Salvo: grafico_trafego_Hibrida.svg')
     plt.close(fig)
 
     # ══════════════════════════════════════════════════════════
@@ -556,9 +587,18 @@ def gerar_graficos():
         _desenhar_mapa(ax['map'], posicoes, links, avg_lat_no, CORES, rede_foco=rede_foco)
 
         plt.tight_layout(rect=[0, 0.02, 1, 0.96])
-        nome = f'grafico_trafego_{rede_foco}.png'
-        plt.savefig(nome, dpi=300)
+        nome = f'grafico_trafego_{rede_foco}.svg'
+        plt.savefig(nome)
         print(f'Salvo: {nome}')
+        if rede_foco == 'Geral':
+            _extra = [a for a in fig.axes if a not in set(ax.values())]
+            _exportar_paineis_separados(fig, [
+                ('heatmap',  [ax['map']] + _extra),
+                ('latencia', [ax['lat']]),
+                ('payload',  [ax['pay']]),
+                ('pdr',      [ax['int']]),
+                ('jitter',   [ax['jit']]),
+            ])
         plt.close(fig)
 
 
