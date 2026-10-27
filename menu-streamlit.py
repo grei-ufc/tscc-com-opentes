@@ -397,13 +397,16 @@ def exibir_preview_topologia(topologia, num_perifericos, tipos_selecionados,
 
 # ── Resultados ────────────────────────────────────────────────────────────────
 
+_EXT_GRAFICO = (".svg", ".png")          # os plot_results_*.py geram SVG; PNG = legado
+
+
 def _listar_graficos():
-    """Todos os grafico_*.png de mosaik-dir/ (grafico_trafego_*.png, grafico_arvore.png,
-    grafico_hibrida.png...). Não depende do nome que cada plot_results_*.py usa."""
+    """Todos os grafico_*.svg (ou .png) de mosaik-dir/. Não depende do nome que cada
+    plot_results_*.py usa. Inclui os gráficos individuais (grafico_trafego_Geral_*)."""
     if not os.path.isdir(MOSAIK_DIR):
         return []
     return sorted(f for f in os.listdir(MOSAIK_DIR)
-                  if f.startswith("grafico_") and f.endswith(".png"))
+                  if f.startswith("grafico_") and f.endswith(_EXT_GRAFICO))
 
 
 def _limpar_graficos():
@@ -415,12 +418,40 @@ def _limpar_graficos():
             pass
 
 
+_ROTULO_INDIVIDUAL = {
+    "heatmap":  "Heatmap de latência (mapa)",
+    "latencia": "Latência temporal",
+    "payload":  "Payload médio por tecnologia",
+    "pdr":      "Taxa de entrega global (PDR)",
+    "jitter":   "Distribuição de jitter",
+}
+
+
+def _eh_individual(nome_arquivo):
+    return nome_arquivo.startswith("grafico_trafego_Geral_")
+
+
 def _rotulo_grafico(nome_arquivo):
-    nome = nome_arquivo[len("grafico_"):-len(".png")]
+    nome = os.path.splitext(nome_arquivo)[0][len("grafico_"):]
+    if nome.startswith("trafego_Geral_"):
+        chave = nome[len("trafego_Geral_"):].split("_")[0]   # …_<grafico>_<Topologia>
+        return _ROTULO_INDIVIDUAL.get(chave, chave)
     return nome.replace("trafego_", "").replace("_", " ").strip().capitalize() or nome
 
 
 def _mostrar_imagem(caminho):
+    if caminho.lower().endswith(".svg"):
+        # <img> com data-URI: renderiza qualquer SVG do matplotlib (st.image só aceita
+        # SVG que começa em "<svg", e o do matplotlib começa em "<?xml").
+        try:
+            with open(caminho, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("ascii")
+        except OSError:
+            st.warning(f"Não foi possível abrir {os.path.basename(caminho)}.")
+            return
+        st.markdown(f'<img src="data:image/svg+xml;base64,{b64}" style="width:100%">',
+                    unsafe_allow_html=True)
+        return
     try:
         st.image(caminho, width="stretch")
     except TypeError:                       # versões antigas do Streamlit
@@ -465,10 +496,22 @@ def exibir_resultados():
     if executada and codigo != 0:
         st.warning("A execução terminou com erro, mas estes gráficos foram gerados:")
 
-    for png in graficos:
-        st.caption(f"Visão: **{_rotulo_grafico(png)}**")
-        _mostrar_imagem(os.path.join(MOSAIK_DIR, png))
+    principais  = [g for g in graficos if not _eh_individual(g)]
+    individuais = [g for g in graficos if _eh_individual(g)]
+
+    for arq in principais:
+        st.caption(f"Visão: **{_rotulo_grafico(arq)}**")
+        _mostrar_imagem(os.path.join(MOSAIK_DIR, arq))
         st.write("")
+
+    if individuais:
+        with st.expander("Gráficos individuais — Visão Geral (SVG separados)", expanded=False):
+            for i in range(0, len(individuais), 2):
+                cols = st.columns(2)
+                for col, arq in zip(cols, individuais[i:i + 2]):
+                    with col:
+                        st.caption(f"**{_rotulo_grafico(arq)}**")
+                        _mostrar_imagem(os.path.join(MOSAIK_DIR, arq))
 
 
 # ── Docker ────────────────────────────────────────────────────────────────────
@@ -600,6 +643,71 @@ def exibir_painel_terminal():
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+_AUTO = "Auto (cíclico)"
+_MAX_AGENTES_VISIVEIS = 20
+
+
+def selecionar_tecnologias(topologia, num_enlaces):
+    """
+    Estrela / Anel: pool de tecnologias + atribuição OPCIONAL de uma tecnologia a cada
+    agente. Retorna a lista de ned-ids na ordem dos enlaces (o scenario.py usa
+    TIPOS_REDE[i % len]), de modo que a posição i da lista é o enlace do agente i.
+      - Todos em "Auto"  → devolve o próprio pool (distribuição cíclica padrão).
+      - Algum escolhido  → devolve uma tecnologia por enlace.
+    """
+    st.subheader("3. Tipos de enlace")
+    chaves = list(REDES.keys())
+    pool = st.multiselect(
+        "Pool de tecnologias disponíveis", options=chaves, default=chaves,
+        format_func=lambda k: REDES[k][0], label_visibility="collapsed")
+    if not pool:
+        st.warning("Selecione ao menos um tipo de enlace."); st.stop()
+
+    opcoes = [_AUTO] + [REDES[k][0] for k in pool]
+    ned_por_rotulo = {_AUTO: None}
+    ned_por_rotulo.update({REDES[k][0]: k for k in pool})
+
+    if topologia == "estrela":
+        rotulos = [f"Periférico {i}" for i in range(1, num_enlaces + 1)]
+    else:
+        rotulos = [f"Agente {i} → Agente {(i % num_enlaces) + 1}"
+                   for i in range(1, num_enlaces + 1)]
+    n_mostrar = min(len(rotulos), _MAX_AGENTES_VISIVEIS)
+    chave = lambda i: f"tech_agente_{topologia}_{i}"
+
+    # Se a tecnologia escolhida saiu do pool, volta para Auto (evita valor inválido).
+    for i in range(n_mostrar):
+        if st.session_state.get(chave(i), _AUTO) not in opcoes:
+            st.session_state[chave(i)] = _AUTO
+
+    with st.expander("Definir tecnologia por agente (opcional)", expanded=False):
+        if topologia == "estrela":
+            st.caption("Cada linha é o enlace daquele periférico com o nó central.")
+        else:
+            st.caption("Cada linha é o enlace agente_i → agente_{i+1} (cíclico).")
+        st.caption("“Auto (cíclico)” segue a ordem do pool; escolha uma tecnologia para "
+                   "fixá-la naquele agente.")
+
+        tipos_finais = []
+        for i in range(n_mostrar):
+            col_a, col_b = st.columns([2, 3])
+            col_a.markdown(
+                f'<div style="padding-top:.45rem;font-size:.95rem;">{rotulos[i]}</div>',
+                unsafe_allow_html=True)
+            escolha = col_b.selectbox("tecnologia", options=opcoes, key=chave(i),
+                                      label_visibility="collapsed")
+            tipos_finais.append(ned_por_rotulo[escolha] or pool[i % len(pool)])
+
+        if len(rotulos) > n_mostrar:
+            st.caption(f"… {len(rotulos) - n_mostrar} agente(s) restantes usam a "
+                       "distribuição cíclica do pool.")
+            for i in range(n_mostrar, len(rotulos)):
+                tipos_finais.append(pool[i % len(pool)])
+
+    todos_auto = all(st.session_state.get(chave(i), _AUTO) == _AUTO for i in range(n_mostrar))
+    return pool if todos_auto else tipos_finais
+
+
 def aba_configuracao():
     """Aba 'Configuração': escolhe topologia/parâmetros, mostra o preview e roda o docker."""
     # ── 1. Topologia ──────────────────────────────────────────────────────────
@@ -697,13 +805,7 @@ def aba_configuracao():
 
     # ── 3. Tipos de enlace (apenas para estrela e anel) ───────────────────────
     if topologia in ("estrela", "anel"):
-        st.subheader("3. Tipos de enlace")
-        chaves_rede = list(REDES.keys())
-        tipos_selecionados = st.multiselect(
-            "Redes", options=chaves_rede, default=chaves_rede,
-            format_func=lambda k: REDES[k][0], label_visibility="collapsed")
-        if not tipos_selecionados:
-            st.warning("Selecione ao menos um tipo de enlace."); st.stop()
+        tipos_selecionados = selecionar_tecnologias(topologia, num_perifericos)
     else:
         # Árvore e Híbrida usam canais fixos por camada
         tipos_selecionados = ["Link_Wired"]  # não usado, mas mantém assinatura
@@ -741,7 +843,7 @@ def aba_configuracao():
             f'<span class="resumo-valor">{semente_hibrida}</span></div>'
         )
 
-    nomes_redes = (", ".join(REDES[t][0] for t in tipos_selecionados)
+    nomes_redes = (", ".join(dict.fromkeys(REDES[t][0] for t in tipos_selecionados))
                    if topologia in ("estrela", "anel") else "Fibra / Celular / PLC-RF")
 
     st.markdown(_strip(f"""
