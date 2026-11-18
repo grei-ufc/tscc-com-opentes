@@ -1,7 +1,7 @@
 services:
 
   # ─────────────────────────────────────────────
-  # PADE: agentes multiagente (FIPA-ACL)
+  # PADE: agentes multiagente (FIPA-ACL + IEEE 13)
   # ─────────────────────────────────────────────
   pade:
     build: ./pade-dir
@@ -15,16 +15,12 @@ services:
     environment:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
-      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G,Link_6TiSCH,Link_WiSUN}
       - RANDOM_SEED=${RANDOM_SEED:-}
       - PADE_PORT=5678
       - PYTHONUNBUFFERED=1
     stdin_open: true
     tty: true
-    # Seleciona o script PADE correto conforme a topologia:
-    #   anel  → pade_anel.py  (vizinhança em ciclo)
-    #   malha → pade_malha.py (broadcast total entre todos)
-    #   demais→ pade_star.py  (central + periféricos)
     command: >
       sh -c '
       if [ "$$TOPOLOGY" = "anel" ]; then
@@ -33,6 +29,9 @@ services:
       elif [ "$$TOPOLOGY" = "malha" ]; then
         echo "Topologia MALHA -> pade_malha.py";
         python3 pade_malha.py;
+      elif [ "$$TOPOLOGY" = "ieee13" ]; then
+        echo "Topologia IEEE 13 (OpenTES) -> pade_ieee13.py";
+        python3 pade_ieee13.py;
       else
         echo "Topologia $$TOPOLOGY -> pade_star.py";
         python3 pade_star.py;
@@ -80,7 +79,7 @@ services:
     environment:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
-      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G,Link_6TiSCH,Link_WiSUN}
       - RANDOM_SEED=${RANDOM_SEED:-}
       - PADE_HOST=127.0.0.1
       - PADE_PORT=5678
@@ -88,10 +87,6 @@ services:
       - OMNET_PORT=5555
       - PYTHONUNBUFFERED=1
       - SIM_STEPS=${SIM_STEPS:-20}
-    # Seleciona o script de plotagem correto conforme a topologia:
-    #   malha → plot_results_malha.py
-    #   anel  → plot_results_anel.py
-    #   demais→ plot_results_star.py
     command: >
       sh -c "
       rm -f /omnet-dir/DynamicNetwork.ned &&
@@ -102,6 +97,8 @@ services:
         python plot_results_malha.py;
       elif [ \"$$TOPOLOGY\" = \"anel\" ]; then
         python plot_results_anel.py;
+      elif [ \"$$TOPOLOGY\" = \"ieee13\" ]; then
+        python ieee13_plot.py;
       else
         python plot_results_star.py;
       fi"

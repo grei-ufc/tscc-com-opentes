@@ -5,21 +5,25 @@ scenario.py — Orquestrador único de cenário Mosaik.
 
 Substitui star.py. Lê TOPOLOGY, NUM_PERIFERICOS e TIPOS_REDE do ambiente
 (injetadas pelo menu.py / menu-streamlit.py via docker-compose.yml) e monta,
-num único lugar, QUALQUER uma das três topologias suportadas:
+num único lugar, QUALQUER uma das quatro topologias suportadas:
 
     estrela — 1 central  <-->  N periféricos          (pade_star.py)
     malha   — N agentes peers conectados em full mesh (pade_malha.py)
     anel    — N agentes peers em ciclo fechado        (pade_anel.py)
+    ieee13  — 18 agentes da rede IEEE 13 (OpenTES)    (pade_ieee13.py)
 
 Semântica de NUM_PERIFERICOS (unificada com menu.py, menu-streamlit.py e PADE):
-    - estrela : número de periféricos N  → total de agentes = 1 (central) + N
-    - malha   : número TOTAL de agentes N → total de agentes = N (1 master + N-1 peers)
-    - anel    : número TOTAL de agentes N → total de agentes = N (agente_1..agente_N)
+- estrela : número de periféricos N  → total de agentes = 1 (central) + N
+- malha   : número TOTAL de agentes N → total de agentes = N (1 master + N-1 peers)
+- anel    : número TOTAL de agentes N → total de agentes = N (agente_1..agente_N)
+- ieee13  : fixo em 18 agentes do alimentador IEEE 13 (Concentrador, DSO, Market + 15 barras)
 
 Nomenclatura:
-    - estrela/malha → 'agent_central' / 'agent_p_1'..'agent_p_K' no OMNeT++
+- estrela/malha → 'agent_central' / 'agent_p_1'..'agent_p_K' no OMNeT++
                        e 'AgenteCentral' / 'AgenteP_1'..'AgenteP_K' no PADE.
-    - anel          → 'agente_1'..'agente_N' tanto no OMNeT++ quanto no PADE.
+- anel          → 'agente_1'..'agente_N' tanto no OMNeT++ quanto no PADE.
+- ieee13        → 'agent_0', 'agent_dso', 'agent_market' e 'agent_611'..'agent_692'
+                       tanto no OMNeT++ quanto no PADE.
 """
 
 import json
@@ -57,6 +61,29 @@ _DEFAULT_OMNET_DIR = (
     else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'omnet-dir'))
 )
 OMNET_DIR = os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR)
+
+# Coordenadas oficiais da rede IEEE 13 barras extraídas de
+# co-simulation-opentes/simulators/grid-opentes/src/data/13Bus/nodes_xy.csv
+IEEE13_NODES_XY = [
+    {'id': 'agent_0',      'x':    0.00, 'y':     0.00, 'tipo': 'Central'},      # Concentrador (Subestação)
+    {'id': 'agent_dso',    'x':    0.00, 'y':     0.00, 'tipo': 'Periferico'},   # Operador do Sistema (DSO)
+    {'id': 'agent_market', 'x':    0.00, 'y':     0.00, 'tipo': 'Periferico'},   # Mercado Transativo
+    {'id': 'agent_611',    'x': -182.88, 'y': -1221.20, 'tipo': 'Periferico'},
+    {'id': 'agent_632',    'x':    0.00, 'y':  -611.60, 'tipo': 'Periferico'},
+    {'id': 'agent_633',    'x':  152.40, 'y':  -611.60, 'tipo': 'Periferico'},
+    {'id': 'agent_634',    'x':  153.40, 'y':  -611.60, 'tipo': 'Periferico'},
+    {'id': 'agent_645',    'x': -152.40, 'y':  -611.60, 'tipo': 'Periferico'},
+    {'id': 'agent_646',    'x': -243.84, 'y':  -611.60, 'tipo': 'Periferico'},
+    {'id': 'agent_650',    'x':    0.00, 'y':    -1.00, 'tipo': 'Periferico'},
+    {'id': 'agent_652',    'x':  -91.44, 'y': -1465.04, 'tipo': 'Periferico'},
+    {'id': 'agent_660',    'x':    0.00, 'y':    -2.00, 'tipo': 'Periferico'},
+    {'id': 'agent_670',    'x':    0.00, 'y':  -814.90, 'tipo': 'Periferico'},
+    {'id': 'agent_671',    'x':    0.00, 'y': -1221.20, 'tipo': 'Periferico'},
+    {'id': 'agent_675',    'x':  153.40, 'y': -1221.20, 'tipo': 'Periferico'},
+    {'id': 'agent_680',    'x':    0.00, 'y': -1526.00, 'tipo': 'Periferico'},
+    {'id': 'agent_684',    'x':  -91.44, 'y': -1221.20, 'tipo': 'Periferico'},
+    {'id': 'agent_692',    'x':    1.00, 'y': -1221.20, 'tipo': 'Periferico'},
+]
 
 # ══════════════════════════════════════════════════════════════
 # RESOLUÇÃO IPv4 E CONFIGURAÇÃO DOS SIMULADORES MOSAIK
@@ -134,7 +161,7 @@ def gerar_topologia_ned(agentes_info, links, arquivo_saida=None):
         Caminho completo do arquivo .ned a ser escrito.
 
     Esta função é totalmente agnóstica à topologia — só descreve
-    o que as listas mandam, então serve para estrela, malha e anel.
+    o que as listas mandam, então serve para estrela, malha, anel e ieee13.
     """
     if arquivo_saida is None:
         arquivo_saida = os.path.join(OMNET_DIR, "DynamicNetwork.ned")
@@ -266,6 +293,31 @@ def gerar_links_anel(agentes_info):
 
 
 # ══════════════════════════════════════════════════════════════
+# GERAÇÃO DE LINKS — IEEE 13 BARRAS (OpenTES)
+# ══════════════════════════════════════════════════════════════
+
+def gerar_links_ieee13(agentes_info):
+    """
+    Cria a lista de enlaces para a rede IEEE 13 barras do co-simulation-opentes:
+      - Concentrador (agent_0) ↔ DSO (agent_dso) e Market (agent_market)
+      - Concentrador (agent_0) ↔ 15 barras prosumidoras (agent_611 .. agent_692)
+    Cicla os canais escolhidos em TIPOS_REDE (ex: Link_6TiSCH, Link_WiSUN, Link_5G, etc.).
+    """
+    central_id = 'agent_0'
+    links = []
+
+    for i, ag in enumerate(agentes_info[1:]):
+        tipo = TIPOS_REDE[i % len(TIPOS_REDE)]
+        links.append({
+            'origem':  central_id,
+            'destino': ag['id'],
+            'tipo':    tipo,
+        })
+
+    return links
+
+
+# ══════════════════════════════════════════════════════════════
 # MONTAGEM DO CENÁRIO MOSAIK
 # ══════════════════════════════════════════════════════════════
 
@@ -276,6 +328,8 @@ def create_scenario(world):
 
     if TOPOLOGY == 'anel':
         _montar_anel(world)
+    elif TOPOLOGY == 'ieee13':
+        _montar_ieee13(world)
     else:
         # 'estrela', 'malha' ou qualquer outro valor cai aqui
         _montar_central_periferico(world)
@@ -293,8 +347,8 @@ def _iniciar_simuladores(world):
 
 def _montar_central_periferico(world):
     """Monta estrela OU malha:
-      - estrela: 1 central + NUM_PERIFERICOS periféricos (total = N + 1)
-      - malha  : 1 master  + (NUM_PERIFERICOS - 1) peers (total = N)
+    - estrela: 1 central + NUM_PERIFERICOS periféricos (total = N + 1)
+    - malha  : 1 master  + (NUM_PERIFERICOS - 1) peers (total = N)
     """
     num_peers_extras = (
         max(1, NUM_PERIFERICOS - 1)
@@ -414,9 +468,37 @@ def _montar_anel(world):
                       'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 
+def _montar_ieee13(world):
+    """Monta a topologia da rede elétrica IEEE 13 barras (co-simulation-opentes)
+    com os 18 agentes posicionados nas coordenadas reais do alimentador."""
+    agentes_info = [dict(item) for item in IEEE13_NODES_XY]
+    links = gerar_links_ieee13(agentes_info)
+
+    _persistir_mapa_e_config(agentes_info, links)
+    print(f"   ↳ {len(agentes_info)} agentes e {len(links)} enlaces gerados para topologia 'ieee13'.", flush=True)
+    gerar_topologia_ned(agentes_info, links)
+    print("   ↳ DynamicNetwork.ned gerado com coordenadas reais da IEEE 13.\n", flush=True)
+
+    omnet_sim, pade_sim, monitor = _iniciar_simuladores(world)
+
+    for ag in agentes_info:
+        aid         = ag['id']
+        agente_pade = pade_sim.PadeAgent(agent_id=aid)
+        node_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=aid)
+
+        world.connect(agente_pade, node_omnet,
+                      ('val_out', 'val_in'))
+        world.connect(node_omnet, agente_pade,
+                      ('val_out', 'val_in'),
+                      time_shifted=True, initial_data={'val_out': ''})
+        world.connect(node_omnet, monitor,
+                      'status', 'packets_sent', 'packets_received', 'packets_dropped',
+                      'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
+
+
 def _persistir_mapa_e_config(agentes_info, links):
     """Persiste posições, enlaces e a config da rodada
-    (topologia/N/redes), comum às três topologias."""
+    (topologia/N/redes), comum a todas as topologias."""
     os.makedirs(OMNET_DIR, exist_ok=True)
     with open(os.path.join(OMNET_DIR, 'posicoes.json'), 'w', encoding='utf-8') as f:
         json.dump(agentes_info, f, indent=4)
@@ -424,10 +506,13 @@ def _persistir_mapa_e_config(agentes_info, links):
     with open(os.path.join(OMNET_DIR, 'links.json'), 'w', encoding='utf-8') as f:
         json.dump(links, f, indent=4)
 
+    num_perifericos_real = (
+        len(agentes_info) - 1 if TOPOLOGY == 'ieee13' else NUM_PERIFERICOS
+    )
     with open(os.path.join(OMNET_DIR, 'config.json'), 'w', encoding='utf-8') as f:
         json.dump({
             'topologia':       TOPOLOGY,
-            'num_perifericos': NUM_PERIFERICOS,
+            'num_perifericos': num_perifericos_real,
             'tipos_rede':      TIPOS_REDE,
         }, f, indent=4)
 

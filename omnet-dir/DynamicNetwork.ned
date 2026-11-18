@@ -3,110 +3,95 @@ network DynamicNetwork
     submodules:
         mosaikBridge: MosaikBridge;
 
-        agent_central: AgentNode {
-            xPos = 500.0;
-            yPos = 500.0;
+        agent_0: AgentNode {
+            xPos = 0.0;
+            yPos = 0.0;
         }
-        agent_p_1: AgentNode {
-            xPos = 639.43;
-            yPos = 25.01;
+        agent_dso: AgentNode {
+            xPos = 0.0;
+            yPos = 0.0;
         }
-        agent_p_2: AgentNode {
-            xPos = 275.03;
-            yPos = 223.21;
+        agent_market: AgentNode {
+            xPos = 0.0;
+            yPos = 0.0;
         }
-        agent_p_3: AgentNode {
-            xPos = 736.47;
-            yPos = 676.7;
+        agent_611: AgentNode {
+            xPos = -182.88;
+            yPos = -1221.2;
         }
-        agent_p_4: AgentNode {
-            xPos = 892.18;
-            yPos = 86.94;
+        agent_632: AgentNode {
+            xPos = 0.0;
+            yPos = -611.6;
         }
-        agent_p_5: AgentNode {
-            xPos = 421.92;
-            yPos = 29.8;
+        agent_633: AgentNode {
+            xPos = 152.4;
+            yPos = -611.6;
         }
-        agent_p_6: AgentNode {
-            xPos = 218.64;
-            yPos = 505.36;
+        agent_634: AgentNode {
+            xPos = 153.4;
+            yPos = -611.6;
         }
-        agent_p_7: AgentNode {
-            xPos = 26.54;
-            yPos = 198.84;
+        agent_645: AgentNode {
+            xPos = -152.4;
+            yPos = -611.6;
         }
-        agent_p_8: AgentNode {
-            xPos = 649.88;
-            yPos = 544.94;
+        agent_646: AgentNode {
+            xPos = -243.84;
+            yPos = -611.6;
         }
-        agent_p_9: AgentNode {
-            xPos = 220.44;
-            yPos = 589.27;
+        agent_650: AgentNode {
+            xPos = 0.0;
+            yPos = -1.0;
         }
-        agent_p_10: AgentNode {
-            xPos = 809.43;
-            yPos = 6.5;
+        agent_652: AgentNode {
+            xPos = -91.44;
+            yPos = -1465.04;
         }
-        agent_p_11: AgentNode {
-            xPos = 805.82;
-            yPos = 698.14;
+        agent_660: AgentNode {
+            xPos = 0.0;
+            yPos = -2.0;
         }
-        agent_p_12: AgentNode {
-            xPos = 340.25;
-            yPos = 155.48;
+        agent_670: AgentNode {
+            xPos = 0.0;
+            yPos = -814.9;
         }
-        agent_p_13: AgentNode {
-            xPos = 957.21;
-            yPos = 336.59;
+        agent_671: AgentNode {
+            xPos = 0.0;
+            yPos = -1221.2;
         }
-        agent_p_14: AgentNode {
-            xPos = 92.75;
-            yPos = 96.72;
+        agent_675: AgentNode {
+            xPos = 153.4;
+            yPos = -1221.2;
         }
-        agent_p_15: AgentNode {
-            xPos = 847.49;
-            yPos = 603.73;
+        agent_680: AgentNode {
+            xPos = 0.0;
+            yPos = -1526.0;
         }
-        agent_p_16: AgentNode {
-            xPos = 807.13;
-            yPos = 729.73;
+        agent_684: AgentNode {
+            xPos = -91.44;
+            yPos = -1221.2;
         }
-        agent_p_17: AgentNode {
-            xPos = 536.23;
-            yPos = 973.12;
-        }
-        agent_p_18: AgentNode {
-            xPos = 378.53;
-            yPos = 552.04;
-        }
-        agent_p_19: AgentNode {
-            xPos = 829.4;
-            yPos = 618.52;
-        }
-        agent_p_20: AgentNode {
-            xPos = 861.71;
-            yPos = 577.35;
+        agent_692: AgentNode {
+            xPos = 1.0;
+            yPos = -1221.2;
         }
 
     connections:
-        agent_central.port++ <--> Link_Wired <--> agent_p_1.port++;
-        agent_central.port++ <--> Link_5G <--> agent_p_2.port++;
-        agent_central.port++ <--> Link_4G <--> agent_p_3.port++;
-        agent_central.port++ <--> Link_2G <--> agent_p_4.port++;
-        agent_central.port++ <--> Link_Wireless <--> agent_p_5.port++;
-        agent_central.port++ <--> Link_Wired <--> agent_p_6.port++;
-        agent_central.port++ <--> Link_5G <--> agent_p_7.port++;
-        agent_central.port++ <--> Link_4G <--> agent_p_8.port++;
-        agent_central.port++ <--> Link_2G <--> agent_p_9.port++;
-        agent_central.port++ <--> Link_Wireless <--> agent_p_10.port++;
-        agent_central.port++ <--> Link_Wired <--> agent_p_11.port++;
-        agent_central.port++ <--> Link_5G <--> agent_p_12.port++;
-        agent_central.port++ <--> Link_4G <--> agent_p_13.port++;
-        agent_central.port++ <--> Link_2G <--> agent_p_14.port++;
-        agent_central.port++ <--> Link_Wireless <--> agent_p_15.port++;
-        agent_central.port++ <--> Link_Wired <--> agent_p_16.port++;
-        agent_central.port++ <--> Link_5G <--> agent_p_17.port++;
-        agent_central.port++ <--> Link_4G <--> agent_p_18.port++;
-        agent_central.port++ <--> Link_2G <--> agent_p_19.port++;
-        agent_central.port++ <--> Link_Wireless <--> agent_p_20.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_dso.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_market.port++;
+        agent_0.port++ <--> Link_WiSUN <--> agent_611.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_632.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_633.port++;
+        agent_0.port++ <--> Link_WiSUN <--> agent_634.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_645.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_646.port++;
+        agent_0.port++ <--> Link_WiSUN <--> agent_650.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_652.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_660.port++;
+        agent_0.port++ <--> Link_WiSUN <--> agent_670.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_671.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_675.port++;
+        agent_0.port++ <--> Link_WiSUN <--> agent_680.port++;
+        agent_0.port++ <--> Link_Wired <--> agent_684.port++;
+        agent_0.port++ <--> Link_6TiSCH <--> agent_692.port++;
 }

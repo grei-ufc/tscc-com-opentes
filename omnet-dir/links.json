@@ -1,102 +1,87 @@
 [
     {
-        "origem": "agent_central",
-        "destino": "agent_p_1",
+        "origem": "agent_0",
+        "destino": "agent_dso",
         "tipo": "Link_Wired"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_2",
-        "tipo": "Link_5G"
+        "origem": "agent_0",
+        "destino": "agent_market",
+        "tipo": "Link_6TiSCH"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_3",
-        "tipo": "Link_4G"
+        "origem": "agent_0",
+        "destino": "agent_611",
+        "tipo": "Link_WiSUN"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_4",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_5",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_6",
+        "origem": "agent_0",
+        "destino": "agent_632",
         "tipo": "Link_Wired"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_7",
-        "tipo": "Link_5G"
+        "origem": "agent_0",
+        "destino": "agent_633",
+        "tipo": "Link_6TiSCH"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_8",
-        "tipo": "Link_4G"
+        "origem": "agent_0",
+        "destino": "agent_634",
+        "tipo": "Link_WiSUN"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_9",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_10",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_11",
+        "origem": "agent_0",
+        "destino": "agent_645",
         "tipo": "Link_Wired"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_12",
-        "tipo": "Link_5G"
+        "origem": "agent_0",
+        "destino": "agent_646",
+        "tipo": "Link_6TiSCH"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_13",
-        "tipo": "Link_4G"
+        "origem": "agent_0",
+        "destino": "agent_650",
+        "tipo": "Link_WiSUN"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_14",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_15",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_16",
+        "origem": "agent_0",
+        "destino": "agent_652",
         "tipo": "Link_Wired"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_17",
-        "tipo": "Link_5G"
+        "origem": "agent_0",
+        "destino": "agent_660",
+        "tipo": "Link_6TiSCH"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_18",
-        "tipo": "Link_4G"
+        "origem": "agent_0",
+        "destino": "agent_670",
+        "tipo": "Link_WiSUN"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_19",
-        "tipo": "Link_2G"
+        "origem": "agent_0",
+        "destino": "agent_671",
+        "tipo": "Link_Wired"
     },
     {
-        "origem": "agent_central",
-        "destino": "agent_p_20",
-        "tipo": "Link_Wireless"
+        "origem": "agent_0",
+        "destino": "agent_675",
+        "tipo": "Link_6TiSCH"
+    },
+    {
+        "origem": "agent_0",
+        "destino": "agent_680",
+        "tipo": "Link_WiSUN"
+    },
+    {
+        "origem": "agent_0",
+        "destino": "agent_684",
+        "tipo": "Link_Wired"
+    },
+    {
+        "origem": "agent_0",
+        "destino": "agent_692",
+        "tipo": "Link_6TiSCH"
     }
 ]

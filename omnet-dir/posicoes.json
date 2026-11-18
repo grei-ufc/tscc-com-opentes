@@ -1,128 +1,110 @@
 [
     {
-        "id": "agent_central",
-        "x": 500.0,
-        "y": 500.0,
+        "id": "agent_0",
+        "x": 0.0,
+        "y": 0.0,
         "tipo": "Central"
     },
     {
-        "id": "agent_p_1",
-        "x": 639.43,
-        "y": 25.01,
+        "id": "agent_dso",
+        "x": 0.0,
+        "y": 0.0,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_2",
-        "x": 275.03,
-        "y": 223.21,
+        "id": "agent_market",
+        "x": 0.0,
+        "y": 0.0,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_3",
-        "x": 736.47,
-        "y": 676.7,
+        "id": "agent_611",
+        "x": -182.88,
+        "y": -1221.2,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_4",
-        "x": 892.18,
-        "y": 86.94,
+        "id": "agent_632",
+        "x": 0.0,
+        "y": -611.6,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_5",
-        "x": 421.92,
-        "y": 29.8,
+        "id": "agent_633",
+        "x": 152.4,
+        "y": -611.6,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_6",
-        "x": 218.64,
-        "y": 505.36,
+        "id": "agent_634",
+        "x": 153.4,
+        "y": -611.6,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_7",
-        "x": 26.54,
-        "y": 198.84,
+        "id": "agent_645",
+        "x": -152.4,
+        "y": -611.6,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_8",
-        "x": 649.88,
-        "y": 544.94,
+        "id": "agent_646",
+        "x": -243.84,
+        "y": -611.6,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_9",
-        "x": 220.44,
-        "y": 589.27,
+        "id": "agent_650",
+        "x": 0.0,
+        "y": -1.0,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_10",
-        "x": 809.43,
-        "y": 6.5,
+        "id": "agent_652",
+        "x": -91.44,
+        "y": -1465.04,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_11",
-        "x": 805.82,
-        "y": 698.14,
+        "id": "agent_660",
+        "x": 0.0,
+        "y": -2.0,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_12",
-        "x": 340.25,
-        "y": 155.48,
+        "id": "agent_670",
+        "x": 0.0,
+        "y": -814.9,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_13",
-        "x": 957.21,
-        "y": 336.59,
+        "id": "agent_671",
+        "x": 0.0,
+        "y": -1221.2,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_14",
-        "x": 92.75,
-        "y": 96.72,
+        "id": "agent_675",
+        "x": 153.4,
+        "y": -1221.2,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_15",
-        "x": 847.49,
-        "y": 603.73,
+        "id": "agent_680",
+        "x": 0.0,
+        "y": -1526.0,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_16",
-        "x": 807.13,
-        "y": 729.73,
+        "id": "agent_684",
+        "x": -91.44,
+        "y": -1221.2,
         "tipo": "Periferico"
     },
     {
-        "id": "agent_p_17",
-        "x": 536.23,
-        "y": 973.12,
-        "tipo": "Periferico"
-    },
-    {
-        "id": "agent_p_18",
-        "x": 378.53,
-        "y": 552.04,
-        "tipo": "Periferico"
-    },
-    {
-        "id": "agent_p_19",
-        "x": 829.4,
-        "y": 618.52,
-        "tipo": "Periferico"
-    },
-    {
-        "id": "agent_p_20",
-        "x": 861.71,
-        "y": 577.35,
+        "id": "agent_692",
+        "x": 1.0,
+        "y": -1221.2,
         "tipo": "Periferico"
     }
 ]

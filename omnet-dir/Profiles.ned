@@ -44,3 +44,18 @@ channel Link_Wireless extends ned.DatarateChannel {
     datarate = 300Mbps;
     per = 0.001;                     // 0.1% de perda
 }
+
+// 6. Rede LPWA 6TiSCH (IEEE 802.15.4g modo 1 - 915 MHz, TSCH slotframe = 4.04s, 2 cells)
+//    Extraído de simulators/comm-opentes/Tisch.ned (Melo, 2022, seção 6.1.5)
+channel Link_6TiSCH extends ned.DatarateChannel {
+    delay = truncnormal(40ms, 10ms); // 1 timeslot TSCH (~40ms) + jitter de escalonamento
+    datarate = 50kbps;               // IEEE 802.15.4g SUN FSK modo 1 (50 kbps)
+    per = 0.02;                      // PER base do enlace de rádio (somada à atenuação espacial do AgentNode.cc)
+}
+
+// 7. Rede Wi-SUN FAN (IEEE 802.15.4g CSMA/CA não sincronizado, 50-150 kbps)
+channel Link_WiSUN extends ned.DatarateChannel {
+    delay = truncnormal(15ms, 4ms);  // CSMA/CA backoff (macMinBE=3..5, unit_backoff=1.16ms)
+    datarate = 150kbps;              // IEEE 802.15.4g SUN FSK modo 3
+    per = 0.01;
+}

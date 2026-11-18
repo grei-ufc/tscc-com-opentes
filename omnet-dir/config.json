@@ -1,11 +1,9 @@
 {
-    "topologia": "estrela",
-    "num_perifericos": 20,
+    "topologia": "ieee13",
+    "num_perifericos": 17,
     "tipos_rede": [
         "Link_Wired",
-        "Link_5G",
-        "Link_4G",
-        "Link_2G",
-        "Link_Wireless"
+        "Link_6TiSCH",
+        "Link_WiSUN"
     ]
 }
