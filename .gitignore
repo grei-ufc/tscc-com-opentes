@@ -17,3 +17,15 @@ omnet-dir/*.tmp
 .venv/
 venv/
 ENV/
+
+# Saídas geradas a cada co-simulação (recriadas por scenario.py e pelos plots)
+omnet-dir/DynamicNetwork.ned
+omnet-dir/posicoes.json
+omnet-dir/links.json
+omnet-dir/config.json
+mosaik-dir/results.csv
+mosaik-dir/grafico_*.png
+mosaik-dir/grafico_*.svg
+mosaik-dir/*.log
+pade-dir/pade_agents/logs/
+output/

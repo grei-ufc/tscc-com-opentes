@@ -27,4 +27,6 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # Porta padrão para comunicação entre agentes/Mosaik
 EXPOSE 5678
 
-CMD ["python3", "pade_sim.py"]
+# Padrão quando o container sobe sem o docker-compose (o compose escolhe o
+# script conforme TOPOLOGY).
+CMD ["python3", "pade_star.py"]
