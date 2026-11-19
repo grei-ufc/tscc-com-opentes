@@ -10,10 +10,9 @@ Topologias suportadas:
   - hibrida  : hierarquia CCO → fibra → celular → RF mesh
 """
 
-import base64, json, math, os, re, subprocess, tempfile, threading, time
+import base64, math, os, re, subprocess, tempfile, threading, time
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 from cosim.canais import descrever, ler_perfis, taxa_legivel
 from cosim.catalogo import CELULAR, TECNOLOGIAS, TIPOS_REDE_PADRAO

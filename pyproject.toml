@@ -43,7 +43,9 @@ mosaik = [
 # compilador C++ (`python -m ziglang c++`) do teste de AgentNode.cc.
 # Grupo instalado por padrão no `uv sync`.
 dev = [
+    "pre-commit>=4.7.0",
     "pytest",
+    "ruff>=0.17.5",
     "ziglang>=0.17.1",
     { include-group = "pade" },
     { include-group = "mosaik" },
@@ -62,3 +64,11 @@ packages = ["cosim"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+extend-exclude = ["examples/legacy", "artigo-overleaf"]
+
+[tool.ruff.lint]
+# Só erros reais: sintaxe (E9) e pyflakes (F: nomes indefinidos, imports e
+# variáveis sem uso...). Regras de estilo ficam a critério de cada autor.
+select = ["E9", "F"]

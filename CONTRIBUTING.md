@@ -10,11 +10,17 @@
 
 ```bash
 uv sync                                   # cria o .venv/ com as versões do uv.lock
+uv run pre-commit install                 # ativa as verificações a cada commit (uma vez por clone)
 uv run streamlit run menu-streamlit.py    # interface web
-uv run pytest -v tests/                   # suíte de validação
+uv run pytest -v                          # suítes de teste
 ```
 
 Rode a suíte antes de abrir o pull request. Ela não precisa de Docker: um emulador faz o papel do OMNeT++.
+
+## Verificações automáticas
+
+- **pre-commit** (`.pre-commit-config.yaml`), a cada commit: lint com ruff (erros de sintaxe e pyflakes), `uv.lock` em dia com o `pyproject.toml`, `requirements.txt` dos containers em dia com o `uv.lock` (o hook os regenera; basta adicioná-los ao commit), YAML/TOML válidos e nenhum arquivo acima de 1 MB.
+- **CI** (`.github/workflows/testes.yml`), a cada push na `main`/`development` e em todo pull request: as mesmas verificações, os testes de consistência e, em seguida, a suíte E2E completa.
 
 ## Nova topologia
 

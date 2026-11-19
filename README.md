@@ -1,5 +1,7 @@
 # Co-Simulação PADE + OMNeT++ + Mosaik
 
+[![testes](https://github.com/grei-ufc/tscc-com-opentes/actions/workflows/testes.yml/badge.svg)](https://github.com/grei-ufc/tscc-com-opentes/actions/workflows/testes.yml)
+
 **Grupo de Redes Elétricas Inteligentes (GREI) — Universidade Federal do Ceará (UFC)**
 
 Plataforma de co-simulação que integra três ferramentas de diferentes domínios em containers Docker: **PADE** (camada cognitiva de agentes FIPA-ACL), **OMNeT++** (simulação de rede de comunicação por eventos discretos em C++) e **Mosaik** (orquestrador de co-simulação). A comunicação entre Mosaik e OMNeT++ usa **ZeroMQ REQ/REP**.

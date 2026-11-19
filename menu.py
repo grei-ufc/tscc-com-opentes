@@ -51,8 +51,8 @@ def linha(char="─", n=58):
 def cabecalho():
     print()
     print(f"╔{linha('═')}                              ╗")
-    print(f"║  Co-Simulação PADE + OMNeT++ + Mosaik    ║")
-    print(f"║  GREI-UFC · Configurador de Cenário (CLI)║")
+    print("║  Co-Simulação PADE + OMNeT++ + Mosaik    ║")
+    print("║  GREI-UFC · Configurador de Cenário (CLI)║")
     print(f"╚{linha('═')}                              ╝")
     print()
 
@@ -196,7 +196,7 @@ def rodar(topologia_id, num_agentes, tipos_rede):
         except OSError:
             pass
 
-    print(f"\nIniciando docker compose...\n")
+    print("\nIniciando docker compose...\n")
 
     resultado = subprocess.run(
         [
@@ -210,8 +210,8 @@ def rodar(topologia_id, num_agentes, tipos_rede):
 
     print()
     if resultado.returncode == 0:
-        print(f"Co-simulação concluída com sucesso.")
-        print(f"  Os gráficos foram salvos em mosaik-dir/")
+        print("Co-simulação concluída com sucesso.")
+        print("  Os gráficos foram salvos em mosaik-dir/")
     else:
         print(f"XXX docker compose encerrou com código {resultado.returncode}.")
 
@@ -219,9 +219,9 @@ def rodar(topologia_id, num_agentes, tipos_rede):
 
 
 def parar():
-    print(f"\nDerrubando containers...")
+    print("\nDerrubando containers...")
     subprocess.run(["docker", "compose", "down"], cwd=RAIZ)
-    print(f"Containers parados.")
+    print("Containers parados.")
 
 def main():
     cabecalho()
@@ -238,7 +238,7 @@ def main():
     exibir_resumo(topologia, num_agentes, nomes)
 
     if not confirmar():
-        print(f"\n  Cancelado.\n")
+        print("\n  Cancelado.\n")
         sys.exit(0)
 
     codigo = rodar(topologia["id"], num_agentes, tipos_rede)
