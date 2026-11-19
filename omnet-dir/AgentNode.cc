@@ -187,7 +187,14 @@ std::string AgentNode::mapPadeToOmnet(const std::string& padeId) {
 
 void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
     cChannel *channel = gate("port$o", portIndex)->getTransmissionChannel();
-    if (!channel->isBusy() && txQueues[portIndex]->isEmpty()) {
+    // Porta livre = canal sem transmissão, fila vazia E nenhum endTx pendente. No
+    // instante exato em que uma transmissão termina, o canal já está livre, mas o
+    // endTx daquele instante pode ainda não ter sido processado (comum com pacotes
+    // encaminhados): reagendá-lo aborta o OMNeT++ ("message is currently scheduled").
+    // Nesse caso o pacote entra na fila e o próprio endTx o transmite, no mesmo instante.
+    bool portaLivre = !channel->isBusy() && txQueues[portIndex]->isEmpty()
+                      && !endTxMsgs[portIndex]->isScheduled();
+    if (portaLivre) {
         if (channel) {
             double baseDelay = baseChannelDelays[portIndex];
             double noise = (baseDelay > 0.0015) ? dist_prob(rng) * baseDelay * 0.25 : 0.0;

@@ -68,6 +68,7 @@ MOCK_OMNETPP_H = r"""
 #include <sstream>
 #include <cmath>
 #include <cstdint>
+#include <stdexcept>
 
 namespace omnetpp {
 
@@ -166,6 +167,7 @@ class cMessage : public cObject {
     SimTime creationTime = SimTime(0.95);
     void* ctxPtr = nullptr;
     bool selfMsg = false;
+    bool scheduled = false;
     cGate* arrivalGate = nullptr;
 public:
     cMessage(const char* n = "") : name(n ? n : "") {}
@@ -178,6 +180,8 @@ public:
     void* getContextPointer() const { return ctxPtr; }
     void setSelfMessage(bool b) { selfMsg = b; }
     bool isSelfMessage() const { return selfMsg; }
+    bool isScheduled() const { return scheduled; }
+    void setScheduled(bool b) { scheduled = b; }
     virtual bool isPacket() const { return false; }
 };
 
@@ -253,6 +257,7 @@ public:
 class cSimpleModule : public cModule {
 public:
     std::vector<cMessage*> sentMessages;
+    std::vector<cMessage*> scheduledMessages;
     cSimpleModule() = default;
     virtual void initialize() {}
     virtual void handleMessage(cMessage*) {}
@@ -261,7 +266,12 @@ public:
         sentMessages.push_back(msg);
     }
     void scheduleAt(SimTime, cMessage* msg) {
+        // Como no OMNeT++: reagendar uma mensagem ainda agendada é erro fatal.
+        if (msg->isScheduled())
+            throw std::runtime_error("scheduleAt(): message is currently scheduled");
         msg->setSelfMessage(true);
+        msg->setScheduled(true);
+        scheduledMessages.push_back(msg);
     }
     void cancelAndDelete(cMessage* msg) {
         delete msg;
@@ -518,6 +528,37 @@ int main() {
     rc.handleMessage(finalPkt);
     assert(rc.par("packets_received").doubleValue() == 1.0);
     assert(rc.par("val_out").stdstringValue() == "{\"sender\":\"ra\"}");
+
+    // Teste 7: pacote que chega no instante em que a transmissão anterior termina:
+    // o canal já está livre, mas o endTx daquele instante ainda não foi processado.
+    // O pacote deve ir para a fila (reagendar o endTx aborta o OMNeT++) e sair
+    // quando o endTx for processado.
+    TestAgentNode ta, tb;
+    ta.setName("ta");
+    tb.setName("tb");
+    cDatarateChannel chTA, chTB;
+    cGate taOut(&ta), taIn(&ta), tbOut(&tb), tbIn(&tb);
+    taOut.setChannel(&chTA);
+    taOut.setPathEndGate(&tbIn);
+    tbOut.setChannel(&chTB);
+    tbOut.setPathEndGate(&taIn);
+    ta.addPortPair(&taOut, &taIn);
+    tb.addPortPair(&tbOut, &tbIn);
+    ta.initialize();
+    tb.initialize();
+    std::string mt = "{\"sender\":\"ta\",\"receivers\":[\"tb@0.0.0.0:1\"]}";
+    ta.par("val_in").setStringValue(mt);
+    ta.handleParameterChange("val_in");        // 1º pacote: transmitido, endTx agendado
+    assert(ta.sentMessages.size() == 1);
+    cMessage* endTx = ta.scheduledMessages.back();
+    assert(endTx->isScheduled());
+    ta.par("val_in").setStringValue(mt);        // canal livre (mock), endTx pendente
+    ta.handleParameterChange("val_in");        // 2º pacote: vai para a fila
+    assert(ta.sentMessages.size() == 1);
+    endTx->setScheduled(false);                 // o OMNeT++ entrega o endTx...
+    ta.handleMessage(endTx);                    // ...que transmite o pacote da fila
+    assert(ta.sentMessages.size() == 2);
+    assert(endTx->isScheduled());
 
     std::cout << "ALL_CPP_TESTS_PASSED" << std::endl;
     return 0;
