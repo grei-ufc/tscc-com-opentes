@@ -1,307 +1,356 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-omnet_zmq_emulator.py — Emulador de eventos discretos ZMQ (REP) compatível
-com MosaikBridge.cc + AgentNode.cc + Profiles.ned para validação fim a fim
-e execução local sem necessidade de Docker.
+omnet_zmq_emulator.py — Emulador ZMQ (REP) de eventos discretos compatível com
+MosaikBridge.cc + AgentNode.cc + Profiles.ned, para validação fim a fim sem
+Docker e sem OMNeT++.
 
-Lê DynamicNetwork.ned, posicoes.json e links.json gerados pelo scenario.py
-e reproduz fielmente a física de rede implementada em AgentNode.cc e
-MosaikBridge.cc:
-  - Perfis de canal de Profiles.ned (Link_Wired, Link_5G, Link_Wireless, Link_4G, Link_2G)
-  - Atraso de propagação espacial (dist * 0.00005 s)
-  - Ruído de jitter (±25% sobre baseDelay > 1.5 ms)
-  - Limite de fila de transmissão (buffer overflow > 5 pacotes por porta)
-  - Perda de pacote por PER nativo do canal (Profiles.ned) + BER espacial/payload
-  - Protocolo ZMQ REQ/REP idêntico ao MosaikBridge.cc (incluindo mosaik_step)
+Lê DynamicNetwork.ned (gerado pelo scenario.py) e Profiles.ned (fonte única
+dos parâmetros de canal) e reproduz a física de AgentNode.cc:
+  - Endereçamento pelos `receivers` da mensagem FIPA-ACL (mapPadeToOmnet)
+  - Roteamento estático por caminho mínimo em nº de saltos (BFS, empate pela
+    menor porta) e encaminhamento multi-salto (`packets_forwarded`)
+  - Atraso base do canal (amostrado uma vez por canal, como parâmetro NED não
+    volátil) + propagação espacial: 5 ns/m em meio guiado (Fibra/Wired) e
+    0,00005 s/m nos demais; ruído de jitter U(0, 25%) quando base > 1,5 ms
+  - Tempo de transmissão (bytes * 8 / datarate) e fila finita de 5 pacotes por
+    porta (buffer overflow)
+  - Perda POR SALTO: PER do canal + atenuação espacial (1,5% a cada 100 m,
+    exceto meio guiado) escalonada pelo payload
+  - Protocolo ZMQ REQ/REP do MosaikBridge.cc (incluindo mosaik_step)
+
+Simplificação: todos os eventos de um passo são resolvidos dentro do próprio
+passo (o OMNeT++ real pode entregar pacotes muito lentos no passo seguinte).
 """
 
+import heapq
+import itertools
 import json
 import math
 import os
 import random
 import re
-import sys
 import zmq
 
 
-def _sample_truncnormal(rng, mean, std):
-    for _ in range(50):
-        val = rng.gauss(mean, std)
-        if val >= 0.0001:
-            return val
-    return max(0.0001, mean)
+# ══════════════════════════════════════════════════════════════
+# PERFIS DE CANAL (Profiles.ned)
+# ══════════════════════════════════════════════════════════════
+
+_UNIDADES_TEMPO = {'s': 1.0, 'ms': 1e-3, 'us': 1e-6, 'ns': 1e-9}
+_UNIDADES_TAXA = {'bps': 1.0, 'kbps': 1e3, 'Mbps': 1e6, 'Gbps': 1e9}
 
 
-def sample_channel_profile(rng, link_type):
-    """Retorna (base_delay_s, per) de acordo com omnet-dir/Profiles.ned."""
-    if link_type == 'Link_Wired':
-        return 0.001, 0.0
-    elif link_type == 'Link_5G':
-        return _sample_truncnormal(rng, 0.005, 0.001), 0.00001
-    elif link_type == 'Link_Wireless':
-        return _sample_truncnormal(rng, 0.002, 0.0005), 0.001
-    elif link_type == 'Link_4G':
-        return _sample_truncnormal(rng, 0.035, 0.008), 0.005
-    elif link_type == 'Link_2G':
-        return rng.expovariate(1.0 / 0.200), 0.15
-    return 0.001, 0.0
+def _tempo(txt):
+    m = re.fullmatch(r'\s*([0-9.]+)\s*(s|ms|us|ns)?\s*', txt)
+    if not m:
+        raise ValueError(f"Tempo NED não reconhecido: {txt!r}")
+    return float(m.group(1)) * _UNIDADES_TEMPO[m.group(2) or 's']
 
+
+def _taxa(txt):
+    m = re.fullmatch(r'\s*([0-9.]+)\s*(bps|kbps|Mbps|Gbps)\s*', txt)
+    if not m:
+        raise ValueError(f"Datarate NED não reconhecido: {txt!r}")
+    return float(m.group(1)) * _UNIDADES_TAXA[m.group(2)]
+
+
+def _amostrar_delay(rng, expr):
+    """Avalia as expressões de delay usadas em Profiles.ned."""
+    expr = expr.strip()
+    m = re.fullmatch(r'truncnormal\(([^,]+),([^)]+)\)', expr)
+    if m:
+        media, desvio = _tempo(m.group(1)), _tempo(m.group(2))
+        for _ in range(100):
+            v = rng.gauss(media, desvio)
+            if v >= 0.0:
+                return v
+        return media
+    m = re.fullmatch(r'exponential\(([^)]+)\)', expr)
+    if m:
+        return rng.expovariate(1.0 / _tempo(m.group(1)))
+    return _tempo(expr)
+
+
+def parse_profiles_ned(path):
+    """Retorna {nome_canal: {'delay': expr, 'datarate': bps, 'per': float}}."""
+    with open(path, 'r', encoding='utf-8') as f:
+        conteudo = re.sub(r'//[^\n]*', '', f.read())
+    perfis = {}
+    for m in re.finditer(r'channel\s+(\w+)\s+extends\s+ned\.DatarateChannel\s*\{(.*?)\}',
+                         conteudo, re.DOTALL):
+        corpo = m.group(2)
+        delay = re.search(r'\bdelay\s*=\s*([^;]+);', corpo)
+        taxa = re.search(r'\bdatarate\s*=\s*([^;]+);', corpo)
+        per = re.search(r'\bper\s*=\s*([^;]+);', corpo)
+        perfis[m.group(1)] = {
+            'delay': delay.group(1) if delay else '0s',
+            'datarate': _taxa(taxa.group(1)) if taxa else 1e9,
+            'per': float(per.group(1)) if per else 0.0,
+        }
+    return perfis
+
+
+def _meio_guiado(tipo):
+    # Mesmo critério de AgentNode::isGuidedMedium
+    return 'Fibra' in tipo or 'Wired' in tipo
+
+
+# ══════════════════════════════════════════════════════════════
+# TOPOLOGIA (DynamicNetwork.ned)
+# ══════════════════════════════════════════════════════════════
 
 def parse_dynamic_network_ned(ned_path):
-    """Extrai nós (xPos, yPos) e conexões de DynamicNetwork.ned."""
-    nodes = {}
-    links = []
+    """Extrai nós (xPos, yPos) e conexões, na ordem em que aparecem."""
+    nodes, links = {}, []
     if not os.path.exists(ned_path):
         return nodes, links
-
     with open(ned_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    node_pattern = re.compile(
-        r'(\w+)\s*:\s*AgentNode\s*\{([^}]*)\}', re.MULTILINE | re.DOTALL
-    )
-    for match in node_pattern.finditer(content):
-        nid = match.group(1)
+    for match in re.finditer(r'(\w+)\s*:\s*AgentNode\s*\{([^}]*)\}', content, re.DOTALL):
         body = match.group(2)
-        xm = re.search(r'xPos\s*=\s*([0-9.+-]+)', body)
-        ym = re.search(r'yPos\s*=\s*([0-9.+-]+)', body)
-        nodes[nid] = {
-            'x': float(xm.group(1)) if xm else 500.0,
-            'y': float(ym.group(1)) if ym else 500.0,
+        xm = re.search(r'xPos\s*=\s*([0-9.eE+-]+)', body)
+        ym = re.search(r'yPos\s*=\s*([0-9.eE+-]+)', body)
+        nodes[match.group(1)] = {
+            'x': float(xm.group(1)) if xm else 0.0,
+            'y': float(ym.group(1)) if ym else 0.0,
         }
 
-    conn_pattern = re.compile(
-        r'(\w+)\.port\+\+\s*<-->\s*(\w+)\s*<-->\s*(\w+)\.port\+\+\s*;'
-    )
-    for match in conn_pattern.finditer(content):
-        links.append({
-            'origem': match.group(1),
-            'destino': match.group(3),
-            'tipo': match.group(2),
-        })
-
+    for match in re.finditer(r'(\w+)\.port\+\+\s*<-->\s*(\w+)\s*<-->\s*(\w+)\.port\+\+\s*;', content):
+        links.append({'origem': match.group(1), 'tipo': match.group(2), 'destino': match.group(3)})
     return nodes, links
 
 
+def map_pade_to_omnet(pade_id):
+    # Mesmo mapeamento de AgentNode::mapPadeToOmnet
+    if pade_id == 'AgenteCentral':
+        return 'agent_central'
+    if pade_id.startswith('AgenteP_'):
+        return 'agent_p_' + pade_id[len('AgenteP_'):]
+    return pade_id
+
+
+class Porta:
+    """Uma porta de saída (port$o[i]) com seu canal e fila de transmissão."""
+
+    def __init__(self, vizinho, tipo, base_delay, datarate, per):
+        self.vizinho = vizinho
+        self.tipo = tipo
+        self.base_delay = base_delay
+        self.datarate = datarate
+        self.per = per
+        self.ocupada_ate = 0.0
+        self.fila = []
+
+
 class AgentNodeSim:
-    def __init__(self, eid, x=500.0, y=500.0):
+    def __init__(self, eid, x=0.0, y=0.0):
         self.eid = eid
         self.x = x
         self.y = y
-        self.gates = []  # list of (neighbor_eid, link_type)
-        self.status = "idle"
+        self.portas = []          # índice = número da porta (ordem de port++)
+        self.rota = {}            # destino -> índice da porta do próximo salto
+        self.drop_espacial = {}   # vizinho -> chance base de perda por distância
+        self.status = 'idle'
         self.packets_sent = 0
         self.packets_received = 0
         self.packets_dropped = 0
-        self.last_delay_from = {}
-        self.val_out_buffer = ""
-        self.packet_sizes_buffer = ""
-        self.latencies_buffer = ""
-        self.jitters_buffer = ""
+        self.packets_forwarded = 0
+        self.ultima_latencia = {}
+        self.clear_step_buffers()
 
     def clear_step_buffers(self):
-        self.val_out_buffer = ""
-        self.packet_sizes_buffer = ""
-        self.latencies_buffer = ""
-        self.jitters_buffer = ""
-        if self.status != "error_dropped":
-            self.status = "idle"
+        self.val_out = []
+        self.sizes = []
+        self.latencies = []
+        self.jitters = []
 
+
+# ══════════════════════════════════════════════════════════════
+# SIMULADOR
+# ══════════════════════════════════════════════════════════════
 
 class OmnetDiscreteSimulator:
     def __init__(self, omnet_dir, seed=None):
         self.omnet_dir = omnet_dir
-        self.rng = random.Random(int(seed) if seed is not None and str(seed) != '' else 42)
+        self.rng = random.Random(int(seed) if seed not in (None, '') else 42)
         self.nodes = {}
-        self.loaded_ned = False
+        self.topologia_carregada = False
+        self.perfis = parse_profiles_ned(os.path.join(omnet_dir, 'Profiles.ned'))
 
-    def _ensure_topology_loaded(self):
-        ned_path = os.path.join(self.omnet_dir, 'DynamicNetwork.ned')
-        ned_nodes, ned_links = parse_dynamic_network_ned(ned_path)
-        for nid, coords in ned_nodes.items():
-            if nid not in self.nodes:
-                self.nodes[nid] = AgentNodeSim(nid, coords['x'], coords['y'])
-            else:
-                self.nodes[nid].x = coords['x']
-                self.nodes[nid].y = coords['y']
+    def _carregar_topologia(self):
+        if self.topologia_carregada:
+            return
+        ned_nodes, ned_links = parse_dynamic_network_ned(
+            os.path.join(self.omnet_dir, 'DynamicNetwork.ned'))
+        if not ned_links:
+            return
+        for nid, c in ned_nodes.items():
+            self.nodes[nid] = AgentNodeSim(nid, c['x'], c['y'])
 
-        if ned_links and not self.loaded_ned:
-            for node in self.nodes.values():
-                node.gates.clear()
-            for lk in ned_links:
-                u, v, t = lk['origem'], lk['destino'], lk['tipo']
-                if u in self.nodes and v in self.nodes:
-                    self.nodes[u].gates.append((v, t))
-                    self.nodes[v].gates.append((u, t))
-            self.loaded_ned = True
+        # Cada '<-->' cria um canal por sentido, cada um com seu delay amostrado.
+        for lk in ned_links:
+            u, v, tipo = lk['origem'], lk['destino'], lk['tipo']
+            if u not in self.nodes or v not in self.nodes:
+                continue
+            perfil = self.perfis.get(tipo, {'delay': '1ms', 'datarate': 1e9, 'per': 0.0})
+            for a, b in ((u, v), (v, u)):
+                na, nb = self.nodes[a], self.nodes[b]
+                dist = math.hypot(na.x - nb.x, na.y - nb.y)
+                guiado = _meio_guiado(tipo)
+                base = _amostrar_delay(self.rng, perfil['delay']) + dist * (5e-9 if guiado else 0.00005)
+                na.portas.append(Porta(b, tipo, base, perfil['datarate'], perfil['per']))
+                na.drop_espacial[b] = 0.0 if guiado else (dist / 100.0) * 0.015
+
+        for node in self.nodes.values():
+            self._construir_rotas(node)
+        self.topologia_carregada = True
+
+    def _construir_rotas(self, origem):
+        """BFS em nº de saltos; guarda a 1ª porta do caminho (AgentNode::buildRoutingTable)."""
+        primeira_porta = {origem.eid: -1}
+        fila = [origem.eid]
+        while fila:
+            atual = fila.pop(0)
+            for idx, porta in enumerate(self.nodes[atual].portas):
+                if porta.vizinho in primeira_porta:
+                    continue
+                primeira_porta[porta.vizinho] = idx if atual == origem.eid else primeira_porta[atual]
+                fila.append(porta.vizinho)
+        origem.rota = {d: p for d, p in primeira_porta.items() if d != origem.eid}
+
+    # ── eventos ─────────────────────────────────────────────────
+    def _transmitir(self, agenda, agora, node, idx_porta, pkt):
+        """AgentNode::transmitPacket: envia se o canal está livre, senão enfileira (máx. 5)."""
+        porta = node.portas[idx_porta]
+        if agora >= porta.ocupada_ate and not porta.fila:
+            self._enviar(agenda, agora, node, porta, pkt)
+        elif len(porta.fila) >= 5:
+            node.packets_dropped += 1
+            node.status = 'overflow_drop'
+        else:
+            porta.fila.append(pkt)
+
+    def _enviar(self, agenda, agora, node, porta, pkt):
+        ruido = self.rng.random() * porta.base_delay * 0.25 if porta.base_delay > 0.0015 else 0.0
+        t_tx = pkt['bytes'] * 8.0 / porta.datarate
+        porta.ocupada_ate = agora + t_tx
+        chegada = agora + t_tx + max(0.0001, porta.base_delay + ruido)
+        erro_bit = self.rng.random() < porta.per
+        heapq.heappush(agenda, (chegada, next(self._seq), 'rx',
+                                (porta.vizinho, node.eid, pkt, erro_bit)))
+        heapq.heappush(agenda, (porta.ocupada_ate, next(self._seq), 'fim_tx', (node, porta)))
+
+    def _receber(self, agenda, agora, eid, salto_anterior, pkt, erro_bit):
+        """AgentNode::handleMessage para um pacote que chegou."""
+        node = self.nodes[eid]
+        fator = max(1.0, pkt['bytes'] / 15000.0)
+        chance = min(0.99, node.drop_espacial.get(salto_anterior, 0.0) * fator)
+        if erro_bit or self.rng.random() < chance:
+            node.packets_dropped += 1
+            node.status = 'error_dropped'
+            return
+
+        if pkt['dest'] != eid:
+            idx = node.rota.get(pkt['dest'])
+            if idx is None:
+                node.packets_dropped += 1
+                return
+            node.packets_forwarded += 1
+            self._transmitir(agenda, agora, node, idx, pkt)
+            return
+
+        latencia = agora - pkt['criado']
+        anterior = node.ultima_latencia.get(pkt['src'], 0.0)
+        jitter = abs(latencia - anterior) if anterior > 0 else 0.0
+        node.ultima_latencia[pkt['src']] = latencia
+        node.packets_received += 1
+        node.status = 'receiving'
+        node.val_out.append(pkt['payload'])
+        node.sizes.append(f"{float(pkt['bytes']):.6f}")
+        node.latencies.append(f"{latencia:.6f}")
+        node.jitters.append(f"{jitter:.6f}")
+
+    def _passo(self, inputs):
+        for node in self.nodes.values():
+            node.clear_step_buffers()
+            if node.status != 'error_dropped':
+                node.status = 'idle'
+            for porta in node.portas:
+                porta.ocupada_ate = 0.0
+                porta.fila.clear()
+
+        agenda = []
+        self._seq = itertools.count()
+
+        # Injeção (AgentNode::processInjectedData) no instante 0 do passo
+        for eid, attrs in inputs.items():
+            node = self.nodes.get(eid)
+            if node is None or 'val_in' not in attrs:
+                continue
+            valores = attrs['val_in']
+            valores = valores.values() if isinstance(valores, dict) else [valores]
+            bruto = '|||'.join(v for v in valores if isinstance(v, str) and v)
+            for msg in (m for m in bruto.split('|||') if m):
+                try:
+                    receivers = json.loads(msg).get('receivers', [])
+                except (ValueError, AttributeError):
+                    continue
+                for rec in receivers:
+                    dest = map_pade_to_omnet(str(rec).split('@')[0])
+                    if not dest or dest == eid or dest not in node.rota:
+                        continue
+                    pkt = {'src': eid, 'dest': dest, 'payload': msg,
+                           'bytes': len(msg.encode('utf-8')), 'criado': 0.0}
+                    self._transmitir(agenda, 0.0, node, node.rota[dest], pkt)
+                    node.packets_sent += 1
+                    node.status = 'transmitting'
+
+        while agenda:
+            agora, _, tipo, dados = heapq.heappop(agenda)
+            if tipo == 'rx':
+                self._receber(agenda, agora, *dados)
+            else:  # fim_tx: libera o canal e envia o próximo da fila
+                node, porta = dados
+                if porta.fila:
+                    self._enviar(agenda, agora, node, porta, porta.fila.pop(0))
 
     def handle_request(self, req):
         action = req.get('action', '')
         if action == 'create':
-            self._ensure_topology_loaded()
+            self._carregar_topologia()
             eid = req.get('eid', 'unknown')
             if eid not in self.nodes:
                 self.nodes[eid] = AgentNodeSim(eid)
             return {'status': 'ok', 'eid': eid}
 
-        elif action == 'connect':
-            self._ensure_topology_loaded()
-            src = req.get('src')
-            dest = req.get('dest')
+        if action == 'connect':
+            # Também usado pelo omnet_wrapper como sonda de disponibilidade.
+            src, dest = req.get('src'), req.get('dest')
             if src in self.nodes and dest in self.nodes:
-                self.nodes[src].gates.append((dest, 'Link_Wired'))
-                self.nodes[dest].gates.append((src, 'Link_Wired'))
                 return {'status': 'ok', 'msg': f'Connected {src} to {dest}'}
             return {'status': 'error', 'reason': 'Nodes not found'}
 
-        elif action == 'step':
-            self._ensure_topology_loaded()
+        if action == 'step':
+            self._carregar_topologia()
             mosaik_step = int(req.get('time', 0))
-            inputs = req.get('inputs', {})
-
-            for node in self.nodes.values():
-                node.clear_step_buffers()
-
-            # 1. Processa envios (processMosaikInput de AgentNode.cc)
-            in_flight_packets = []
-            for eid, attrs in inputs.items():
-                if eid not in self.nodes or 'val_in' not in attrs:
-                    continue
-                sender_node = self.nodes[eid]
-                val_in_dict = attrs['val_in']
-                consolidated = ""
-                if isinstance(val_in_dict, dict):
-                    for v in val_in_dict.values():
-                        if isinstance(v, str) and v:
-                            consolidated = (consolidated + "|||" + v) if consolidated else v
-                elif isinstance(val_in_dict, str):
-                    consolidated = val_in_dict
-
-                if not consolidated:
-                    continue
-
-                raw_msgs = [m for m in consolidated.split("|||") if m]
-                for gate_idx, (neighbor_eid, link_type) in enumerate(sender_node.gates):
-                    dest_node = self.nodes.get(neighbor_eid)
-                    if dest_node is None:
-                        continue
-                    dist = math.hypot(sender_node.x - dest_node.x, sender_node.y - dest_node.y)
-                    prop_delay = dist * 0.00005
-
-                    for msg_idx, single_msg in enumerate(raw_msgs):
-                        # Buffer overflow: limite de 5 pacotes por porta
-                        if msg_idx >= 5:
-                            sender_node.packets_dropped += 1
-                            sender_node.status = "overflow_drop"
-                            continue
-
-                        base_delay, channel_per = sample_channel_profile(self.rng, link_type)
-                        jitter_noise = 0.0
-                        if base_delay > 0.0015:
-                            jitter_noise = self.rng.uniform(-0.25 * base_delay, 0.25 * base_delay)
-                        total_delay = max(0.0001, base_delay + prop_delay + jitter_noise)
-
-                        # Serialization delay (byteLength * 8 / datarate)
-                        datarates = {
-                            'Link_Wired': 1e9,
-                            'Link_5G': 500e6,
-                            'Link_Wireless': 300e6,
-                            'Link_4G': 50e6,
-                            'Link_2G': 250e3,
-                        }
-                        tx_delay = (len(single_msg.encode('utf-8')) * 8.0) / datarates.get(link_type, 1e9)
-                        arrival_delay = total_delay + tx_delay
-
-                        has_bit_error = (self.rng.random() < channel_per)
-                        in_flight_packets.append({
-                            'src': sender_node,
-                            'dst': dest_node,
-                            'payload': single_msg,
-                            'byte_len': float(len(single_msg.encode('utf-8'))),
-                            'delay': arrival_delay,
-                            'has_bit_error': has_bit_error,
-                            'link_type': link_type,
-                        })
-                        sender_node.packets_sent += 1
-                        sender_node.status = "transmitting"
-
-            # Ordena chegadas pelo menor atraso (ordem cronológica de eventos discretos)
-            in_flight_packets.sort(key=lambda pkt: pkt['delay'])
-
-            # 2. Processa recepções (handleMessage de AgentNode.cc)
-            for pkt in in_flight_packets:
-                src_node = pkt['src']
-                dst_node = pkt['dst']
-
-                # Checagem 1: PER nativo do canal (pkt->hasBitError())
-                if pkt['has_bit_error']:
-                    dst_node.packets_dropped += 1
-                    dst_node.status = "error_dropped"
-                    continue
-
-                # Checagem 2: BER espacial e escalonado por payload (AgentNode.cc)
-                dist = math.hypot(dst_node.x - src_node.x, dst_node.y - src_node.y)
-                base_drop = 0.0
-                if dist > 400.0 and pkt['link_type'] != 'Link_Wired':
-                    base_drop = 0.12
-                elif dist > 150.0 and pkt['link_type'] in ('Link_4G', 'Link_2G'):
-                    base_drop = 0.03
-
-                size_factor = max(1.0, pkt['byte_len'] / 15000.0)
-                final_drop = min(0.99, base_drop * size_factor)
-
-                if self.rng.random() < final_drop:
-                    dst_node.packets_dropped += 1
-                    dst_node.status = "error_dropped"
-                    continue
-
-                # Sucesso na recepção
-                dst_node.packets_received += 1
-                dst_node.status = "receiving"
-                delay = pkt['delay']
-                prev_delay = dst_node.last_delay_from.get(src_node.eid)
-                jitter = abs(delay - prev_delay) if prev_delay is not None else 0.0
-                dst_node.last_delay_from[src_node.eid] = delay
-
-                dst_node.val_out_buffer = (
-                    (dst_node.val_out_buffer + "|||" + pkt['payload'])
-                    if dst_node.val_out_buffer else pkt['payload']
-                )
-                sz_s = f"{pkt['byte_len']:.6f}"
-                lat_s = f"{delay:.6f}"
-                jit_s = f"{jitter:.6f}"
-                dst_node.packet_sizes_buffer = (
-                    (dst_node.packet_sizes_buffer + "|||" + sz_s)
-                    if dst_node.packet_sizes_buffer else sz_s
-                )
-                dst_node.latencies_buffer = (
-                    (dst_node.latencies_buffer + "|||" + lat_s)
-                    if dst_node.latencies_buffer else lat_s
-                )
-                dst_node.jitters_buffer = (
-                    (dst_node.jitters_buffer + "|||" + jit_s)
-                    if dst_node.jitters_buffer else jit_s
-                )
-
-            data_out = {}
-            for eid, node in self.nodes.items():
-                data_out[eid] = {
-                    'status': node.status,
-                    'packets_sent': node.packets_sent,
-                    'packets_received': node.packets_received,
-                    'packets_dropped': node.packets_dropped,
-                    'val_out': node.val_out_buffer,
-                    'packet_sizes_out': node.packet_sizes_buffer,
-                    'latencies_out': node.latencies_buffer,
-                    'jitters_out': node.jitters_buffer,
+            self._passo(req.get('inputs', {}))
+            data_out = {
+                eid: {
+                    'status': n.status,
+                    'packets_sent': n.packets_sent,
+                    'packets_received': n.packets_received,
+                    'packets_dropped': n.packets_dropped,
+                    'packets_forwarded': n.packets_forwarded,
+                    'val_out': '|||'.join(n.val_out),
+                    'packet_sizes_out': '|||'.join(n.sizes),
+                    'latencies_out': '|||'.join(n.latencies),
+                    'jitters_out': '|||'.join(n.jitters),
                 }
-
-            return {
-                'status': 'ok',
-                'mosaik_step': mosaik_step,
-                'data': data_out,
+                for eid, n in self.nodes.items()
             }
+            return {'status': 'ok', 'mosaik_step': mosaik_step, 'data': data_out}
 
         return {'status': 'error', 'reason': f'Unknown action: {action}'}
 
@@ -315,8 +364,7 @@ def serve_forever(port, omnet_dir, seed=None, max_steps=None):
     try:
         while True:
             req = sock.recv_json()
-            resp = sim.handle_request(req)
-            sock.send_json(resp)
+            sock.send_json(sim.handle_request(req))
             if req.get('action') == 'step':
                 steps_done += 1
                 if max_steps is not None and steps_done >= max_steps:

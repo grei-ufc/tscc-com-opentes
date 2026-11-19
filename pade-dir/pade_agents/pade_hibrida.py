@@ -42,6 +42,8 @@ import json
 import math
 import os
 import random
+import sys
+import types
 from itertools import combinations
 
 from pade.misc.utility import start_loop
@@ -49,6 +51,16 @@ from pade.core.agent import Agent
 from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.drivers.mosaik_driver import MosaikCon
+
+# O data_logger do PADE importa fcntl (só existe em Unix). No Windows (testes locais)
+# usa um substituto inócuo, instalado DEPOIS dos imports acima: se o Twisted o
+# encontrar ao ser importado, passa a usar o caminho POSIX e quebra.
+if sys.platform == 'win32' and 'fcntl' not in sys.modules:
+    _fcntl = types.ModuleType('fcntl')
+    _fcntl.LOCK_EX = 2
+    _fcntl.LOCK_UN = 8
+    _fcntl.flock = lambda *args, **kwargs: None
+    sys.modules['fcntl'] = _fcntl
 
 # ── Estado global ─────────────────────────────────────────────────────────────
 ACTIVE_AGENTS = {}
@@ -64,7 +76,8 @@ MOSAIK_MODELS = {
     },
 }
 
-PORTA_BASE          = 5678
+PORTA_BASE          = int(os.environ.get('PADE_PORT', 5678))
+AMS_PORT            = int(os.environ.get('AMS_PORT', 8000))
 SUBESTACOES         = int(os.environ.get('SUBESTACOES',        3))
 CONCENTRADORES      = int(os.environ.get('CONCENTRADORES',     3))
 MEDIDORES_CLUSTER   = int(os.environ.get('MEDIDORES_CLUSTER',  5))
@@ -425,7 +438,7 @@ class AgenteHibridaFIPA(Agent):
 
 if __name__ == '__main__':
     host       = '0.0.0.0'
-    ams_config = {'name': host, 'port': 8000}
+    ams_config = {'name': host, 'port': AMS_PORT}
     agentes    = []
 
     for nome, dados in CONFIG_REDE.items():

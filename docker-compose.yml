@@ -17,6 +17,9 @@ services:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - RANDOM_SEED=${RANDOM_SEED:-}
+      - PADE_PORT=5678
+      - PYTHONUNBUFFERED=1
       # ── topologia árvore ────────────────────
       - ARVORE_FANOUT=${ARVORE_FANOUT:-3,2,4}
       - CELULAR_ARVORE=${CELULAR_ARVORE:-4g}
@@ -29,15 +32,19 @@ services:
     stdin_open: true
     tty: true
     # Seleciona o script PADE correto conforme a topologia:
-    #   anel    → pade_anel.py   (vizinhança em ciclo)
-    #   arvore  → pade_arvore.py (árvore fan-out IEC 61850)
+    #   anel    → pade_anel.py    (vizinhança em ciclo)
+    #   malha   → pade_malha.py   (todos enviam para todos)
+    #   arvore  → pade_arvore.py  (árvore fan-out IEC 61850)
     #   hibrida → pade_hibrida.py (CCO + fibra + celular + RF mesh)
-    #   demais  → pade_star.py   (central + periféricos)
+    #   demais  → pade_star.py    (central + periféricos)
     command: >
       sh -c '
       if [ "$$TOPOLOGY" = "anel" ]; then
         echo "Topologia ANEL -> pade_anel.py";
         python3 pade_anel.py;
+      elif [ "$$TOPOLOGY" = "malha" ]; then
+        echo "Topologia MALHA -> pade_malha.py";
+        python3 pade_malha.py;
       elif [ "$$TOPOLOGY" = "arvore" ]; then
         echo "Topologia ARVORE -> pade_arvore.py";
         python3 pade_arvore.py;
@@ -52,15 +59,20 @@ services:
   # ─────────────────────────────────────────────
   # OMNET++: simulador de rede de comunicação (C++)
   # ─────────────────────────────────────────────
+  # omnet_sim e mosaik_master compartilham o namespace de rede do container
+  # pade e se falam por 127.0.0.1. Isso evita a resolução de DNS entre
+  # containers, que falha no Docker-in-Docker do GitHub Codespaces.
   omnet_sim:
     build: ./omnet-dir
     container_name: omnet_sim
-    networks:
-      - sim_net
-    expose:
-      - "5555"
+    network_mode: "service:pade"
+    depends_on:
+      - pade
     volumes:
       - ./omnet-dir:/root/models
+    environment:
+      - RANDOM_SEED=${RANDOM_SEED:-}
+      - PYTHONUNBUFFERED=1
     command: >
       /bin/bash -c "
       source /root/omnetpp/setenv &&
@@ -79,8 +91,7 @@ services:
   mosaik_master:
     build: ./mosaik-dir
     container_name: mosaik_master
-    networks:
-      - sim_net
+    network_mode: "service:pade"
     depends_on:
       - pade
       - omnet_sim
@@ -92,6 +103,13 @@ services:
       - TOPOLOGY=${TOPOLOGY:-estrela}
       - NUM_PERIFERICOS=${NUM_PERIFERICOS:-3}
       - TIPOS_REDE=${TIPOS_REDE:-Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G}
+      - RANDOM_SEED=${RANDOM_SEED:-}
+      - SIM_STEPS=${SIM_STEPS:-20}
+      - PADE_HOST=127.0.0.1
+      - PADE_PORT=5678
+      - OMNET_HOST=127.0.0.1
+      - OMNET_PORT=5555
+      - PYTHONUNBUFFERED=1
       # ── topologia árvore ────────────────────
       - ARVORE_FANOUT=${ARVORE_FANOUT:-3,2,4}
       - CELULAR_ARVORE=${CELULAR_ARVORE:-4g}
@@ -102,13 +120,15 @@ services:
       - CELULAR_HIBRIDA=${CELULAR_HIBRIDA:-4g}
       - SEMENTE_HIBRIDA=${SEMENTE_HIBRIDA:-42}
     # scenario.py já despacha o script de plotagem correto internamente:
-    #   anel    → plot_results_anel.py    → grafico_anel.png
-    #   arvore  → plot_results_arvore.py  → grafico_arvore.png
-    #   hibrida → plot_results_hibrida.py → grafico_hibrida.png
-    #   demais  → plot_results_star.py    → grafico_trafego_*.png
+    #   anel    → plot_results_anel.py
+    #   malha   → plot_results_malha.py
+    #   arvore  → plot_results_arvore.py
+    #   hibrida → plot_results_hibrida.py
+    #   demais  → plot_results_star.py
+    # As dependências Python vêm da imagem (mosaik-dir/requirements.txt, travado pelo uv).
     command: >
       sh -c "
-      pip install pandas matplotlib plotly kaleido &&
+      rm -f /omnet-dir/DynamicNetwork.ned &&
       echo 'Aguardando OMNeT++ compilar...' &&
       sleep 3 &&
       python scenario.py"

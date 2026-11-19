@@ -6,7 +6,7 @@ scenario.py — Orquestrador único de cenário Mosaik.
 Suporta cinco topologias, selecionadas via TOPOLOGY:
 
     estrela  — 1 central  <-->  N periféricos          (pade_star.py)
-    malha    — full mesh entre central + N periféricos  (pade_star.py)
+    malha    — N agentes peers em full mesh             (pade_malha.py)
     anel     — N agentes em ciclo fechado               (pade_anel.py)
     arvore   — árvore radial IEC 61850 com fan-out      (pade_arvore.py)
     hibrida  — hierarquia CCO→subs(fibra)→cons(celular)→meds(RF mesh)
@@ -16,8 +16,15 @@ Variáveis de ambiente
 ---------------------
 Comuns:
     TOPOLOGY          estrela | malha | anel | arvore | hibrida
-    NUM_PERIFERICOS   (estrela/malha/anel) número de periféricos
+    NUM_PERIFERICOS   estrela: nº de periféricos (total = N + 1)
+                      malha/anel: nº TOTAL de agentes (N)
     TIPOS_REDE        lista separada por vírgula de nomes de canal
+    SIM_STEPS         passos da co-simulação (padrão 20)
+    RANDOM_SEED       semente para reprodutibilidade (vazio = aleatório)
+    PADE_HOST         host do PADE (padrão 127.0.0.1)
+    PADE_PORT         porta do PADE (padrão 5678)
+    OMNET_DIR         pasta do modelo OMNeT++ (padrão /omnet-dir no container,
+                      ../omnet-dir fora dele)
 
 Árvore (TOPOLOGY=arvore):
     ARVORE_FANOUT     ex.: "3,2,4"  (filhos por nível)
@@ -37,6 +44,8 @@ import mosaik
 import os
 import random
 import json
+import socket
+import time
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO VIA VARIÁVEIS DE AMBIENTE
@@ -45,7 +54,24 @@ import json
 TOPOLOGY         = os.environ.get('TOPOLOGY', 'estrela').lower()
 NUM_PERIFERICOS  = int(os.environ.get('NUM_PERIFERICOS', 3))
 _tipos_raw       = os.environ.get('TIPOS_REDE', 'Link_Wired,Link_5G,Link_4G,Link_2G,Link_Wireless')
-TIPOS_REDE       = [t.strip() for t in _tipos_raw.split(',')]
+TIPOS_REDE       = [t.strip() for t in _tipos_raw.split(',') if t.strip()]
+
+SIM_STEPS   = int(os.environ.get('SIM_STEPS', 20))
+RANDOM_SEED = os.environ.get('RANDOM_SEED', '').strip()
+if RANDOM_SEED:
+    random.seed(int(RANDOM_SEED))
+
+PADE_HOST = os.environ.get('PADE_HOST', '127.0.0.1')
+PADE_PORT = int(os.environ.get('PADE_PORT', 5678))
+
+# Dentro do container o modelo OMNeT++ é montado em /omnet-dir; fora dele
+# (testes locais) usa a pasta irmã ../omnet-dir.
+_DEFAULT_OMNET_DIR = (
+    '/omnet-dir'
+    if os.path.isdir('/omnet-dir')
+    else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'omnet-dir'))
+)
+OMNET_DIR = os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR)
 
 # Árvore
 ARVORE_FANOUT  = os.environ.get('ARVORE_FANOUT', '3,2,4')
@@ -70,26 +96,66 @@ CELULAR_MAP = {
 # CONFIGURAÇÃO DOS SIMULADORES MOSAIK
 # ══════════════════════════════════════════════════════════════
 
+def _resolver_ipv4(host):
+    """
+    Resolve o hostname explicitamente para IPv4. Evita que o glibc no Docker
+    (ex.: GitHub Codespaces) tente IPv6 primeiro e trave ~30 s na conexão.
+    """
+    try:
+        infos = socket.getaddrinfo(host, None, socket.AF_INET, socket.SOCK_STREAM)
+        if infos:
+            return infos[0][4][0]
+    except OSError as e:
+        print(f"[MOSAIK] ⚠ Falha ao resolver IPv4 de '{host}': {e}; mantendo original.", flush=True)
+    return host
+
+
+PADE_HOST_IPV4 = _resolver_ipv4(PADE_HOST)
+
 sim_config = {
     'OmnetSim':   {'python': 'omnet_wrapper:OmnetAdapter'},
     'ColetorSim': {'python': 'collector:Coletor'},
-    'PadeSim':    {'connect': 'pade:5678'},
+    'PadeSim':    {'connect': f'{PADE_HOST_IPV4}:{PADE_PORT}'},
 }
+
+
+def _aguardar_pade_pronto(timeout=30.0):
+    """Espera a porta TCP do PADE aceitar conexões antes do world.start('PadeSim')."""
+    print(f"[MOSAIK] Aguardando PADE em {PADE_HOST_IPV4}:{PADE_PORT}...", flush=True)
+    inicio = time.time()
+    while time.time() - inicio < timeout:
+        try:
+            with socket.create_connection((PADE_HOST_IPV4, PADE_PORT), timeout=0.5):
+                print("[MOSAIK] ✓ PADE pronto.", flush=True)
+                return True
+        except OSError:
+            time.sleep(0.3)
+    print(f"[MOSAIK] ⚠ Timeout ({timeout}s) aguardando PADE; tentando conectar mesmo assim.", flush=True)
+    return False
+
+
+def _caminho_omnet(nome):
+    return os.path.join(OMNET_DIR, nome)
 
 
 # ══════════════════════════════════════════════════════════════
 # GERAÇÃO DO ARQUIVO NED  (agnóstica à topologia)
 # ══════════════════════════════════════════════════════════════
 
-def gerar_topologia_ned(agentes_info, links,
-                        arquivo_saida="/omnet-dir/DynamicNetwork.ned"):
+def gerar_topologia_ned(agentes_info, links, arquivo_saida=None):
     """
     Escreve DynamicNetwork.ned a partir de listas genéricas.
 
     agentes_info : list[dict]  — cada item tem 'id', 'x', 'y', 'tipo'.
     links        : list[dict]  — cada item tem 'origem', 'destino', 'tipo'.
+
+    A escrita é atômica (arquivo .tmp + os.replace): o OMNeT++ espera o
+    arquivo aparecer e não pode ler uma versão pela metade.
     """
-    with open(arquivo_saida, 'w') as f:
+    arquivo_saida = arquivo_saida or _caminho_omnet('DynamicNetwork.ned')
+    os.makedirs(os.path.dirname(os.path.abspath(arquivo_saida)), exist_ok=True)
+    arquivo_tmp = arquivo_saida + '.tmp'
+    with open(arquivo_tmp, 'w', encoding='utf-8') as f:
         f.write("network DynamicNetwork\n{\n")
         f.write("    submodules:\n")
         f.write("        mosaikBridge: MosaikBridge;\n\n")
@@ -108,6 +174,7 @@ def gerar_topologia_ned(agentes_info, links,
                 f"{link['destino']}.port++;\n"
             )
         f.write("}\n")
+    os.replace(arquivo_tmp, arquivo_saida)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -227,6 +294,7 @@ def create_scenario(world):
 
     omnet_sim   = world.start('OmnetSim')
     coletor_sim = world.start('ColetorSim')
+    _aguardar_pade_pronto()
     pade_sim    = world.start('PadeSim')
     monitor     = coletor_sim.Monitor()
 
@@ -246,9 +314,17 @@ def create_scenario(world):
 # ──────────────────────────────────────────────────────────────
 
 def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
-    print(f"   Periféricos: {NUM_PERIFERICOS}\n   Redes: {', '.join(TIPOS_REDE)}\n")
+    """Monta estrela OU malha (mesma nomenclatura de agentes):
+      - estrela: 1 central + NUM_PERIFERICOS periféricos  (total = N + 1)
+      - malha  : 1 master  + (NUM_PERIFERICOS - 1) peers  (total = N),
+                 semântica igual à de menu.py e pade_malha.py
+    """
+    num_perifericos = (
+        max(1, NUM_PERIFERICOS - 1) if TOPOLOGY == 'malha' else NUM_PERIFERICOS
+    )
+    print(f"   Periféricos: {num_perifericos}\n   Redes: {', '.join(TIPOS_REDE)}\n")
     agente_central_id = 'agent_central'
-    perifericos_ids   = [f'agent_p_{i}' for i in range(1, NUM_PERIFERICOS + 1)]
+    perifericos_ids   = [f'agent_p_{i}' for i in range(1, num_perifericos + 1)]
 
     agentes_info = [{
         'id': agente_central_id, 'x': 500.0, 'y': 500.0,
@@ -282,7 +358,7 @@ def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
                   'packets_forwarded',
                   'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
-    for i in range(1, NUM_PERIFERICOS + 1):
+    for i in range(1, num_perifericos + 1):
         pid           = f'agent_p_{i}'
         agente_p_pade = pade_sim.PadeAgent(agent_id=f'AgenteP_{i}')
         node_p_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=pid)
@@ -518,14 +594,15 @@ def _conectar_agentes_mosaik(world, omnet_sim, pade_sim, monitor, agentes_info):
 
 def _persistir_mapa_e_config(agentes_info, links=None, extra_config=None):
     """
-    Salva os artefatos da rodada em /omnet-dir/ para uso pelos scripts
+    Salva os artefatos da rodada em OMNET_DIR para uso pelos scripts
     de plotagem e pelo dashboard Streamlit.
 
     posicoes.json  — lista de nós com id, x, y, tipo, camada (quando disponível)
     config.json    — topologia, parâmetros e metadados extras
     links.json     — lista de enlaces da rodada atual (removido se não houver)
     """
-    with open('/omnet-dir/posicoes.json', 'w') as f:
+    os.makedirs(OMNET_DIR, exist_ok=True)
+    with open(_caminho_omnet('posicoes.json'), 'w', encoding='utf-8') as f:
         json.dump(agentes_info, f, indent=4)
 
     config_data = {
@@ -535,16 +612,17 @@ def _persistir_mapa_e_config(agentes_info, links=None, extra_config=None):
     }
     if extra_config:
         config_data.update(extra_config)
-    with open('/omnet-dir/config.json', 'w') as f:
+    with open(_caminho_omnet('config.json'), 'w', encoding='utf-8') as f:
         json.dump(config_data, f, indent=4)
 
     # links.json SEMPRE reflete a rodada atual. Um arquivo velho (de outra topologia) fazia os
     # scripts de plotagem não casarem remetente/destino e gerar painéis por tecnologia vazios.
+    caminho_links = _caminho_omnet('links.json')
     if links is not None:
-        with open('/omnet-dir/links.json', 'w') as f:
+        with open(caminho_links, 'w', encoding='utf-8') as f:
             json.dump(links, f, indent=2)
-    elif os.path.exists('/omnet-dir/links.json'):
-        os.remove('/omnet-dir/links.json')
+    elif os.path.exists(caminho_links):
+        os.remove(caminho_links)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -554,7 +632,7 @@ def _persistir_mapa_e_config(agentes_info, links=None, extra_config=None):
 if __name__ == '__main__':
     world = mosaik.World(sim_config)
     create_scenario(world)
-    world.run(until=20)
+    world.run(until=SIM_STEPS)
 
     # ── Despacha script de plotagem conforme a topologia ─────
     def _rodar_plot(modulo, *nomes):
@@ -575,7 +653,10 @@ if __name__ == '__main__':
     elif TOPOLOGY == 'hibrida':
         import plot_results_hibrida as plotter
         _rodar_plot(plotter, 'gerar_grafico_hibrida', 'gerar_graficos')
+    elif TOPOLOGY == 'malha':
+        import plot_results_malha as plotter
+        _rodar_plot(plotter, 'gerar_graficos')
     else:
-        # 'estrela', 'malha' ou qualquer fallback
+        # 'estrela' ou qualquer fallback
         import plot_results_star as plotter
         _rodar_plot(plotter, 'gerar_graficos')
