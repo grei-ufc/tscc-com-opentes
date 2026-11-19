@@ -12,6 +12,8 @@ omnet-dir/*.o
 omnet-dir/*.d
 omnet-dir/.cmdenv-log
 omnet-dir/*.tmp
+# Regerado por `opp_makemake -f` a cada subida do container omnet_sim
+omnet-dir/Makefile
 
 # Ambientes virtuais
 .venv/
