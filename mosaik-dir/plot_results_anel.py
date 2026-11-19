@@ -21,9 +21,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
-import numpy as np
 import pandas as pd
-from matplotlib.transforms import Bbox
+
+from plot_comum import (NED_PARA_LABEL, ROTULOS_PADRAO, caminho_omnet,
+                        exportar_paineis_separados)
 
 # ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
 # 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
@@ -35,50 +36,7 @@ _TOPO_ROTULO = 'Topologia em Anel'      # aparece no título de cada gráfico in
 _TOPO_ARQ = 'Anel'                  # sufixo do nome do arquivo (evita colisão entre topologias)
 
 
-def _exportar_paineis_separados(fig, paineis, prefixo='grafico_trafego_Geral', pad_px=12):
-    """Salva cada painel do dashboard como um SVG próprio (título, legenda e colorbar
-    inclusos). O título ganha uma linha com o nome da topologia, para o gráfico fazer
-    sentido isolado. `paineis` = lista de (sufixo, [axes que compõem o painel])."""
-    inv = fig.dpi_scale_trans.inverted()
-    for sufixo, axs in paineis:
-        ax0 = axs[0]
-        titulo_orig = ax0.get_title()
-        ax0.set_title(f'{_TOPO_ROTULO}\n{titulo_orig}', fontweight='bold',
-                      fontsize=ax0.title.get_fontsize())
-        fig.canvas.draw()
-        renderer = fig.canvas.get_renderer()
-        bb = Bbox.union([a.get_tightbbox(renderer) for a in axs])
-        bb = Bbox.from_extents(bb.x0 - pad_px, bb.y0 - pad_px, bb.x1 + pad_px, bb.y1 + pad_px)
-        nome = f'{prefixo}_{sufixo}_{_TOPO_ARQ}.svg'
-        fig.savefig(nome, format='svg', bbox_inches=bb.transformed(inv))
-        ax0.set_title(titulo_orig, fontweight='bold', fontsize=ax0.title.get_fontsize())
-        print(f'Salvo: {nome}')
-
-
-NED_PARA_LABEL = {
-    'Link_Wired':    'Cabeada',
-    'Link_5G':       '5G',
-    'Link_Wireless': 'Wireless',
-    'Link_4G':       '4G',
-    'Link_2G':       '2G',
-}
 _PALETA = ['#1f77b4', '#2ca02c', '#17becf', '#ff7f0e', '#9467bd', '#8c564b', '#d62728', '#e377c2']
-
-
-def _path(nome):
-    omnet_env = os.environ.get('OMNET_DIR')
-    candidatos = []
-    if omnet_env:
-        candidatos.append(os.path.join(omnet_env, nome))
-    candidatos.extend([
-        f'/omnet-dir/{nome}',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'omnet-dir', nome),
-        nome,
-    ])
-    for c in candidatos:
-        if os.path.exists(c):
-            return c
-    return nome
 
 
 def _reconstruir_links_anel(posicoes, config):
@@ -101,11 +59,11 @@ def carregar():
     if not os.path.exists('results.csv'):
         raise FileNotFoundError("results.csv não encontrado.")
     df = pd.read_csv('results.csv')
-    with open(_path('posicoes.json'), encoding='utf-8') as f:
+    with open(caminho_omnet('posicoes.json'), encoding='utf-8') as f:
         posicoes = json.load(f)
-    with open(_path('config.json'), encoding='utf-8') as f:
+    with open(caminho_omnet('config.json'), encoding='utf-8') as f:
         config = json.load(f)
-    p = _path('links.json')
+    p = caminho_omnet('links.json')
     if os.path.exists(p):
         with open(p, encoding='utf-8') as f:
             links = json.load(f)
@@ -213,7 +171,7 @@ def gerar_graficos():
     brutos = config.get('tipos_rede', [])
     labels = [NED_PARA_LABEL.get(t, t) for t in brutos]
     vistos = set()
-    TIPOS_REDE_ATIVOS = [x for x in labels if not (x in vistos or vistos.add(x))] or list(NED_PARA_LABEL.values())
+    TIPOS_REDE_ATIVOS = [x for x in labels if not (x in vistos or vistos.add(x))] or list(ROTULOS_PADRAO)
     CORES_TECH = {t: _PALETA[i % len(_PALETA)] for i, t in enumerate(TIPOS_REDE_ATIVOS)}
     link_map = _build_link_map(links)
 
@@ -510,13 +468,13 @@ def gerar_graficos():
         print(f"✅ Salvo: {nome}")
         if rede_foco == 'Geral':
             _extra = [a for a in fig.axes if a not in (ax_kpi, ax_lat, ax_pay, ax_jit, ax_int, ax_tab, ax_map)]
-            _exportar_paineis_separados(fig, [
+            exportar_paineis_separados(fig, [
                 ('heatmap',  [ax_map] + _extra),
                 ('latencia', [ax_lat]),
                 ('payload',  [ax_pay]),
                 ('pdr',      [ax_int]),
                 ('jitter',   [ax_jit]),
-            ])
+            ], _TOPO_ROTULO, _TOPO_ARQ)
         plt.close(fig)
 
 

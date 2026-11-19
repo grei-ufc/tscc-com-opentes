@@ -20,8 +20,14 @@ Mudanças relevantes do projeto, da mais recente para a mais antiga.
 - `pade_arvore.py` e `pade_hibrida.py` passaram a ler `PADE_PORT`/`AMS_PORT` e ganharam o shim de `fcntl`, sem o qual não rodavam no Windows.
 - O mock C++ dos testes ganhou as APIs do OMNeT++ usadas pelo novo `AgentNode.cc` (`cComponentType`, `getArrivalGate()`, `cGate::getIndex()`).
 - O emulador ZMQ dos testes passou a reproduzir o `AgentNode.cc` atual: endereçamento por `receivers`, roteamento BFS, perda por salto, meio guiado e os 12 canais lidos do `Profiles.ned`.
+- A topologia **híbrida** não era reprodutível com a mesma semente: os enlaces RF mesh vinham de um `set`, cuja ordem muda a cada processo (hash aleatório do Python), alterando portas e rotas. Agora saem ordenados.
 
 ### Alterado
+- **Fim da duplicação de código (fase 2)**, sem mudar nenhuma saída: com semente fixa, `results.csv`, gráficos e arquivos de rede das 5 topologias são idênticos antes e depois.
+  - `pade_bridge.py` concentra o que estava copiado nos 5 scripts PADE (shim de `fcntl`, configuração por ambiente, `MosaikSim`, tradução ACL↔JSON e o agente base `AgenteCosim`); cada `pade_<topologia>.py` define só o comportamento dos agentes.
+  - `pade_hierarquico.py` reúne o agente de árvore e híbrida, que eram o mesmo código com nomes trocados.
+  - `plot_camadas.py` reúne os dashboards de árvore e híbrida (~97% iguais); `plot_results_arvore.py` e `plot_results_hibrida.py` viraram pontos de entrada de poucas linhas.
+  - `plot_comum.py` concentra `caminho_omnet`, `exportar_paineis_separados` e `NED_PARA_LABEL`, antes repetidos nos plots.
 - Saídas geradas a cada rodada (`results.csv`, `grafico_*`, `DynamicNetwork.ned`, `posicoes.json`, `links.json`, `config.json`, `logs/` do PADE) saíram do git.
 - Imagens da interface foram para `assets/`; scripts legados foram para `examples/legacy/`.
 - `omnet-dir/Network.ned` virou `MosaikBridge.ned`, só com a declaração do módulo (a rede `CoSimulationNetwork` não era usada).

@@ -14,7 +14,16 @@ uv run streamlit run menu-streamlit.py    # interface web
 uv run pytest -v tests/                   # suíte de validação
 ```
 
-Rode a suíte antes de abrir o pull request. Ela não precisa de Docker: um emulador faz o papel do OMNeT++. Ao criar uma topologia, adicione um teste E2E para ela em `tests/test_validation_suite.py`.
+Rode a suíte antes de abrir o pull request. Ela não precisa de Docker: um emulador faz o papel do OMNeT++.
+
+## Nova topologia
+
+Não copie um script existente; reaproveite as bases comuns:
+
+1. **PADE:** crie `pade-dir/pade_agents/pade_<topologia>.py` com uma subclasse de `AgenteCosim` (`pade_bridge.py`), definindo `ONTOLOGIAS`, `agir()` e `react()`, e inicie com `iniciar(agentes)`. Se for uma hierarquia raiz → subestação → concentrador → medidor, use `AgenteHierarquico` (`pade_hierarquico.py`).
+2. **Mosaik:** monte os nós e enlaces em `mosaik-dir/scenario.py`; use ordem determinística (listas ordenadas, nunca iterar um `set`), para que a mesma semente reproduza a mesma rodada.
+3. **Plotagem:** use `plot_comum.py`; para topologias em camadas, basta um `TopologiaEmCamadas` em `plot_camadas.py`.
+4. **Despacho e testes:** inclua a topologia no `docker-compose.yml` e no `scenario.py` e adicione um teste E2E em `tests/test_validation_suite.py`.
 
 ## Dependências
 

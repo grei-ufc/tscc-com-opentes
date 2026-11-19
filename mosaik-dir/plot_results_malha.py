@@ -26,14 +26,8 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import pandas as pd
 
-# ── Mapeamento NED → label legível ────────────────────────────
-NED_PARA_LABEL = {
-    'Link_Wired':    'Cabeada',
-    'Link_5G':       '5G',
-    'Link_Wireless': 'Wireless',
-    'Link_4G':       '4G',
-    'Link_2G':       '2G',
-}
+from plot_comum import NED_PARA_LABEL, ROTULOS_PADRAO, caminho_omnet
+
 _PALETA = ['#1f77b4', '#2ca02c', '#17becf', '#ff7f0e', '#9467bd', '#8c564b']
 
 
@@ -41,32 +35,16 @@ _PALETA = ['#1f77b4', '#2ca02c', '#17becf', '#ff7f0e', '#9467bd', '#8c564b']
 # CARREGAMENTO
 # ══════════════════════════════════════════════════════════════
 
-def _path(nome):
-    omnet_env = os.environ.get('OMNET_DIR')
-    candidatos = []
-    if omnet_env:
-        candidatos.append(os.path.join(omnet_env, nome))
-    candidatos.extend([
-        f'/omnet-dir/{nome}',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'omnet-dir', nome),
-        nome,
-    ])
-    for c in candidatos:
-        if os.path.exists(c):
-            return c
-    return nome
-
-
 def _carregar_tipos_rede():
     try:
-        with open(_path('config.json'), encoding='utf-8') as f:
+        with open(caminho_omnet('config.json'), encoding='utf-8') as f:
             config = json.load(f)
         brutos = config.get('tipos_rede', [])
         labels = [NED_PARA_LABEL.get(t, t) for t in brutos]
         vistos = set()
         return [x for x in labels if not (x in vistos or vistos.add(x))]
     except Exception:
-        return list(NED_PARA_LABEL.values())
+        return list(ROTULOS_PADRAO)
 
 
 def _reconstruir_links(posicoes, config):
@@ -85,9 +63,9 @@ def carregar():
     if not os.path.exists('results.csv'):
         raise FileNotFoundError("results.csv não encontrado.")
     df = pd.read_csv('results.csv')
-    with open(_path('posicoes.json'), encoding='utf-8') as f: posicoes = json.load(f)
-    with open(_path('config.json'), encoding='utf-8')  as f: config   = json.load(f)
-    p = _path('links.json')
+    with open(caminho_omnet('posicoes.json'), encoding='utf-8') as f: posicoes = json.load(f)
+    with open(caminho_omnet('config.json'), encoding='utf-8')  as f: config   = json.load(f)
+    p = caminho_omnet('links.json')
     if os.path.exists(p):
         with open(p, encoding='utf-8') as f: links = json.load(f)
         print(f"links.json carregado ({len(links)} enlaces).")

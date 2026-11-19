@@ -142,6 +142,8 @@ tscc-com-opentes/
 │   ├── Dockerfile
 │   ├── requirements.txt           # Exportado do uv.lock (grupo "pade"); não editar à mão
 │   └── pade_agents/
+│       ├── pade_bridge.py         # Base comum: MosaikSim, tradução ACL↔JSON, AgenteCosim
+│       ├── pade_hierarquico.py    # Agente das topologias em camadas (árvore e híbrida)
 │       ├── pade_star.py           # Agentes da topologia estrela
 │       ├── pade_malha.py          # Agentes da topologia malha (full mesh)
 │       ├── pade_anel.py           # Agentes da topologia anel
@@ -167,7 +169,9 @@ tscc-com-opentes/
 │   ├── scenario.py                # Orquestrador: monta qualquer topologia e chama a plotagem
 │   ├── collector.py               # Coleta métricas de cada nó em results.csv
 │   ├── omnet_wrapper.py           # Adaptador Mosaik ↔ OMNeT++
-│   ├── plot_results_*.py          # Dashboards matplotlib (um por topologia)
+│   ├── plot_results_*.py          # Dashboards matplotlib (um ponto de entrada por topologia)
+│   ├── plot_camadas.py            # Dashboards de árvore e híbrida (implementação comum)
+│   ├── plot_comum.py              # Utilitários compartilhados pelos plots
 │   └── results.csv, grafico_*     # Saídas de cada rodada (fora do git)
 │
 ├── tests/
