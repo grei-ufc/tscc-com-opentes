@@ -246,7 +246,11 @@ def _calcular_malha_parcial(ids, pos, k_neigh=4, raio=60.0):
 
     ids  : list de identificadores de nó
     pos  : dict  nó -> (x, y)
-    Retorna set de tuplas (a, b) com a < b (sem duplicatas).
+    Retorna lista ORDENADA de tuplas (a, b) com a < b (sem duplicatas).
+    A ordem importa: define a ordem dos enlaces no DynamicNetwork.ned (e
+    portanto as portas e o desempate das rotas). Iterar o set direto
+    dependeria da aleatoriedade de hash do Python e quebraria a
+    reprodutibilidade com a mesma semente.
     """
     arestas: set = set()
     for i in ids:
@@ -282,7 +286,7 @@ def _calcular_malha_parcial(ids, pos, k_neigh=4, raio=60.0):
             pai[find(a)] = find(b)
             arestas.add(tuple(sorted((a, b))))
 
-    return arestas
+    return sorted(arestas)
 
 
 # ══════════════════════════════════════════════════════════════

@@ -130,7 +130,8 @@ def _calcular_malha_parcial(ids, pos, k_neigh=4, raio=60.0):
             pai[find(a)] = find(b)
             arestas.add(tuple(sorted((a, b))))
 
-    return arestas
+    # Ordenado, como no scenario.py: iterar o set dependeria do hash aleatório do Python.
+    return sorted(arestas)
 
 
 # ── Construção da configuração de rede ────────────────────────────────────────
