@@ -20,37 +20,25 @@ import os
 import subprocess
 import sys
 
+from cosim.canais import descrever, ler_perfis
+from cosim.catalogo import TECNOLOGIAS, TIPOS_REDE_PADRAO
+from cosim.catalogo import TOPOLOGIAS as CATALOGO_TOPOLOGIAS
+
 # ══════════════════════════════════════════════════════════════
-# CONFIGURAÇÃO DE OPÇÕES
+# CONFIGURAÇÃO DE OPÇÕES  (catálogo compartilhado em cosim/)
 # ══════════════════════════════════════════════════════════════
 
+# Topologias oferecidas no terminal: "1" = estrela, "2" = malha, "3" = anel
 TOPOLOGIAS = {
-    "1": {
-        "id":   "estrela",
-        "nome": "Estrela",
-        "desc": "1 agente central + N periféricos (hub-and-spoke).",
-        "min":  1,
-    },
-    "2": {
-        "id":   "malha",
-        "nome": "Malha",
-        "desc": "N agentes, todos conectados entre si (full mesh).",
-        "min":  2,
-    },
-    "3": {
-        "id":   "anel",
-        "nome": "Anel",
-        "desc": "N agentes em ciclo fechado, cada um fala só com vizinhos. COMUNICAÇÃO BIDIRECIONAL.",
-        "min":  3,
-    },
+    str(i): {"id": t.id, "nome": t.rotulo, "desc": t.descricao, "min": t.min_agentes}
+    for i, t in enumerate((CATALOGO_TOPOLOGIAS[k] for k in ("estrela", "malha", "anel")), 1)
 }
 
+# Tecnologias "1".."5": (nome NED, rótulo, descrição gerada a partir do Profiles.ned)
+_PERFIS = ler_perfis()
 REDES = {
-    "1": ("Link_Wired",    "Cabeada",  "1 Gbps   | delay fixo 1 ms      |  0 %    perda"),
-    "2": ("Link_5G",       "5G",       "500 Mbps | delay ~5 ms (σ=1ms)  |  0,001% perda"),
-    "3": ("Link_Wireless", "Wireless", "300 Mbps | delay ~2 ms (σ=0,5)  |  0,1%   perda"),
-    "4": ("Link_4G",       "4G",       "50 Mbps  | delay ~35ms (σ=8ms)  |  0,5%   perda"),
-    "5": ("Link_2G",       "2G",       "250 kbps | delay exp(200ms)      | 15 %    perda"),
+    str(i): (ned, TECNOLOGIAS[ned].rotulo, descrever(_PERFIS[ned]))
+    for i, ned in enumerate(TIPOS_REDE_PADRAO, 1)
 }
 
 RAIZ = os.path.dirname(os.path.abspath(__file__))

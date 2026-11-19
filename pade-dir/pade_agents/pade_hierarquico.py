@@ -19,12 +19,25 @@ Comportamento por papel
              passagem são encaminhados pelo OMNeT++, sem lógica de aplicação.
 
 Uso: cada script cria uma subclasse definindo RAIZ, ROTULO_RAIZ, ONT_LOCAL,
-ONT_TELEMETRIA e CONFIG_REDE ({nome: {'port', 'vizinhos'}}) e chama `iniciar_rede`.
+ONT_TELEMETRIA e CONFIG_REDE = config_rede(<rede de cosim.topologias>) e chama
+`iniciar_rede`.
 """
 
 import json
 
-from pade_bridge import ACLMessage, AgenteCosim, aid, endereco, iniciar
+from cosim.topologias import vizinhos
+from pade_bridge import PORTA_BASE, ACLMessage, AgenteCosim, aid, endereco, iniciar
+
+
+def config_rede(rede):
+    """{nome: {'port', 'vizinhos'}} a partir da rede montada por cosim.topologias.
+
+    Os vizinhos são exatamente os enlaces do DynamicNetwork.ned (mesma rede que o
+    scenario.py monta); as portas seguem a ordem dos nós a partir de PORTA_BASE.
+    """
+    viz = vizinhos(rede)
+    return {no['id']: {'port': PORTA_BASE + i, 'vizinhos': viz[no['id']]}
+            for i, no in enumerate(rede.nos)}
 
 
 def papel(nome, raiz):
@@ -187,4 +200,4 @@ def iniciar_rede(classe_agente):
     iniciar(agentes)
 
 
-__all__ = ['AgenteHierarquico', 'endereco', 'iniciar_rede', 'papel']
+__all__ = ['AgenteHierarquico', 'config_rede', 'endereco', 'iniciar_rede', 'papel']

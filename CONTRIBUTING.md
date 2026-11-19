@@ -20,10 +20,11 @@ Rode a suíte antes de abrir o pull request. Ela não precisa de Docker: um emul
 
 Não copie um script existente; reaproveite as bases comuns:
 
-1. **PADE:** crie `pade-dir/pade_agents/pade_<topologia>.py` com uma subclasse de `AgenteCosim` (`pade_bridge.py`), definindo `ONTOLOGIAS`, `agir()` e `react()`, e inicie com `iniciar(agentes)`. Se for uma hierarquia raiz → subestação → concentrador → medidor, use `AgenteHierarquico` (`pade_hierarquico.py`).
-2. **Mosaik:** monte os nós e enlaces em `mosaik-dir/scenario.py`; use ordem determinística (listas ordenadas, nunca iterar um `set`), para que a mesma semente reproduza a mesma rodada.
-3. **Plotagem:** use `plot_comum.py`; para topologias em camadas, basta um `TopologiaEmCamadas` em `plot_camadas.py`.
-4. **Despacho e testes:** inclua a topologia no `docker-compose.yml` e no `scenario.py` e adicione um teste E2E em `tests/test_validation_suite.py`.
+1. **Rede:** escreva `montar_<topologia>()` em `cosim/topologias.py`, devolvendo uma `Rede` (nós, enlaces e metadados). Use ordem determinística (listas ordenadas, nunca iterar um `set`), para que a mesma semente reproduza a mesma rodada. Registre a topologia em `TOPOLOGIAS` (`cosim/catalogo.py`); um canal novo vai no `Profiles.ned` e em `TECNOLOGIAS`.
+2. **Mosaik:** chame a função em `montar_rede()` do `mosaik-dir/scenario.py`. NED, artefatos e conexões do Mosaik já são genéricos.
+3. **PADE:** crie `pade-dir/pade_agents/pade_<topologia>.py` com uma subclasse de `AgenteCosim` (`pade_bridge.py`), definindo `ONTOLOGIAS`, `agir()` e `react()`, e inicie com `iniciar(agentes)`. Tire os vizinhos da mesma rede (`cosim.topologias.vizinhos`). Se for uma hierarquia raiz → subestação → concentrador → medidor, use `AgenteHierarquico` e `config_rede` (`pade_hierarquico.py`).
+4. **Plotagem:** use `plot_comum.py`; para topologias em camadas, basta um `TopologiaEmCamadas` em `plot_camadas.py`.
+5. **Despacho e testes:** inclua a topologia no despacho do `docker-compose.yml`, adicione um teste E2E em `tests/test_validation_suite.py` e casos de contagem em `tests/test_consistencia.py`. O teste de consistência acusa se o catálogo e o compose ficarem divergentes.
 
 ## Dependências
 

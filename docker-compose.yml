@@ -12,6 +12,7 @@ services:
       - "5678:5678"
     volumes:
       - ./pade-dir/pade_agents:/app
+      - ./cosim:/opt/cosim/cosim:ro      # topologias e catálogo compartilhados
     environment:
       # ── comuns ──────────────────────────────
       - TOPOLOGY=${TOPOLOGY:-estrela}
@@ -20,6 +21,7 @@ services:
       - RANDOM_SEED=${RANDOM_SEED:-}
       - PADE_PORT=5678
       - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/opt/cosim
       # ── topologia árvore ────────────────────
       - ARVORE_FANOUT=${ARVORE_FANOUT:-3,2,4}
       - CELULAR_ARVORE=${CELULAR_ARVORE:-4g}
@@ -98,6 +100,7 @@ services:
     volumes:
       - ./mosaik-dir:/app
       - ./omnet-dir:/omnet-dir
+      - ./cosim:/opt/cosim/cosim:ro      # topologias e catálogo compartilhados
     environment:
       # ── comuns ──────────────────────────────
       - TOPOLOGY=${TOPOLOGY:-estrela}
@@ -110,6 +113,7 @@ services:
       - OMNET_HOST=127.0.0.1
       - OMNET_PORT=5555
       - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/opt/cosim
       # ── topologia árvore ────────────────────
       - ARVORE_FANOUT=${ARVORE_FANOUT:-3,2,4}
       - CELULAR_ARVORE=${CELULAR_ARVORE:-4g}

@@ -5,6 +5,11 @@ Mudanças relevantes do projeto, da mais recente para a mais antiga.
 ## [Não lançado]
 
 ### Adicionado
+- **Fonte única de verdade (fase 3):** pacote `cosim/`, instalado no `.venv` pelo `uv sync` e montado nos containers `pade` e `mosaik_master` (`/opt/cosim` + `PYTHONPATH`).
+  - `cosim.topologias` monta cada rede uma única vez. O `scenario.py` gera o `DynamicNetwork.ned` a partir dela, e os agentes PADE tiram seus vizinhos dos mesmos enlaces. Acaba a cópia da geometria da híbrida no PADE, que precisava ser "idêntica ao scenario.py" à mão e calculava a malha RF com posições não arredondadas.
+  - `cosim.catalogo` reúne topologias (rótulo, descrição, scripts PADE e de plotagem) e tecnologias (rótulo e cor), usados pelos menus, pelo `scenario.py`, pelos plots e pelos testes.
+  - `cosim.canais` lê o `Profiles.ned`; os menus geram a descrição de cada tecnologia a partir dele.
+- `tests/test_consistencia.py`: 27 verificações em menos de 1 s (catálogo × `Profiles.ned` × compose, contagens, conectividade e reprodutibilidade das topologias, vizinhança do PADE × enlaces).
 - Gerenciamento de dependências com **uv**: `pyproject.toml`, `uv.lock` e `.python-version` (Python 3.12, o mesmo das imagens). Os containers instalam as versões travadas via `pade-dir/requirements.txt` e `mosaik-dir/requirements.txt`, exportados do lock.
 - Testes E2E das topologias **árvore** e **híbrida**, com verificação de encaminhamento multi-salto (`packets_forwarded`).
 - Testes C++ de **roteamento multi-salto** e de **meio guiado** (Fibra) no `AgentNode.cc`.
@@ -20,6 +25,7 @@ Mudanças relevantes do projeto, da mais recente para a mais antiga.
 - `pade_arvore.py` e `pade_hibrida.py` passaram a ler `PADE_PORT`/`AMS_PORT` e ganharam o shim de `fcntl`, sem o qual não rodavam no Windows.
 - O mock C++ dos testes ganhou as APIs do OMNeT++ usadas pelo novo `AgentNode.cc` (`cComponentType`, `getArrivalGate()`, `cGate::getIndex()`).
 - O emulador ZMQ dos testes passou a reproduzir o `AgentNode.cc` atual: endereçamento por `receivers`, roteamento BFS, perda por salto, meio guiado e os 12 canais lidos do `Profiles.ned`.
+- O menu Streamlit descrevia o Wireless como "100 Mbps · ~15 ms · 3% perda", mas o `Profiles.ned` simula 300 Mbps, ~2 ms e 0,1%. As descrições dos dois menus agora são geradas do `Profiles.ned`.
 - A topologia **híbrida** não era reprodutível com a mesma semente: os enlaces RF mesh vinham de um `set`, cuja ordem muda a cada processo (hash aleatório do Python), alterando portas e rotas. Agora saem ordenados.
 
 ### Alterado

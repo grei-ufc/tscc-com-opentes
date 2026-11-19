@@ -45,6 +45,18 @@ A co-simulação é composta por três containers que rodam simultaneamente. `om
 
 O framework PADE não está neste repositório: `pade-dir/` contém só o container e os agentes desta co-simulação. O PADE é instalado do PyPI (`pade-agents`), publicado a partir de [grei-ufc/pade](https://github.com/grei-ufc/pade).
 
+### Fonte única de verdade (`cosim/`)
+
+O pacote `cosim/` guarda o que precisa ser igual em todos os componentes, para que não haja cópias a manter sincronizadas:
+
+| Módulo | Conteúdo | Usado por |
+|---|---|---|
+| `cosim.topologias` | Montagem de cada topologia: nós, posições e enlaces | `scenario.py` (gera o `DynamicNetwork.ned`) e agentes PADE (vizinhos = os mesmos enlaces) |
+| `cosim.catalogo` | Topologias (rótulo, descrição, scripts) e tecnologias (rótulo, cor) | menus, `scenario.py`, plots e testes |
+| `cosim.canais` | Leitura do `omnet-dir/Profiles.ned` | menus (descrição de cada tecnologia) e emulador dos testes |
+
+No host, o `uv sync` instala o `cosim` no `.venv`. Nos containers `pade` e `mosaik_master`, o `docker-compose.yml` monta a pasta em `/opt/cosim` e ajusta o `PYTHONPATH`.
+
 ### Fluxo de dados por passo de simulação
 
 ```
@@ -94,7 +106,7 @@ O `mosaik-dir/scenario.py` monta todas as topologias e, ao final da co-simulaç�
 
 ## Tecnologias de rede
 
-Definidas em `omnet-dir/Profiles.ned` (fonte única: o emulador dos testes lê os mesmos valores):
+Definidas em `omnet-dir/Profiles.ned`, a fonte única dos parâmetros: os menus geram a descrição de cada tecnologia a partir dele e o emulador dos testes lê os mesmos valores. Rótulos e cores ficam em `cosim/catalogo.py`.
 
 | Nome | Identificador NED | Banda | Delay | PER | Uso |
 |---|---|---|---|---|---|
@@ -137,6 +149,10 @@ tscc-com-opentes/
 ├── CHANGELOG.md                   # Histórico de mudanças
 ├── CONTRIBUTING.md                # Fluxo de branches, dependências e testes
 ├── assets/                        # Logotipo GREI e ícones SVG usados na interface
+├── cosim/                         # Fonte única: topologias, catálogo e perfis de canal
+│   ├── topologias.py              # Montagem das redes (Mosaik e PADE usam a mesma)
+│   ├── catalogo.py                # Topologias e tecnologias (rótulos, cores, scripts)
+│   └── canais.py                  # Leitura do omnet-dir/Profiles.ned
 │
 ├── pade-dir/                      # Container PADE (o framework vem do PyPI)
 │   ├── Dockerfile
@@ -175,6 +191,7 @@ tscc-com-opentes/
 │   └── results.csv, grafico_*     # Saídas de cada rodada (fora do git)
 │
 ├── tests/
+│   ├── test_consistencia.py       # Testes rápidos: catálogo × Profiles.ned × compose, topologias
 │   ├── test_validation_suite.py   # Física C++ + co-simulação E2E nas 5 topologias
 │   └── omnet_zmq_emulator.py      # Substituto do OMNeT++ para rodar os testes sem Docker
 │
@@ -283,11 +300,15 @@ Os scripts de plotagem usam `links.json`, `posicoes.json` e `config.json` e salv
 
 ## Validação e testes automatizados
 
-A suíte compila e testa a física C++ (`AgentNode.cc`, incluindo roteamento multi-salto e meio guiado), confere o sincronismo do `MosaikBridge.cc` e roda a co-simulação fim a fim nas 5 topologias, validando contagens de agentes e enlaces, entrega de mensagens, encaminhamento e geração dos dashboards:
+Duas suítes:
+
+- `tests/test_consistencia.py` (menos de 1 s): confere que o catálogo cobre exatamente os canais do `Profiles.ned`, que o compose usa as mesmas tecnologias padrão e despacha os scripts do catálogo, e que cada topologia tem as contagens de nós e enlaces esperadas, é conexa, reprodutível e que a vizinhança do PADE coincide com os enlaces.
+- `tests/test_validation_suite.py` (~5 min): compila e testa a física C++ (`AgentNode.cc`, incluindo roteamento multi-salto e meio guiado), confere o sincronismo do `MosaikBridge.cc` e roda a co-simulação fim a fim nas 5 topologias, validando contagens, entrega de mensagens, encaminhamento e geração dos dashboards.
 
 ```bash
-uv sync    # instala PADE, Mosaik, pytest e ziglang (compilador C++ do teste) no .venv/
-uv run pytest -v tests/test_validation_suite.py
+uv sync                                   # instala PADE, Mosaik, pytest e ziglang (compilador C++ do teste)
+uv run pytest -v                          # as duas suítes
+uv run pytest -v tests/test_consistencia.py   # só as verificações rápidas
 ```
 
 Os testes E2E não precisam de Docker: rodam PADE, Mosaik e os dashboards no host, com `tests/omnet_zmq_emulator.py` fazendo o papel do OMNeT++ (mesmo roteamento e mesma física do `AgentNode.cc`, com os canais lidos do `Profiles.ned`).
@@ -300,7 +321,7 @@ O `pyproject.toml` é a fonte única das dependências Python, e o `uv.lock` gua
 
 | Grupo | Onde é usado | Conteúdo |
 |---|---|---|
-| `dependencies` | host: `menu-streamlit.py`, `menu.py` | streamlit, plotly |
+| `dependencies` | host: `menu-streamlit.py`, `menu.py` (o `uv sync` também instala o pacote `cosim`) | streamlit, plotly |
 | `pade` | container `pade` (exportado para `pade-dir/requirements.txt`) | pade-agents, twisted, autobahn, pyzmq, mosaik-api-v3, ipython |
 | `mosaik` | container `mosaik_master` (exportado para `mosaik-dir/requirements.txt`) | mosaik, mosaik-api-v3, mosaik-csv, pyzmq, pandas, matplotlib, plotly, numpy |
 | `dev` | testes no host (instalado por padrão no `uv sync`) | pytest, ziglang, mais os grupos `pade` e `mosaik` |

@@ -30,37 +30,24 @@ import math
 import os
 import random
 import re
+
 import zmq
+
+from cosim.canais import Perfil, ler_perfis, tempo_s
+from cosim.topologias import pade_para_omnet
 
 
 # ══════════════════════════════════════════════════════════════
 # PERFIS DE CANAL (Profiles.ned)
 # ══════════════════════════════════════════════════════════════
 
-_UNIDADES_TEMPO = {'s': 1.0, 'ms': 1e-3, 'us': 1e-6, 'ns': 1e-9}
-_UNIDADES_TAXA = {'bps': 1.0, 'kbps': 1e3, 'Mbps': 1e6, 'Gbps': 1e9}
-
-
-def _tempo(txt):
-    m = re.fullmatch(r'\s*([0-9.]+)\s*(s|ms|us|ns)?\s*', txt)
-    if not m:
-        raise ValueError(f"Tempo NED não reconhecido: {txt!r}")
-    return float(m.group(1)) * _UNIDADES_TEMPO[m.group(2) or 's']
-
-
-def _taxa(txt):
-    m = re.fullmatch(r'\s*([0-9.]+)\s*(bps|kbps|Mbps|Gbps)\s*', txt)
-    if not m:
-        raise ValueError(f"Datarate NED não reconhecido: {txt!r}")
-    return float(m.group(1)) * _UNIDADES_TAXA[m.group(2)]
-
-
 def _amostrar_delay(rng, expr):
-    """Avalia as expressões de delay usadas em Profiles.ned."""
+    """Avalia as expressões de delay usadas em Profiles.ned (parâmetro não volátil:
+    uma amostra por canal, como no OMNeT++)."""
     expr = expr.strip()
     m = re.fullmatch(r'truncnormal\(([^,]+),([^)]+)\)', expr)
     if m:
-        media, desvio = _tempo(m.group(1)), _tempo(m.group(2))
+        media, desvio = tempo_s(m.group(1)), tempo_s(m.group(2))
         for _ in range(100):
             v = rng.gauss(media, desvio)
             if v >= 0.0:
@@ -68,27 +55,8 @@ def _amostrar_delay(rng, expr):
         return media
     m = re.fullmatch(r'exponential\(([^)]+)\)', expr)
     if m:
-        return rng.expovariate(1.0 / _tempo(m.group(1)))
-    return _tempo(expr)
-
-
-def parse_profiles_ned(path):
-    """Retorna {nome_canal: {'delay': expr, 'datarate': bps, 'per': float}}."""
-    with open(path, 'r', encoding='utf-8') as f:
-        conteudo = re.sub(r'//[^\n]*', '', f.read())
-    perfis = {}
-    for m in re.finditer(r'channel\s+(\w+)\s+extends\s+ned\.DatarateChannel\s*\{(.*?)\}',
-                         conteudo, re.DOTALL):
-        corpo = m.group(2)
-        delay = re.search(r'\bdelay\s*=\s*([^;]+);', corpo)
-        taxa = re.search(r'\bdatarate\s*=\s*([^;]+);', corpo)
-        per = re.search(r'\bper\s*=\s*([^;]+);', corpo)
-        perfis[m.group(1)] = {
-            'delay': delay.group(1) if delay else '0s',
-            'datarate': _taxa(taxa.group(1)) if taxa else 1e9,
-            'per': float(per.group(1)) if per else 0.0,
-        }
-    return perfis
+        return rng.expovariate(1.0 / tempo_s(m.group(1)))
+    return tempo_s(expr)
 
 
 def _meio_guiado(tipo):
@@ -120,15 +88,6 @@ def parse_dynamic_network_ned(ned_path):
     for match in re.finditer(r'(\w+)\.port\+\+\s*<-->\s*(\w+)\s*<-->\s*(\w+)\.port\+\+\s*;', content):
         links.append({'origem': match.group(1), 'tipo': match.group(2), 'destino': match.group(3)})
     return nodes, links
-
-
-def map_pade_to_omnet(pade_id):
-    # Mesmo mapeamento de AgentNode::mapPadeToOmnet
-    if pade_id == 'AgenteCentral':
-        return 'agent_central'
-    if pade_id.startswith('AgenteP_'):
-        return 'agent_p_' + pade_id[len('AgenteP_'):]
-    return pade_id
 
 
 class Porta:
@@ -177,7 +136,7 @@ class OmnetDiscreteSimulator:
         self.rng = random.Random(int(seed) if seed not in (None, '') else 42)
         self.nodes = {}
         self.topologia_carregada = False
-        self.perfis = parse_profiles_ned(os.path.join(omnet_dir, 'Profiles.ned'))
+        self.perfis = ler_perfis(os.path.join(omnet_dir, 'Profiles.ned'))
 
     def _carregar_topologia(self):
         if self.topologia_carregada:
@@ -194,13 +153,13 @@ class OmnetDiscreteSimulator:
             u, v, tipo = lk['origem'], lk['destino'], lk['tipo']
             if u not in self.nodes or v not in self.nodes:
                 continue
-            perfil = self.perfis.get(tipo, {'delay': '1ms', 'datarate': 1e9, 'per': 0.0})
+            perfil = self.perfis.get(tipo) or Perfil(tipo, '1ms', '1Gbps', 0.0)
             for a, b in ((u, v), (v, u)):
                 na, nb = self.nodes[a], self.nodes[b]
                 dist = math.hypot(na.x - nb.x, na.y - nb.y)
                 guiado = _meio_guiado(tipo)
-                base = _amostrar_delay(self.rng, perfil['delay']) + dist * (5e-9 if guiado else 0.00005)
-                na.portas.append(Porta(b, tipo, base, perfil['datarate'], perfil['per']))
+                base = _amostrar_delay(self.rng, perfil.delay) + dist * (5e-9 if guiado else 0.00005)
+                na.portas.append(Porta(b, tipo, base, perfil.bps, perfil.per))
                 na.drop_espacial[b] = 0.0 if guiado else (dist / 100.0) * 0.015
 
         for node in self.nodes.values():
@@ -298,7 +257,7 @@ class OmnetDiscreteSimulator:
                 except (ValueError, AttributeError):
                     continue
                 for rec in receivers:
-                    dest = map_pade_to_omnet(str(rec).split('@')[0])
+                    dest = pade_para_omnet(str(rec).split('@')[0])
                     if not dest or dest == eid or dest not in node.rota:
                         continue
                     pkt = {'src': eid, 'dest': dest, 'payload': msg,

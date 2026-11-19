@@ -8,25 +8,17 @@ import os
 
 from matplotlib.transforms import Bbox
 
+from cosim.catalogo import COR_POR_ROTULO, NED_PARA_ROTULO, TIPOS_REDE_PADRAO, rotulo
+
 # Nome do canal no NED (Profiles.ned) -> rótulo exibido nos gráficos
-NED_PARA_LABEL = {
-    'Link_Wired':    'Cabeada',
-    'Link_5G':       '5G',
-    'Link_Wireless': 'Wireless',
-    'Link_4G':       '4G',
-    'Link_2G':       '2G',
-    'Fibra':         'Fibra',
-    'Celular5G':     '5G',
-    'Celular4G':     '4G',
-    'Celular3G':     '3G',
-    'Celular2G':     '2G',
-    'RFMesh':        'RF Mesh',
-    'PLC':           'PLC',
-}
+NED_PARA_LABEL = NED_PARA_ROTULO
+
+# Rótulo -> cor (mesma tecnologia, mesma cor em todos os gráficos)
+COR_TECH = COR_POR_ROTULO
 
 # Tecnologias de estrela/malha/anel, na ordem padrão de TIPOS_REDE.
 # Usada quando config.json não informa as tecnologias da rodada.
-ROTULOS_PADRAO = ['Cabeada', '5G', 'Wireless', '4G', '2G']
+ROTULOS_PADRAO = [rotulo(t) for t in TIPOS_REDE_PADRAO]
 
 
 def caminho_omnet(nome):

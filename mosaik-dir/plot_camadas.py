@@ -40,7 +40,7 @@ import matplotlib.cm as cm
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
-from plot_comum import NED_PARA_LABEL, caminho_omnet, exportar_paineis_separados
+from plot_comum import COR_TECH, NED_PARA_LABEL, caminho_omnet, exportar_paineis_separados
 
 # ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
 # 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
@@ -64,13 +64,8 @@ HIBRIDA = TopologiaEmCamadas('Topologia Híbrida', 'Híbrida', 'Hibrida', 'cco',
 _TOPO = ARVORE
 
 
-# Mesma cor para a mesma tecnologia em todas as topologias (Cabeada/5G/Wireless/4G/2G
-# coincidem com a paleta do anel e da estrela).
-_COR_TECH = {
-    'Cabeada': '#1f77b4', '5G': '#2ca02c', 'Wireless': '#17becf',
-    '4G': '#ff7f0e', '2G': '#9467bd', 'Fibra': '#08306b',
-    'RF Mesh': '#d62728', 'PLC': '#8c564b', '3G': '#bcbd22',
-}
+# Mesma cor para a mesma tecnologia em todas as topologias (cosim.catalogo).
+_COR_TECH = COR_TECH
 _PALETA_RESERVA = ['#e377c2', '#7f7f7f', '#bcbd22', '#aec7e8']
 
 _RAIZ = 'raiz'   # chave do papel raiz (o nó chama-se _TOPO.no_raiz)

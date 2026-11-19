@@ -12,6 +12,11 @@ Suporta cinco topologias, selecionadas via TOPOLOGY:
     hibrida  — hierarquia CCO→subs(fibra)→cons(celular)→meds(RF mesh)
                                                         (pade_hibrida.py)
 
+A rede de cada topologia (nós, posições, enlaces) é montada por
+cosim.topologias — a mesma definição que os agentes PADE usam para achar
+seus vizinhos. Aqui ficam só a integração com o Mosaik, a escrita dos
+artefatos da rodada e a chamada do script de plotagem.
+
 Variáveis de ambiente
 ---------------------
 Comuns:
@@ -38,14 +43,17 @@ Híbrida (TOPOLOGY=hibrida):
     SEMENTE_HIBRIDA   int  (padrão 42)
 """
 
-import itertools
-import math
-import mosaik
+import importlib
+import json
 import os
 import random
-import json
 import socket
 import time
+
+import mosaik
+
+from cosim import topologias
+from cosim.catalogo import TIPOS_REDE_PADRAO, TOPOLOGIAS
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO VIA VARIÁVEIS DE AMBIENTE
@@ -53,7 +61,7 @@ import time
 
 TOPOLOGY         = os.environ.get('TOPOLOGY', 'estrela').lower()
 NUM_PERIFERICOS  = int(os.environ.get('NUM_PERIFERICOS', 3))
-_tipos_raw       = os.environ.get('TIPOS_REDE', 'Link_Wired,Link_5G,Link_4G,Link_2G,Link_Wireless')
+_tipos_raw       = os.environ.get('TIPOS_REDE', ','.join(TIPOS_REDE_PADRAO))
 TIPOS_REDE       = [t.strip() for t in _tipos_raw.split(',') if t.strip()]
 
 SIM_STEPS   = int(os.environ.get('SIM_STEPS', 20))
@@ -83,14 +91,6 @@ CONCENTRADORES     = int(os.environ.get('CONCENTRADORES',     3))
 MEDIDORES_CLUSTER  = int(os.environ.get('MEDIDORES_CLUSTER',  5))
 CELULAR_HIBRIDA    = os.environ.get('CELULAR_HIBRIDA', '4g').lower()
 SEMENTE_HIBRIDA    = int(os.environ.get('SEMENTE_HIBRIDA',    42))
-
-# Mapeamento de código de operadora → nome do canal NED
-CELULAR_MAP = {
-    '2g': 'Celular2G',
-    '3g': 'Celular3G',
-    '4g': 'Celular4G',
-    '5g': 'Celular5G',
-}
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO DOS SIMULADORES MOSAIK
@@ -139,6 +139,32 @@ def _caminho_omnet(nome):
 
 
 # ══════════════════════════════════════════════════════════════
+# MONTAGEM DA REDE
+# ══════════════════════════════════════════════════════════════
+
+def montar_rede():
+    """Rede da topologia selecionada (definição única em cosim.topologias)."""
+    if TOPOLOGY == 'anel':
+        print(f"   Agentes: {NUM_PERIFERICOS}   Redes: {', '.join(TIPOS_REDE)}\n")
+        return topologias.montar_anel(NUM_PERIFERICOS, TIPOS_REDE)
+    if TOPOLOGY == 'arvore':
+        print(f"   Fan-out: {ARVORE_FANOUT}   Celular: {CELULAR_ARVORE}\n")
+        return topologias.montar_arvore(ARVORE_FANOUT, CELULAR_ARVORE)
+    if TOPOLOGY == 'hibrida':
+        print(f"   Subs: {SUBESTACOES}  Cons/sub: {CONCENTRADORES}  "
+              f"Meds/con: {MEDIDORES_CLUSTER}  Celular: {CELULAR_HIBRIDA}  "
+              f"Semente: {SEMENTE_HIBRIDA}\n")
+        return topologias.montar_hibrida(SUBESTACOES, CONCENTRADORES, MEDIDORES_CLUSTER,
+                                         CELULAR_HIBRIDA, SEMENTE_HIBRIDA)
+    print(f"   N: {NUM_PERIFERICOS}\n   Redes: {', '.join(TIPOS_REDE)}\n")
+    if TOPOLOGY == 'malha':
+        # Posições aleatórias do módulo random, semeado por RANDOM_SEED.
+        return topologias.montar_malha(NUM_PERIFERICOS, TIPOS_REDE, random)
+    # 'estrela' ou qualquer outro valor
+    return topologias.montar_estrela(NUM_PERIFERICOS, TIPOS_REDE, random)
+
+
+# ══════════════════════════════════════════════════════════════
 # GERAÇÃO DO ARQUIVO NED  (agnóstica à topologia)
 # ══════════════════════════════════════════════════════════════
 
@@ -178,118 +204,6 @@ def gerar_topologia_ned(agentes_info, links, arquivo_saida=None):
 
 
 # ══════════════════════════════════════════════════════════════
-# GERAÇÃO DE LINKS — ESTRELA
-# ══════════════════════════════════════════════════════════════
-
-def gerar_links_estrela(agentes_info):
-    central_id = agentes_info[0]['id']
-    links = []
-    for i, ag in enumerate(agentes_info[1:]):
-        tipo = TIPOS_REDE[i % len(TIPOS_REDE)]
-        links.append({'origem': central_id, 'destino': ag['id'], 'tipo': tipo})
-    return links
-
-
-# ══════════════════════════════════════════════════════════════
-# GERAÇÃO DE LINKS — MALHA (full mesh)
-# ══════════════════════════════════════════════════════════════
-
-def gerar_links_malha(agentes_info):
-    links = []
-    n = len(agentes_info)
-    contador = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            tipo = TIPOS_REDE[contador % len(TIPOS_REDE)]
-            links.append({
-                'origem':  agentes_info[i]['id'],
-                'destino': agentes_info[j]['id'],
-                'tipo':    tipo,
-            })
-            contador += 1
-    return links
-
-
-# ══════════════════════════════════════════════════════════════
-# GERAÇÃO DE LINKS — ANEL (ciclo fechado)
-# ══════════════════════════════════════════════════════════════
-
-def gerar_links_anel(agentes_info):
-    links = []
-    n = len(agentes_info)
-    if n < 2:
-        return links
-    for i in range(n):
-        if n == 2 and i == 1:
-            break
-        origem  = agentes_info[i]['id']
-        destino = agentes_info[(i + 1) % n]['id']
-        tipo    = TIPOS_REDE[i % len(TIPOS_REDE)]
-        links.append({'origem': origem, 'destino': destino, 'tipo': tipo})
-    return links
-
-
-# ══════════════════════════════════════════════════════════════
-# HELPERS PARA TOPOLOGIAS ARVORE E HIBRIDA
-# ══════════════════════════════════════════════════════════════
-
-def _ponto_no_disco(rng, cx, cy, r):
-    """Gera ponto aleatório uniformemente distribuído num disco de raio r."""
-    ang = rng.uniform(0, 2 * math.pi)
-    rad = r * math.sqrt(rng.random())
-    return cx + rad * math.cos(ang), cy + rad * math.sin(ang)
-
-
-def _calcular_malha_parcial(ids, pos, k_neigh=4, raio=60.0):
-    """
-    Malha parcial k-vizinhos + Kruskal para garantir conectividade.
-
-    ids  : list de identificadores de nó
-    pos  : dict  nó -> (x, y)
-    Retorna lista ORDENADA de tuplas (a, b) com a < b (sem duplicatas).
-    A ordem importa: define a ordem dos enlaces no DynamicNetwork.ned (e
-    portanto as portas e o desempate das rotas). Iterar o set direto
-    dependeria da aleatoriedade de hash do Python e quebraria a
-    reprodutibilidade com a mesma semente.
-    """
-    arestas: set = set()
-    for i in ids:
-        candidatos = sorted(
-            (j for j in ids if j != i),
-            key=lambda j: math.hypot(pos[i][0] - pos[j][0],
-                                     pos[i][1] - pos[j][1]),
-        )
-        for j in candidatos[:k_neigh]:
-            d = math.hypot(pos[i][0] - pos[j][0], pos[i][1] - pos[j][1])
-            if raio is None or d <= raio:
-                arestas.add(tuple(sorted((i, j))))
-
-    # Garantia de conectividade (estilo Kruskal)
-    pai = {i: i for i in ids}
-
-    def find(x):
-        while pai[x] != x:
-            pai[x] = pai[pai[x]]
-            x = pai[x]
-        return x
-
-    for a, b in arestas:
-        pai[find(a)] = find(b)
-
-    todos_pares = sorted(
-        itertools.combinations(ids, 2),
-        key=lambda p: math.hypot(pos[p[0]][0] - pos[p[1]][0],
-                                 pos[p[0]][1] - pos[p[1]][1]),
-    )
-    for a, b in todos_pares:
-        if find(a) != find(b):
-            pai[find(a)] = find(b)
-            arestas.add(tuple(sorted((a, b))))
-
-    return sorted(arestas)
-
-
-# ══════════════════════════════════════════════════════════════
 # MONTAGEM DO CENÁRIO MOSAIK
 # ══════════════════════════════════════════════════════════════
 
@@ -302,293 +216,29 @@ def create_scenario(world):
     pade_sim    = world.start('PadeSim')
     monitor     = coletor_sim.Monitor()
 
-    if TOPOLOGY == 'anel':
-        _montar_anel(world, omnet_sim, pade_sim, monitor)
-    elif TOPOLOGY == 'arvore':
-        _montar_arvore(world, omnet_sim, pade_sim, monitor)
-    elif TOPOLOGY == 'hibrida':
-        _montar_hibrida(world, omnet_sim, pade_sim, monitor)
-    else:
-        # 'estrela', 'malha' ou qualquer fallback
-        _montar_central_periferico(world, omnet_sim, pade_sim, monitor)
-
-
-# ──────────────────────────────────────────────────────────────
-# Topologias existentes (estrela / malha / anel)
-# ──────────────────────────────────────────────────────────────
-
-def _montar_central_periferico(world, omnet_sim, pade_sim, monitor):
-    """Monta estrela OU malha (mesma nomenclatura de agentes):
-      - estrela: 1 central + NUM_PERIFERICOS periféricos  (total = N + 1)
-      - malha  : 1 master  + (NUM_PERIFERICOS - 1) peers  (total = N),
-                 semântica igual à de menu.py e pade_malha.py
-    """
-    num_perifericos = (
-        max(1, NUM_PERIFERICOS - 1) if TOPOLOGY == 'malha' else NUM_PERIFERICOS
-    )
-    print(f"   Periféricos: {num_perifericos}\n   Redes: {', '.join(TIPOS_REDE)}\n")
-    agente_central_id = 'agent_central'
-    perifericos_ids   = [f'agent_p_{i}' for i in range(1, num_perifericos + 1)]
-
-    agentes_info = [{
-        'id': agente_central_id, 'x': 500.0, 'y': 500.0,
-        'tipo': 'Central', 'camada': 'controle',
-    }]
-    for pid in perifericos_ids:
-        agentes_info.append({
-            'id': pid,
-            'x':  round(random.uniform(0, 1000), 2),
-            'y':  round(random.uniform(0, 1000), 2),
-            'tipo': 'Periferico', 'camada': 'periferico',
-        })
-
-    if TOPOLOGY == 'malha':
-        links = gerar_links_malha(agentes_info)
-    else:
-        links = gerar_links_estrela(agentes_info)
-
-    _persistir_mapa_e_config(agentes_info, links=links)
-    print(f"   ↳ {len(links)} enlaces gerados para topologia '{TOPOLOGY}'.")
-    gerar_topologia_ned(agentes_info, links)
+    rede = montar_rede()
+    _persistir_mapa_e_config(rede.nos, links=rede.links, extra_config=rede.config)
+    print(f"   ↳ {len(rede.nos)} nós e {len(rede.links)} enlaces gerados para topologia '{TOPOLOGY}'.")
+    gerar_topologia_ned(rede.nos, rede.links)
     print("   ↳ DynamicNetwork.ned gerado.\n")
 
-    agente_central_pade = pade_sim.PadeAgent(agent_id='AgenteCentral')
-    node_central_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=agente_central_id)
-    world.connect(agente_central_pade, node_central_omnet, ('val_out', 'val_in'))
-    world.connect(node_central_omnet, agente_central_pade, ('val_out', 'val_in'),
-                  time_shifted=True, initial_data={'val_out': ''})
-    world.connect(node_central_omnet, monitor,
-                  'status', 'packets_sent', 'packets_received', 'packets_dropped',
-                  'packets_forwarded',
-                  'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
+    _conectar_agentes_mosaik(world, omnet_sim, pade_sim, monitor, rede.nos)
 
-    for i in range(1, num_perifericos + 1):
-        pid           = f'agent_p_{i}'
-        agente_p_pade = pade_sim.PadeAgent(agent_id=f'AgenteP_{i}')
-        node_p_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=pid)
-        world.connect(agente_p_pade, node_p_omnet, ('val_out', 'val_in'))
-        world.connect(node_p_omnet, agente_p_pade, ('val_out', 'val_in'),
-                      time_shifted=True, initial_data={'val_out': ''})
-        world.connect(node_p_omnet, monitor,
-                      'status', 'packets_sent', 'packets_received', 'packets_dropped',
-                  'packets_forwarded',
-                      'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
-
-
-def _montar_anel(world, omnet_sim, pade_sim, monitor):
-    total_agentes = NUM_PERIFERICOS      # mesmo total do menu e do pade_anel.py
-    ids = [f'agente_{i}' for i in range(1, total_agentes + 1)]
-    print(f"   Agentes: {total_agentes}   Redes: {', '.join(TIPOS_REDE)}\n")
-
-    centro_x, centro_y, raio = 500.0, 500.0, 350.0
-    agentes_info = []
-    for i, aid in enumerate(ids):
-        angulo = 2 * math.pi * i / total_agentes
-        agentes_info.append({
-            'id':     aid,
-            'x':      round(centro_x + raio * math.cos(angulo), 2),
-            'y':      round(centro_y + raio * math.sin(angulo), 2),
-            'tipo':   'Anel',
-            'camada': 'anel',
-        })
-
-    links = gerar_links_anel(agentes_info)
-    _persistir_mapa_e_config(agentes_info, links=links)
-    print(f"   ↳ {len(links)} enlaces gerados para topologia 'anel' ({total_agentes} agentes).")
-    gerar_topologia_ned(agentes_info, links)
-    print("   ↳ DynamicNetwork.ned gerado.\n")
-
-    for ag in agentes_info:
-        aid         = ag['id']
-        agente_pade = pade_sim.PadeAgent(agent_id=aid)
-        node_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=aid)
-        world.connect(agente_pade, node_omnet, ('val_out', 'val_in'))
-        world.connect(node_omnet, agente_pade, ('val_out', 'val_in'),
-                      time_shifted=True, initial_data={'val_out': ''})
-        world.connect(node_omnet, monitor,
-                      'status', 'packets_sent', 'packets_received', 'packets_dropped',
-                  'packets_forwarded',
-                      'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
-
-
-# ──────────────────────────────────────────────────────────────
-# Topologia ÁRVORE RADIAL (IEC 61850 / AMI)
-# ──────────────────────────────────────────────────────────────
-
-def _montar_arvore(world, omnet_sim, pade_sim, monitor):
-    """
-    Árvore fan-out por nível: raiz → subs → cons → meds.
-
-    Canais por nível:
-      0 → 1  (raiz→sub)  : Fibra
-      1 → 2  (sub→con)   : CELULAR_MAP[CELULAR_ARVORE]
-      2+     (con→med+)  : PLC
-    """
-    fan          = [int(v) for v in ARVORE_FANOUT.split(',')]
-    canal_celular = CELULAR_MAP.get(CELULAR_ARVORE, 'Celular4G')
-    prefixos     = ['sub', 'con', 'med']
-    camadas_nome = ['subestacao', 'concentrador', 'medidor']
-    canais_nivel = ['Fibra', canal_celular, 'PLC']
-
-    print(f"   Fan-out: {ARVORE_FANOUT}   Celular: {canal_celular}\n")
-
-    # ── Constrói árvore (BFS) ─────────────────────────────────
-    agentes_info = [{'id': 'raiz', 'x': 500.0, 'y': 150.0,
-                     'tipo': 'Raiz', 'camada': 'controle'}]
-    links        = []
-    nivel_atual  = ['raiz']
-
-    for d, f in enumerate(fan):
-        idx = min(d, 2)
-        nivel_proximo_pares = []   # lista de (pai_id, filho_id)
-
-        for pai_id in nivel_atual:
-            for _ in range(f):
-                nid = f"{prefixos[idx]}{d + 1}_{len(nivel_proximo_pares)}"
-                nivel_proximo_pares.append((pai_id, nid))
-
-        n_nivel = len(nivel_proximo_pares)
-        y_pos   = 150.0 + (d + 1) * 280.0
-        for p, (pai_id, nid) in enumerate(nivel_proximo_pares):
-            x_pos = round((p + 0.5) * (1000.0 / n_nivel), 2)
-            canal = canais_nivel[idx] if idx < len(canais_nivel) else 'PLC'
-            agentes_info.append({
-                'id':     nid,
-                'x':      x_pos,
-                'y':      round(y_pos, 2),
-                'tipo':   camadas_nome[idx].capitalize(),
-                'camada': camadas_nome[idx],
-            })
-            links.append({'origem': pai_id, 'destino': nid, 'tipo': canal})
-
-        nivel_atual = [nid for _, nid in nivel_proximo_pares]
-
-    _persistir_mapa_e_config(agentes_info, links=links,
-                             extra_config={'arvore_fanout': ARVORE_FANOUT,
-                                           'celular_arvore': CELULAR_ARVORE})
-    print(f"   ↳ {len(agentes_info)} nós, {len(links)} enlaces (árvore).")
-    gerar_topologia_ned(agentes_info, links)
-    print("   ↳ DynamicNetwork.ned gerado.\n")
-
-    _conectar_agentes_mosaik(world, omnet_sim, pade_sim, monitor, agentes_info)
-
-
-# ──────────────────────────────────────────────────────────────
-# Topologia HÍBRIDA (CCO → anel fibra → estrela celular → RF mesh)
-# ──────────────────────────────────────────────────────────────
-
-def _montar_hibrida(world, omnet_sim, pade_sim, monitor):
-    """
-    Hierarquia em camadas:
-      cco ──(Fibra)──► anel de subestações
-      sub{i} ──(Celular)──► concentradores (estrela)
-      con{i}_{j} ──(RFMesh)──► cluster de medidores (malha parcial)
-
-    Usa random.Random(SEMENTE_HIBRIDA) para reproduzir as mesmas posições
-    que pade_hibrida.py calcula independentemente.
-    """
-    rng      = random.Random(SEMENTE_HIBRIDA)
-    celular  = CELULAR_MAP.get(CELULAR_HIBRIDA, 'Celular4G')
-    print(f"   Subs: {SUBESTACOES}  Cons/sub: {CONCENTRADORES}  "
-          f"Meds/con: {MEDIDORES_CLUSTER}  Celular: {celular}  "
-          f"Semente: {SEMENTE_HIBRIDA}\n")
-
-    agentes_info = [{'id': 'cco', 'x': 0.0, 'y': 0.0,
-                     'tipo': 'CCO', 'camada': 'controle'}]
-    links     = []
-    vistos    = set()   # frozenset para deduplicar links
-
-    def add_link(a, b, canal):
-        chave = frozenset((a, b))
-        if chave not in vistos:
-            vistos.add(chave)
-            links.append({'origem': a, 'destino': b, 'tipo': canal})
-
-    # ── Anel de subestações (Fibra) ───────────────────────────
-    subs = []
-    for i in range(SUBESTACOES):
-        ang = 2 * math.pi * i / SUBESTACOES
-        sid = f'sub{i}'
-        sx  = round(2500 * math.cos(ang), 2)
-        sy  = round(2500 * math.sin(ang), 2)
-        agentes_info.append({'id': sid, 'x': sx, 'y': sy,
-                             'tipo': 'Subestacao', 'camada': 'subestacao'})
-        subs.append(sid)
-
-    n = len(subs)
-    if n >= 3:
-        for i in range(n):
-            add_link(subs[i], subs[(i + 1) % n], 'Fibra')
-    elif n == 2:
-        add_link(subs[0], subs[1], 'Fibra')
-
-    # CCO conectado às primeiras 2 subs (redundância IEC 61850)
-    for s in subs[:2]:
-        add_link('cco', s, 'Fibra')
-
-    # ── Estrela celular + cluster RF mesh por subestação ──────
-    pos_idx = {ag['id']: (ag['x'], ag['y']) for ag in agentes_info}
-
-    for i, sid in enumerate(subs):
-        sx, sy = pos_idx[sid]
-        for j in range(CONCENTRADORES):
-            cid    = f'con{i}_{j}'
-            cx, cy = _ponto_no_disco(rng, sx, sy, 700)
-            cx, cy = round(cx, 2), round(cy, 2)
-            agentes_info.append({'id': cid, 'x': cx, 'y': cy,
-                                 'tipo': 'Concentrador', 'camada': 'concentrador'})
-            add_link(sid, cid, celular)
-
-            # Cluster: concentrador + medidores
-            cluster     = [cid]
-            cluster_pos = {cid: (cx, cy)}
-            for k in range(MEDIDORES_CLUSTER):
-                mid    = f'med{i}_{j}_{k}'
-                mx, my = _ponto_no_disco(rng, cx, cy, 150.0)
-                mx, my = round(mx, 2), round(my, 2)
-                agentes_info.append({'id': mid, 'x': mx, 'y': my,
-                                     'tipo': 'Medidor', 'camada': 'medidor'})
-                cluster.append(mid)
-                cluster_pos[mid] = (mx, my)
-
-            # Malha parcial RF dentro do cluster
-            for a, b in _calcular_malha_parcial(cluster, cluster_pos,
-                                                k_neigh=4, raio=60.0):
-                add_link(a, b, 'RFMesh')
-
-    _persistir_mapa_e_config(
-        agentes_info, links=links,
-        extra_config={
-            'subestacoes':       SUBESTACOES,
-            'concentradores':    CONCENTRADORES,
-            'medidores_cluster': MEDIDORES_CLUSTER,
-            'celular_hibrida':   CELULAR_HIBRIDA,
-            'semente_hibrida':   SEMENTE_HIBRIDA,
-        },
-    )
-    print(f"   ↳ {len(agentes_info)} nós, {len(links)} enlaces (híbrida).")
-    gerar_topologia_ned(agentes_info, links)
-    print("   ↳ DynamicNetwork.ned gerado.\n")
-
-    _conectar_agentes_mosaik(world, omnet_sim, pade_sim, monitor, agentes_info)
-
-
-# ──────────────────────────────────────────────────────────────
-# Utilitário compartilhado: conecta todos os agentes ao Mosaik
-# ──────────────────────────────────────────────────────────────
 
 def _conectar_agentes_mosaik(world, omnet_sim, pade_sim, monitor, agentes_info):
-    """Registra cada agente no Mosaik e cria as conexões padrão."""
+    """Registra cada agente no Mosaik e cria as conexões padrão:
+    PADE → OMNeT++ (val_out → val_in), OMNeT++ → PADE no passo seguinte
+    (time_shifted) e OMNeT++ → coletor (métricas)."""
     for ag in agentes_info:
-        aid         = ag['id']
-        agente_pade = pade_sim.PadeAgent(agent_id=aid)
-        node_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=aid)
+        eid         = ag['id']
+        agente_pade = pade_sim.PadeAgent(agent_id=topologias.omnet_para_pade(eid))
+        node_omnet  = omnet_sim.AgentNode(node_type='AgentNode', eid=eid)
         world.connect(agente_pade, node_omnet, ('val_out', 'val_in'))
         world.connect(node_omnet, agente_pade, ('val_out', 'val_in'),
                       time_shifted=True, initial_data={'val_out': ''})
         world.connect(node_omnet, monitor,
                       'status', 'packets_sent', 'packets_received', 'packets_dropped',
-                  'packets_forwarded',
+                      'packets_forwarded',
                       'packet_sizes_out', 'latencies_out', 'jitters_out', 'val_out')
 
 
@@ -638,29 +288,7 @@ if __name__ == '__main__':
     create_scenario(world)
     world.run(until=SIM_STEPS)
 
-    # ── Despacha script de plotagem conforme a topologia ─────
-    def _rodar_plot(modulo, *nomes):
-        """Chama a 1ª função existente entre `nomes` (tolera nomes diferentes entre scripts)."""
-        for nome in nomes:
-            fn = getattr(modulo, nome, None)
-            if callable(fn):
-                return fn()
-        raise AttributeError(f"{modulo.__name__} não define nenhuma de {nomes}")
-
+    # Plotagem da topologia (script definido no catálogo; estrela é o padrão)
     print("\nGerando gráficos da simulação...")
-    if TOPOLOGY == 'anel':
-        import plot_results_anel as plotter
-        _rodar_plot(plotter, 'gerar_grafico_anel', 'gerar_graficos')
-    elif TOPOLOGY == 'arvore':
-        import plot_results_arvore as plotter
-        _rodar_plot(plotter, 'gerar_grafico_arvore', 'gerar_graficos')
-    elif TOPOLOGY == 'hibrida':
-        import plot_results_hibrida as plotter
-        _rodar_plot(plotter, 'gerar_grafico_hibrida', 'gerar_graficos')
-    elif TOPOLOGY == 'malha':
-        import plot_results_malha as plotter
-        _rodar_plot(plotter, 'gerar_graficos')
-    else:
-        # 'estrela' ou qualquer fallback
-        import plot_results_star as plotter
-        _rodar_plot(plotter, 'gerar_graficos')
+    script = TOPOLOGIAS.get(TOPOLOGY, TOPOLOGIAS['estrela']).script_plot
+    importlib.import_module(script.removesuffix('.py')).gerar_graficos()

@@ -49,6 +49,16 @@ dev = [
     { include-group = "mosaik" },
 ]
 
-[tool.uv]
-# Aplicação, não biblioteca: o uv só gerencia o ambiente, sem empacotar o projeto.
-package = false
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+# O único pacote Python do projeto é o `cosim` (catálogo, perfis de canal e
+# montagem das topologias). O `uv sync` o instala em modo editável no .venv, e
+# ele fica importável pelos menus, pelos testes e pelos scripts rodados no host.
+# Nos containers, o docker-compose.yml monta a pasta cosim/ e ajusta o PYTHONPATH.
+[tool.hatch.build.targets.wheel]
+packages = ["cosim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

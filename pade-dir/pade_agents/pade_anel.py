@@ -10,28 +10,16 @@ agente_1 é o master (hospeda o MosaikSim na porta PADE_PORT).
 
 import os
 
+from cosim.topologias import vizinhos_anel
 from pade_bridge import ACLMessage, AgenteCosim, PORTA_BASE, aid, iniciar
 
 NUM_AGENTES = int(os.environ.get('NUM_PERIFERICOS', 4))
 ONTOLOGIA = 'malha_restrita'
 
-
-def _gerar_config_rede(total_agentes):
-    """Vizinhos de cada agente no anel: o próximo e o anterior, de modo que o
-    agente_1 saiba que o agente_N está às suas costas."""
-    config = {}
-    for i in range(1, total_agentes + 1):
-        nome = f'agente_{i}'
-        proximo = f'agente_{i % total_agentes + 1}'
-        anterior = f'agente_{(i - 2) % total_agentes + 1}'
-
-        # Evita duplicação caso a rede tenha apenas 2 agentes
-        vizinhos = [proximo, anterior] if proximo != anterior else [proximo]
-        config[nome] = {'port': PORTA_BASE + i - 1, 'vizinhos': vizinhos}
-    return config
-
-
-CONFIG_REDE = _gerar_config_rede(NUM_AGENTES)
+# {agente_i: {'port', 'vizinhos': [próximo, anterior]}}; o agente_1 sabe que o
+# agente_N está às suas costas. Mesma vizinhança dos enlaces de montar_anel().
+CONFIG_REDE = {nome: {'port': PORTA_BASE + i, 'vizinhos': viz}
+               for i, (nome, viz) in enumerate(vizinhos_anel(NUM_AGENTES).items())}
 
 
 class AgenteAnelFIPA(AgenteCosim):

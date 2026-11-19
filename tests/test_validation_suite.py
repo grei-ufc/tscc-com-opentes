@@ -33,6 +33,8 @@ import time
 import pandas as pd
 import pytest
 
+from cosim.catalogo import TOPOLOGIAS
+
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OMNET_DIR = os.path.join(ROOT_DIR, 'omnet-dir')
 MOSAIK_DIR = os.path.join(ROOT_DIR, 'mosaik-dir')
@@ -567,15 +569,9 @@ def test_cpp_agentnode_and_mosaikbridge_physics():
 # 2. TESTE DE CO-SIMULAÇÃO INTEGRADA E2E NAS 5 TOPOLOGIAS
 # ══════════════════════════════════════════════════════════════
 
-# Mesmo despacho do docker-compose.yml (serviço pade). O scenario.py chama o
-# script de plotagem da topologia ao final, como no container mosaik_master.
-PADE_SCRIPTS = {
-    'estrela': 'pade_star.py',
-    'malha':   'pade_malha.py',
-    'anel':    'pade_anel.py',
-    'arvore':  'pade_arvore.py',
-    'hibrida': 'pade_hibrida.py',
-}
+# Script PADE de cada topologia (mesmo despacho do docker-compose.yml). O
+# scenario.py chama o script de plotagem ao final, como no container mosaik_master.
+PADE_SCRIPTS = {t.id: t.script_pade for t in TOPOLOGIAS.values()}
 _EXTENSOES_GRAFICOS = ('.png', '.svg')
 
 
