@@ -29,9 +29,7 @@ import socket
 import subprocess
 import sys
 import tempfile
-import time
 import pandas as pd
-import pytest
 
 from cosim.catalogo import TOPOLOGIAS
 
@@ -575,13 +573,13 @@ PADE_SCRIPTS = {t.id: t.script_pade for t in TOPOLOGIAS.values()}
 _EXTENSOES_GRAFICOS = ('.png', '.svg')
 
 
-def _listar_graficos():
-    return sorted(f for f in os.listdir(MOSAIK_DIR)
+def _listar_graficos(pasta):
+    return sorted(f for f in os.listdir(pasta)
                   if f.startswith('grafico_') and f.endswith(_EXTENSOES_GRAFICOS))
 
 
-def _contar_conexoes_ned():
-    with open(os.path.join(OMNET_DIR, 'DynamicNetwork.ned'), encoding='utf-8') as f:
+def _contar_conexoes_ned(pasta):
+    with open(os.path.join(pasta, 'DynamicNetwork.ned'), encoding='utf-8') as f:
         return sum(1 for linha in f if '.port++ <-->' in linha)
 
 
@@ -611,11 +609,14 @@ def _ultimo_valor(df, atributo):
     return pd.to_numeric(ultimos, errors='coerce').fillna(0).sum()
 
 
-def _run_e2e_cosimulation(topology, total_agentes, num_perifericos=3,
+def _run_e2e_cosimulation(topology, saida, total_agentes, num_perifericos=3,
                           extra_env=None, sim_steps=20, seed=42):
     """
     Executa uma co-simulação completa (PADE + Mosaik + emulador OMNeT++ via ZMQ
     + Collector + plotagem) e retorna os artefatos gerados para inspeção.
+
+    As saídas (results.csv, gráficos e cópia da rede) vão para `saida`
+    (OUTPUT_DIR), sem escrever em mosaik-dir/.
     """
     offset = {'anel': 0, 'malha': 200, 'estrela': 400, 'arvore': 600, 'hibrida': 800}[topology]
     pade_port = _get_free_port(18000 + offset, span=total_agentes + 5)
@@ -637,12 +638,9 @@ def _run_e2e_cosimulation(topology, total_agentes, num_perifericos=3,
         'OMNET_DIR': OMNET_DIR,
         'PYTHONIOENCODING': 'utf-8',
         'MPLBACKEND': 'Agg',
+        'OUTPUT_DIR': str(saida),
     })
     env.update(extra_env or {})
-
-    # Remove gráficos de rodadas anteriores para confirmar que o plotter os recriou
-    for fname in _listar_graficos():
-        os.remove(os.path.join(MOSAIK_DIR, fname))
 
     with tempfile.TemporaryFile(mode='w+', encoding='utf-8', errors='replace') as pade_log, \
          tempfile.TemporaryFile(mode='w+', encoding='utf-8', errors='replace') as omnet_log:
@@ -678,28 +676,28 @@ def _run_e2e_cosimulation(topology, total_agentes, num_perifericos=3,
                         proc.kill()
             _truncar_logs_pade()
 
-    with open(os.path.join(OMNET_DIR, 'posicoes.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'posicoes.json'), encoding='utf-8') as f:
         posicoes = json.load(f)
-    with open(os.path.join(OMNET_DIR, 'links.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'links.json'), encoding='utf-8') as f:
         links = json.load(f)
-    with open(os.path.join(OMNET_DIR, 'config.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'config.json'), encoding='utf-8') as f:
         config = json.load(f)
-    df = pd.read_csv(os.path.join(MOSAIK_DIR, 'results.csv'))
+    df = pd.read_csv(os.path.join(saida, 'results.csv'))
 
     assert len(posicoes) == total_agentes, (
         f"{topology}: esperado {total_agentes} agentes, posicoes.json tem {len(posicoes)}")
-    assert _contar_conexoes_ned() == len(links), "DynamicNetwork.ned e links.json divergem"
+    assert _contar_conexoes_ned(saida) == len(links), "DynamicNetwork.ned e links.json divergem"
     assert config['topologia'] == topology
-    return posicoes, links, config, df, _listar_graficos()
+    return posicoes, links, config, df, _listar_graficos(saida)
 
 
 def _mensagens_entregues(df):
     return df[(df['Atributo'] == 'val_out') & (df['Valor'].notna()) & (df['Valor'] != '')]
 
 
-def test_e2e_anel_topology():
+def test_e2e_anel_topology(tmp_path):
     """Anel: N=5 agentes peers, 5 enlaces fechando o ciclo."""
-    posicoes, links, _, df, graficos = _run_e2e_cosimulation('anel', total_agentes=5, num_perifericos=5)
+    posicoes, links, _, df, graficos = _run_e2e_cosimulation('anel', tmp_path, total_agentes=5, num_perifericos=5)
 
     assert [ag['id'] for ag in posicoes] == ['agente_1', 'agente_2', 'agente_3', 'agente_4', 'agente_5']
     assert len(links) == 5, "Anel de 5 agentes deve possuir 5 enlaces fechando o ciclo."
@@ -708,9 +706,9 @@ def test_e2e_anel_topology():
     assert 'grafico_trafego_Geral.svg' in graficos
 
 
-def test_e2e_malha_topology():
+def test_e2e_malha_topology(tmp_path):
     """Malha completa: N=5 agentes no total (semântica de menu.py), 10 enlaces."""
-    _, links, _, df, graficos = _run_e2e_cosimulation('malha', total_agentes=5, num_perifericos=5)
+    _, links, _, df, graficos = _run_e2e_cosimulation('malha', tmp_path, total_agentes=5, num_perifericos=5)
 
     assert len(links) == 10, "Malha de 5 agentes deve possuir 5*4/2 = 10 enlaces bidirecionais."
     assert len(_mensagens_entregues(df)) >= 50, \
@@ -720,9 +718,9 @@ def test_e2e_malha_topology():
         assert f'grafico_trafego_{tech}.png' in graficos
 
 
-def test_e2e_estrela_topology():
+def test_e2e_estrela_topology(tmp_path):
     """Estrela: N=20 periféricos -> 21 agentes, 20 enlaces."""
-    _, links, _, df, graficos = _run_e2e_cosimulation('estrela', total_agentes=21, num_perifericos=20)
+    _, links, _, df, graficos = _run_e2e_cosimulation('estrela', tmp_path, total_agentes=21, num_perifericos=20)
 
     assert len(links) == 20, "Estrela de 20 periféricos deve possuir 20 enlaces."
     # O central faz poll em todos os periféricos a cada passo e recebe as respostas no
@@ -737,10 +735,10 @@ def test_e2e_estrela_topology():
         assert f'grafico_trafego_{tech}.svg' in graficos
 
 
-def test_e2e_arvore_topology():
+def test_e2e_arvore_topology(tmp_path):
     """Árvore radial IEC 61850 com fan-out 2,2,2: 1 + 2 + 4 + 8 = 15 nós e 14 enlaces."""
     posicoes, links, config, df, graficos = _run_e2e_cosimulation(
-        'arvore', total_agentes=15, extra_env={'ARVORE_FANOUT': '2,2,2', 'CELULAR_ARVORE': '4g'})
+        'arvore', tmp_path, total_agentes=15, extra_env={'ARVORE_FANOUT': '2,2,2', 'CELULAR_ARVORE': '4g'})
 
     assert len(links) == 14, "Uma árvore com 15 nós deve ter 14 enlaces."
     assert config['arvore_fanout'] == '2,2,2'
@@ -753,10 +751,10 @@ def test_e2e_arvore_topology():
     assert 'grafico_trafego_Geral.svg' in graficos
 
 
-def test_e2e_hibrida_topology():
+def test_e2e_hibrida_topology(tmp_path):
     """Híbrida: CCO + 3 subestações (anel de fibra) + 1 concentrador/sub + 3 medidores/concentrador."""
     _, links, config, df, graficos = _run_e2e_cosimulation(
-        'hibrida', total_agentes=1 + 3 + 3 + 9,
+        'hibrida', tmp_path, total_agentes=1 + 3 + 3 + 9,
         extra_env={'SUBESTACOES': '3', 'CONCENTRADORES': '1', 'MEDIDORES_CLUSTER': '3',
                    'CELULAR_HIBRIDA': '4g', 'SEMENTE_HIBRIDA': '42'})
 

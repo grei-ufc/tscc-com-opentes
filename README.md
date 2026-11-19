@@ -280,6 +280,7 @@ Injetadas via `docker-compose.yml` a partir das escolhas feitas no menu:
 | `MEDIDORES_CLUSTER` | Inteiro | `5` | Híbrida: medidores por concentrador |
 | `CELULAR_HIBRIDA` | `2g`, `3g`, `4g`, `5g` | `4g` | Híbrida: canal subestação → concentrador |
 | `SEMENTE_HIBRIDA` | Inteiro | `42` | Híbrida: semente das posições (PADE e Mosaik usam a mesma) |
+| `OUTPUT_DIR` | Caminho opcional | vazio (pasta atual, `mosaik-dir/`) | `scenario.py`: pasta de saída da rodada, com `results.csv`, gráficos e uma cópia da rede (`DynamicNetwork.ned`, `posicoes.json`, `links.json`, `config.json`). Os testes usam uma pasta temporária por rodada |
 
 ---
 

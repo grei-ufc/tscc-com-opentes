@@ -30,6 +30,9 @@ Comuns:
     PADE_PORT         porta do PADE (padrão 5678)
     OMNET_DIR         pasta do modelo OMNeT++ (padrão /omnet-dir no container,
                       ../omnet-dir fora dele)
+    OUTPUT_DIR        pasta das saídas da rodada: results.csv, gráficos e uma
+                      cópia de DynamicNetwork.ned, posicoes/links/config.json
+                      (padrão: a pasta atual, como sempre foi)
 
 Árvore (TOPOLOGY=arvore):
     ARVORE_FANOUT     ex.: "3,2,4"  (filhos por nível)
@@ -47,6 +50,7 @@ import importlib
 import json
 import os
 import random
+import shutil
 import socket
 import time
 
@@ -79,7 +83,11 @@ _DEFAULT_OMNET_DIR = (
     if os.path.isdir('/omnet-dir')
     else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'omnet-dir'))
 )
-OMNET_DIR = os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR)
+OMNET_DIR = os.path.abspath(os.environ.get('OMNET_DIR', _DEFAULT_OMNET_DIR))
+
+# Absoluto desde já: o ponto de entrada muda a pasta atual para OUTPUT_DIR.
+OUTPUT_DIR = os.environ.get('OUTPUT_DIR', '').strip()
+OUTPUT_DIR = os.path.abspath(OUTPUT_DIR) if OUTPUT_DIR else ''
 
 # Árvore
 ARVORE_FANOUT  = os.environ.get('ARVORE_FANOUT', '3,2,4')
@@ -284,6 +292,13 @@ def _persistir_mapa_e_config(agentes_info, links=None, extra_config=None):
 # ══════════════════════════════════════════════════════════════
 
 if __name__ == '__main__':
+    if OUTPUT_DIR:
+        # O coletor (results.csv) e os plots (grafico_*) gravam na pasta atual.
+        # Os imports não são afetados: a pasta deste script já está no sys.path.
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        os.chdir(OUTPUT_DIR)
+        print(f"[MOSAIK] Saídas da rodada em {OUTPUT_DIR}", flush=True)
+
     world = mosaik.World(sim_config)
     create_scenario(world)
     world.run(until=SIM_STEPS)
@@ -292,3 +307,9 @@ if __name__ == '__main__':
     print("\nGerando gráficos da simulação...")
     script = TOPOLOGIAS.get(TOPOLOGY, TOPOLOGIAS['estrela']).script_plot
     importlib.import_module(script.removesuffix('.py')).gerar_graficos()
+
+    if OUTPUT_DIR:
+        # Registro completo da rodada: a rede e a configuração junto dos resultados
+        for nome in ('DynamicNetwork.ned', 'posicoes.json', 'links.json', 'config.json'):
+            if os.path.exists(_caminho_omnet(nome)):
+                shutil.copy2(_caminho_omnet(nome), os.path.join(OUTPUT_DIR, nome))

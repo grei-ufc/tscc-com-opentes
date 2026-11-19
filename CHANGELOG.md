@@ -9,6 +9,7 @@ Mudanças relevantes do projeto, da mais recente para a mais antiga.
   - `cosim.topologias` monta cada rede uma única vez. O `scenario.py` gera o `DynamicNetwork.ned` a partir dela, e os agentes PADE tiram seus vizinhos dos mesmos enlaces. Acaba a cópia da geometria da híbrida no PADE, que precisava ser "idêntica ao scenario.py" à mão e calculava a malha RF com posições não arredondadas.
   - `cosim.catalogo` reúne topologias (rótulo, descrição, scripts PADE e de plotagem) e tecnologias (rótulo e cor), usados pelos menus, pelo `scenario.py`, pelos plots e pelos testes.
   - `cosim.canais` lê o `Profiles.ned`; os menus geram a descrição de cada tecnologia a partir dele.
+- `OUTPUT_DIR` (opcional) no `scenario.py`: grava `results.csv`, gráficos e uma cópia da rede numa pasta própria da rodada. Sem a variável, nada muda. Os testes E2E passam a usar uma pasta temporária e não escrevem mais em `mosaik-dir/`.
 - `tests/test_consistencia.py`: 27 verificações em menos de 1 s (catálogo × `Profiles.ned` × compose, contagens, conectividade e reprodutibilidade das topologias, vizinhança do PADE × enlaces).
 - Gerenciamento de dependências com **uv**: `pyproject.toml`, `uv.lock` e `.python-version` (Python 3.12, o mesmo das imagens). Os containers instalam as versões travadas via `pade-dir/requirements.txt` e `mosaik-dir/requirements.txt`, exportados do lock.
 - Testes E2E das topologias **árvore** e **híbrida**, com verificação de encaminhamento multi-salto (`packets_forwarded`).
