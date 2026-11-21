@@ -6,6 +6,7 @@
 
 #include <omnetpp.h>
 #include <map>
+#include <deque>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -22,7 +23,11 @@ class AgentNode : public cSimpleModule
 {
   private:
     std::string myAgentId;
+    // Destino -> índice da porta do PRÓXIMO SALTO (caminho mínimo em nº de saltos).
+    // Inclui vizinhos diretos e, em topologias multi-salto (árvore, anel...), nós distantes.
     std::map<std::string, int> routingTable;
+    // Porta -> id do vizinho direto naquela porta (identifica o salto anterior na chegada).
+    std::map<int, std::string> portNeighbor;
     std::map<int, cPacketQueue*> txQueues;
     std::map<int, cMessage*> endTxMsgs;
 
@@ -41,6 +46,16 @@ class AgentNode : public cSimpleModule
         return 0.0;
     }
 
+    // Meio guiado (fibra ou cabo): sem atenuação espacial por distância e com
+    // atraso de propagação físico (~5 ns/m). O erro do canal continua vindo do PER
+    // de Profiles.ned (hasBitError). Os demais meios mantêm o modelo espacial original.
+    static bool isGuidedMedium(cChannel *channel) {
+        if (!channel) return false;
+        cComponentType *ct = channel->getComponentType();
+        std::string t = ct ? ct->getName() : "";
+        return t.find("Fibra") != std::string::npos || t.find("Wired") != std::string::npos;
+    }
+
     static void setChannelDelay(cChannel *channel, double delaySec) {
         if (auto *dr = dynamic_cast<cDatarateChannel*>(channel)) dr->setDelay(delaySec);
         else if (auto *dl = dynamic_cast<cDelayChannel*>(channel)) dl->setDelay(delaySec);
@@ -54,6 +69,7 @@ class AgentNode : public cSimpleModule
     virtual ~AgentNode();
 
     void processInjectedData();
+    void buildRoutingTable();
     void transmitPacket(AgentPacket *pkt, int portIndex);
     std::vector<std::string> splitString(const std::string& s, const std::string& delimiter);
     std::string mapPadeToOmnet(const std::string& padeId);
@@ -91,6 +107,7 @@ void AgentNode::initialize()
             cModule *neighbor = outGate->getPathEndGate()->getOwnerModule();
             std::string neighborId = neighbor->getName();
             routingTable[neighborId] = i;
+            portNeighbor[i] = neighborId;
 
             if (neighbor->hasPar("xPos") && neighbor->hasPar("yPos")) {
                 double nX = neighbor->par("xPos").doubleValue();
@@ -98,19 +115,56 @@ void AgentNode::initialize()
                 double dist = std::sqrt(std::pow(nX - myX, 2) + std::pow(nY - myY, 2));
 
                 cChannel *txChannel = outGate->getTransmissionChannel();
+                bool guided = isGuidedMedium(txChannel);
                 if (txChannel) {
                     double currentDelay = getChannelDelay(txChannel);
-                    double propagationDelay = dist * 0.00005;
+                    // Guiado: ~5 ns/m (velocidade de propagação ~2e8 m/s). Demais: modelo original.
+                    double propagationDelay = dist * (guided ? 5e-9 : 0.00005);
                     baseChannelDelays[i] = currentDelay + propagationDelay;
                     setChannelDelay(txChannel, baseChannelDelays[i]);
                 } else {
                     baseChannelDelays[i] = 0.0;
                 }
 
-                // Chance base de erro por atenuação espacial: ~1.5% a cada 100m.
-                inDropChances[neighborId] = (dist / 100.0) * 0.015;
+                // Chance base de erro por atenuação espacial: ~1.5% a cada 100m
+                // (não se aplica a fibra/cabo; ali só vale o PER do canal).
+                inDropChances[neighborId] = guided ? 0.0 : (dist / 100.0) * 0.015;
             }
         }
+    }
+
+    buildRoutingTable();
+}
+
+/**
+ * Roteamento estático por caminho mínimo (BFS em nº de saltos) sobre o grafo
+ * formado pelas portas dos AgentNodes. Para cada nó alcançável guarda a porta
+ * DESTE nó que inicia o caminho. Com isso um pacote pode atravessar vários
+ * nós (árvore, anel, ...) e não apenas chegar a vizinhos diretos. Empates são
+ * resolvidos pela menor porta (determinístico).
+ */
+void AgentNode::buildRoutingTable() {
+    std::map<cModule*, int> firstPort;
+    std::deque<cModule*> fila;
+    firstPort[this] = -1;
+    fila.push_back(this);
+
+    while (!fila.empty()) {
+        cModule *cur = fila.front();
+        fila.pop_front();
+        int n = cur->gateSize("port");
+        for (int p = 0; p < n; p++) {
+            cGate *og = cur->gate("port$o", p);
+            if (!og || !og->getPathEndGate()) continue;
+            cModule *nb = og->getPathEndGate()->getOwnerModule();
+            if (!nb || firstPort.count(nb)) continue;
+            firstPort[nb] = (cur == this) ? p : firstPort[cur];
+            fila.push_back(nb);
+        }
+    }
+
+    for (auto const& kv : firstPort) {
+        if (kv.first != this) routingTable[kv.first->getName()] = kv.second;
     }
 }
 
@@ -202,23 +256,44 @@ void AgentNode::handleMessage(cMessage *msg) {
 
     if (msg->isPacket()) {
         AgentPacket *pkt = check_and_cast<AgentPacket *>(msg);
-        if (std::string(pkt->getDestAgent()) == myAgentId) {
+        std::string srcId = pkt->getSrcAgent();
+        std::string destId = pkt->getDestAgent();
+        double packetSize = pkt->getByteLength();
 
-            std::string srcId = pkt->getSrcAgent();
-            double packetSize = pkt->getByteLength();
+        // Salto anterior (vizinho que acabou de transmitir). Sem porta de chegada
+        // conhecida, usa a origem do pacote (comportamento original de vizinho direto).
+        std::string prevHop = srcId;
+        if (cGate *arrival = pkt->getArrivalGate()) {
+            auto it = portNeighbor.find(arrival->getIndex());
+            if (it != portNeighbor.end()) prevHop = it->second;
+        }
 
-            // 1. Verifica erro do canal físico (PER configurada em Profiles.ned via DatarateChannel)
-            // 2. Aplica penalidade espacial e de tamanho de payload (BER)
-            double sizeFactor = std::max(1.0, packetSize / 15000.0);
-            double baseDropChance = inDropChances[srcId];
-            double finalDropChance = std::min(0.99, baseDropChance * sizeFactor);
+        // Perda POR SALTO: 1. erro do canal físico (PER de Profiles.ned via DatarateChannel);
+        // 2. penalidade espacial (distância do salto anterior) escalonada pelo payload (BER).
+        double sizeFactor = std::max(1.0, packetSize / 15000.0);
+        double baseDropChance = inDropChances[prevHop];
+        double finalDropChance = std::min(0.99, baseDropChance * sizeFactor);
 
-            if (pkt->hasBitError() || dist_prob(rng) < finalDropChance) {
+        if (pkt->hasBitError() || dist_prob(rng) < finalDropChance) {
+            par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+            delete pkt;
+            return;
+        }
+
+        // Pacote de passagem: encaminha ao próximo salto (ou descarta se não há rota).
+        if (destId != myAgentId) {
+            auto route = routingTable.find(destId);
+            if (route == routingTable.end()) {
                 par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
                 delete pkt;
                 return;
             }
+            par("packets_forwarded") = par("packets_forwarded").doubleValue() + 1;
+            transmitPacket(pkt, route->second);
+            return;
+        }
 
+        {
             double latency = (simTime() - pkt->getCreationTime()).dbl();
             double previous_latency = lastLatencies[srcId];
             double jitter = (previous_latency > 0) ? std::abs(latency - previous_latency) : 0.0;
@@ -238,8 +313,6 @@ void AgentNode::handleMessage(cMessage *msg) {
             par("latencies_out").setStringValue(cur_lats.empty() ? std::to_string(latency).c_str() : (cur_lats + "|||" + std::to_string(latency)).c_str());
             par("jitters_out").setStringValue(cur_jits.empty() ? std::to_string(jitter).c_str() : (cur_jits + "|||" + std::to_string(jitter)).c_str());
 
-            delete pkt;
-        } else {
             delete pkt;
         }
     } else {

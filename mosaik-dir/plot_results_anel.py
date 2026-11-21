@@ -8,9 +8,9 @@ no commit edbb07c) e o generaliza para N >= 2 agentes dinâmicos utilizando
 links.json, posicoes.json e config.json.
 
 Arquivos gerados:
-  - grafico_trafego_Anel.png           (visão por Agente Roteador P2P no anel)
-  - grafico_trafego_Geral.png          (visão global por Tecnologia de Enlace)
-  - grafico_trafego_{Tecnologia}.png   (visão individual por Tecnologia de Enlace)
+  - grafico_trafego_Anel.svg           (visão por Agente Roteador P2P no anel)
+  - grafico_trafego_Geral.svg          (visão global por Tecnologia de Enlace)
+  - grafico_trafego_{Tecnologia}.svg   (visão individual por Tecnologia de Enlace)
 """
 
 import json
@@ -23,6 +23,37 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
+from matplotlib.transforms import Bbox
+
+# ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
+# 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
+# converter o texto em curvas (aparência idêntica em qualquer máquina, sem edição).
+matplotlib.rcParams['svg.fonttype'] = 'none'
+
+
+_TOPO_ROTULO = 'Topologia em Anel'      # aparece no título de cada gráfico individual
+_TOPO_ARQ = 'Anel'                  # sufixo do nome do arquivo (evita colisão entre topologias)
+
+
+def _exportar_paineis_separados(fig, paineis, prefixo='grafico_trafego_Geral', pad_px=12):
+    """Salva cada painel do dashboard como um SVG próprio (título, legenda e colorbar
+    inclusos). O título ganha uma linha com o nome da topologia, para o gráfico fazer
+    sentido isolado. `paineis` = lista de (sufixo, [axes que compõem o painel])."""
+    inv = fig.dpi_scale_trans.inverted()
+    for sufixo, axs in paineis:
+        ax0 = axs[0]
+        titulo_orig = ax0.get_title()
+        ax0.set_title(f'{_TOPO_ROTULO}\n{titulo_orig}', fontweight='bold',
+                      fontsize=ax0.title.get_fontsize())
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        bb = Bbox.union([a.get_tightbbox(renderer) for a in axs])
+        bb = Bbox.from_extents(bb.x0 - pad_px, bb.y0 - pad_px, bb.x1 + pad_px, bb.y1 + pad_px)
+        nome = f'{prefixo}_{sufixo}_{_TOPO_ARQ}.svg'
+        fig.savefig(nome, format='svg', bbox_inches=bb.transformed(inv))
+        ax0.set_title(titulo_orig, fontweight='bold', fontsize=ax0.title.get_fontsize())
+        print(f'Salvo: {nome}')
+
 
 NED_PARA_LABEL = {
     'Link_Wired':    'Cabeada',
@@ -261,7 +292,7 @@ def gerar_graficos():
     avg_lat_no = df_exp.groupby('NodeId')['Latencia'].mean().to_dict()
 
     # ══════════════════════════════════════════════════════════
-    # 1. DASHBOARD POR AGENTE ROTEADOR (grafico_trafego_Anel.png)
+    # 1. DASHBOARD POR AGENTE ROTEADOR (grafico_trafego_Anel.svg)
     # ══════════════════════════════════════════════════════════
     agentes_list = sorted(
         df_exp['Agente'].unique(),
@@ -357,8 +388,8 @@ def gerar_graficos():
     _desenhar_mapa_anel(ax_map, posicoes, links, avg_lat_no, CORES_TECH, rede_foco=None)
 
     plt.tight_layout(rect=[0, 0.02, 1, 0.96])
-    plt.savefig('grafico_trafego_Anel.png', dpi=300)
-    print("✅ Salvo: grafico_trafego_Anel.png")
+    plt.savefig('grafico_trafego_Anel.svg')
+    print("✅ Salvo: grafico_trafego_Anel.svg")
     plt.close(fig)
 
     # ══════════════════════════════════════════════════════════
@@ -474,9 +505,18 @@ def gerar_graficos():
         _desenhar_mapa_anel(ax_map, posicoes, links, avg_lat_no, CORES_TECH, rede_foco=rede_foco)
 
         plt.tight_layout(rect=[0, 0.02, 1, 0.96])
-        nome = f'grafico_trafego_{rede_foco}.png'
-        plt.savefig(nome, dpi=300)
+        nome = f'grafico_trafego_{rede_foco}.svg'
+        plt.savefig(nome)
         print(f"✅ Salvo: {nome}")
+        if rede_foco == 'Geral':
+            _extra = [a for a in fig.axes if a not in (ax_kpi, ax_lat, ax_pay, ax_jit, ax_int, ax_tab, ax_map)]
+            _exportar_paineis_separados(fig, [
+                ('heatmap',  [ax_map] + _extra),
+                ('latencia', [ax_lat]),
+                ('payload',  [ax_pay]),
+                ('pdr',      [ax_int]),
+                ('jitter',   [ax_jit]),
+            ])
         plt.close(fig)
 
 

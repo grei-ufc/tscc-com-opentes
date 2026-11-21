@@ -1,5 +1,3 @@
-
-
 simple AgentNode // (Substitui o NetworkNode)
 {
     parameters:
@@ -22,6 +20,7 @@ simple AgentNode // (Substitui o NetworkNode)
         double packets_sent @mutable = default(0);
         double packets_received @mutable = default(0);
         double packets_dropped @mutable = default(0);
+        double packets_forwarded @mutable = default(0);   // pacotes de passagem encaminhados (roteamento)
         
         double last_latency @mutable = default(0.0);
         double last_packet_size @mutable = default(0.0);

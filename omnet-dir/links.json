@@ -1,102 +1,102 @@
 [
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_1",
-        "tipo": "Link_Wired"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_2",
-        "tipo": "Link_5G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_3",
-        "tipo": "Link_4G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_4",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_5",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_6",
-        "tipo": "Link_Wired"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_7",
-        "tipo": "Link_5G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_8",
-        "tipo": "Link_4G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_9",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_10",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_11",
-        "tipo": "Link_Wired"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_12",
-        "tipo": "Link_5G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_13",
-        "tipo": "Link_4G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_14",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_15",
-        "tipo": "Link_Wireless"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_16",
-        "tipo": "Link_Wired"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_17",
-        "tipo": "Link_5G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_18",
-        "tipo": "Link_4G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_19",
-        "tipo": "Link_2G"
-    },
-    {
-        "origem": "agent_central",
-        "destino": "agent_p_20",
-        "tipo": "Link_Wireless"
-    }
+  {
+    "origem": "agente_1",
+    "destino": "agente_2",
+    "tipo": "Link_Wired"
+  },
+  {
+    "origem": "agente_2",
+    "destino": "agente_3",
+    "tipo": "Link_5G"
+  },
+  {
+    "origem": "agente_3",
+    "destino": "agente_4",
+    "tipo": "Link_Wireless"
+  },
+  {
+    "origem": "agente_4",
+    "destino": "agente_5",
+    "tipo": "Link_4G"
+  },
+  {
+    "origem": "agente_5",
+    "destino": "agente_6",
+    "tipo": "Link_2G"
+  },
+  {
+    "origem": "agente_6",
+    "destino": "agente_7",
+    "tipo": "Link_Wired"
+  },
+  {
+    "origem": "agente_7",
+    "destino": "agente_8",
+    "tipo": "Link_5G"
+  },
+  {
+    "origem": "agente_8",
+    "destino": "agente_9",
+    "tipo": "Link_Wireless"
+  },
+  {
+    "origem": "agente_9",
+    "destino": "agente_10",
+    "tipo": "Link_4G"
+  },
+  {
+    "origem": "agente_10",
+    "destino": "agente_11",
+    "tipo": "Link_2G"
+  },
+  {
+    "origem": "agente_11",
+    "destino": "agente_12",
+    "tipo": "Link_Wired"
+  },
+  {
+    "origem": "agente_12",
+    "destino": "agente_13",
+    "tipo": "Link_5G"
+  },
+  {
+    "origem": "agente_13",
+    "destino": "agente_14",
+    "tipo": "Link_Wireless"
+  },
+  {
+    "origem": "agente_14",
+    "destino": "agente_15",
+    "tipo": "Link_4G"
+  },
+  {
+    "origem": "agente_15",
+    "destino": "agente_16",
+    "tipo": "Link_2G"
+  },
+  {
+    "origem": "agente_16",
+    "destino": "agente_17",
+    "tipo": "Link_Wired"
+  },
+  {
+    "origem": "agente_17",
+    "destino": "agente_18",
+    "tipo": "Link_5G"
+  },
+  {
+    "origem": "agente_18",
+    "destino": "agente_19",
+    "tipo": "Link_Wireless"
+  },
+  {
+    "origem": "agente_19",
+    "destino": "agente_20",
+    "tipo": "Link_4G"
+  },
+  {
+    "origem": "agente_20",
+    "destino": "agente_1",
+    "tipo": "Link_2G"
+  }
 ]

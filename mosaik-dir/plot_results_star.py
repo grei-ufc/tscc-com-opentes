@@ -10,6 +10,37 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
+from matplotlib.transforms import Bbox
+
+# ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
+# 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
+# converter o texto em curvas (aparência idêntica em qualquer máquina, sem edição).
+matplotlib.rcParams['svg.fonttype'] = 'none'
+
+
+_TOPO_ROTULO = 'Topologia em Estrela'      # aparece no título de cada gráfico individual
+_TOPO_ARQ = 'Estrela'                  # sufixo do nome do arquivo (evita colisão entre topologias)
+
+
+def _exportar_paineis_separados(fig, paineis, prefixo='grafico_trafego_Geral', pad_px=12):
+    """Salva cada painel do dashboard como um SVG próprio (título, legenda e colorbar
+    inclusos). O título ganha uma linha com o nome da topologia, para o gráfico fazer
+    sentido isolado. `paineis` = lista de (sufixo, [axes que compõem o painel])."""
+    inv = fig.dpi_scale_trans.inverted()
+    for sufixo, axs in paineis:
+        ax0 = axs[0]
+        titulo_orig = ax0.get_title()
+        ax0.set_title(f'{_TOPO_ROTULO}\n{titulo_orig}', fontweight='bold',
+                      fontsize=ax0.title.get_fontsize())
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        bb = Bbox.union([a.get_tightbbox(renderer) for a in axs])
+        bb = Bbox.from_extents(bb.x0 - pad_px, bb.y0 - pad_px, bb.x1 + pad_px, bb.y1 + pad_px)
+        nome = f'{prefixo}_{sufixo}_{_TOPO_ARQ}.svg'
+        fig.savefig(nome, format='svg', bbox_inches=bb.transformed(inv))
+        ax0.set_title(titulo_orig, fontweight='bold', fontsize=ax0.title.get_fontsize())
+        print(f'Salvo: {nome}')
+
 
 # =================================================================
 # TIPOS DE REDE — lidos dinamicamente de config.json e links.json
@@ -104,6 +135,24 @@ def _normalizar_id_agente(agente):
     if n.startswith('AgenteP_'):
         return 'agent_p_' + n[len('AgenteP_'):]
     return n.lower()
+
+
+def _payload_por_tecnologia_svg(df_exp, tipos, cores, nome):
+    """Payload médio por tecnologia (mesmo gráfico dos demais painéis Geral)."""
+    com = [t for t in tipos if not df_exp[df_exp['RedeLink'] == t].empty]
+    fig, ax = plt.subplots(figsize=(7, 5))
+    if com:
+        vals = [df_exp[df_exp['RedeLink'] == t]['Tamanho'].mean() for t in com]
+        bars = ax.bar(com, vals, color=[cores[t] for t in com], edgecolor='black', alpha=0.85)
+        for b, v in zip(bars, vals):
+            ax.text(b.get_x() + b.get_width() / 2, v + 3, f'{v:.0f} B', ha='center',
+                    fontsize=9, fontweight='bold')
+    ax.set_title(f'{_TOPO_ROTULO}\n2. Payload Médio por Tecnologia (Bytes)', fontweight='bold', fontsize=14)
+    ax.set_ylabel('Bytes'); ax.grid(axis='y', ls='--', alpha=0.5)
+    fig.tight_layout()
+    fig.savefig(nome, format='svg')
+    plt.close(fig)
+    print(f'Salvo: {nome}')
 
 
 def gerar_graficos():
@@ -393,9 +442,19 @@ def gerar_graficos():
             ax_map.grid(True, linestyle=':', alpha=0.7); ax_map.legend(loc='upper right')
 
         plt.tight_layout(rect=[0, 0.02, 1, 0.96])
-        nome_arquivo = f'grafico_trafego_{rede_foco}.png'
-        plt.savefig(nome_arquivo, dpi=300)
+        nome_arquivo = f'grafico_trafego_{rede_foco}.svg'
+        plt.savefig(nome_arquivo)
         print(f"Salvo: {nome_arquivo}")
+        if rede_foco == 'Geral':
+            _extra = [a for a in fig.axes if a not in (ax_kpi, ax_lat, ax_pay, ax_jit, ax_int, ax_tab, ax_map)]
+            _exportar_paineis_separados(fig, [
+                ('heatmap',  [ax_map] + _extra),
+                ('latencia', [ax_lat]),
+                ('pdr',      [ax_int]),
+                ('jitter',   [ax_jit]),
+            ])
+            _payload_por_tecnologia_svg(df_expandido, TIPOS_REDE_ATIVOS, cores,
+                                        f'grafico_trafego_Geral_payload_{_TOPO_ARQ}.svg')
         plt.close(fig)
 
 
