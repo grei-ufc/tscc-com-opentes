@@ -54,7 +54,8 @@ CORES_CAMADA    = {
 }
 
 RAIZ_PROJETO  = os.path.dirname(os.path.abspath(__file__))
-CAMINHO_LOGO  = os.path.join(RAIZ_PROJETO, "LOGO.png")
+IMAGES_DIR    = os.path.join(RAIZ_PROJETO, "images")   # LOGO.png e ícones SVG ficam aqui
+CAMINHO_LOGO  = os.path.join(IMAGES_DIR, "LOGO.png")
 MOSAIK_DIR    = os.path.join(RAIZ_PROJETO, "mosaik-dir")
 VERDE_ESCURO  = "#2F5D4B"
 VERDE_VIVO    = "#007024"
@@ -72,7 +73,7 @@ def _svg_img(svg, size=52):
 def _load_svg_colored(filename, color=VERDE_ESCURO):
     if not filename:
         return None
-    path = os.path.join(RAIZ_PROJETO, filename)
+    path = os.path.join(IMAGES_DIR, filename)
     try:
         with open(path, 'r', encoding='utf-8') as f:
             svg = f.read()
