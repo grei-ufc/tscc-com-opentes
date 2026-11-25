@@ -15,7 +15,7 @@ import pytest
 from cosim import canais
 from cosim.catalogo import (COR_POR_ROTULO, TECNOLOGIAS, TIPOS_REDE_PADRAO, TOPOLOGIAS,
                             canal_celular)
-from cosim.topologias import (montar_anel, montar_arvore, montar_estrela, montar_hibrida,
+from cosim.topologias import (montar_anel, montar_arvore, montar_estrela, montar_hibrida, montar_ieee13,
                               montar_malha, omnet_para_pade, pade_para_omnet, vizinhos,
                               vizinhos_anel)
 
@@ -173,3 +173,17 @@ def test_nomes_pade_omnet():
         assert pade_para_omnet(omnet_para_pade(eid)) == eid
     assert omnet_para_pade('agent_p_7') == 'AgenteP_7'
     assert pade_para_omnet('AgenteCentral') == 'agent_central'
+
+def test_ieee13():
+    rede = montar_ieee13(['Link_6TiSCH', 'Link_WiSUN'])
+    assert len(rede.nos) == 18
+    assert len(rede.links) == 17
+    assert rede.config['topologia'] == 'ieee13'
+    assert rede.config['num_perifericos'] == 17
+
+    # Enlaces locais na subestação devem usar Link_Wired
+    enlaces_subestacao = {lk['destino']: lk['tipo'] for lk in rede.links[:2]}
+    assert enlaces_subestacao == {'agent_dso': 'Link_Wired', 'agent_market': 'Link_Wired'}
+
+    # Demais 15 barras ciclam entre Link_6TiSCH e Link_WiSUN de forma determinística
+    assert rede == montar_ieee13(['Link_6TiSCH', 'Link_WiSUN'])

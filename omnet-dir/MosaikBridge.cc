@@ -4,6 +4,7 @@
  */
 
 #include <omnetpp.h>
+#include <cstdlib>
 #include <zmq.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -69,7 +70,11 @@ void MosaikBridge::applyInputs(json j) {
 }
 
 void MosaikBridge::initialize() {
-    socket.bind("tcp://*:5555");
+    const char *portEnv = std::getenv("OMNET_PORT");
+    std::string port = (portEnv != nullptr && std::string(portEnv).length() > 0) ? portEnv : "5555";
+    std::string endpoint = "tcp://*:" + port;
+    socket.bind(endpoint);
+    EV << "MosaikBridge escutando em " << endpoint << std::endl;
     bool scenario_ready = false;
 
     while (!scenario_ready) {

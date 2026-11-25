@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from cosim.catalogo import canal_celular
 
 __all__ = [
-    'Rede', 'calcular_malha_parcial', 'montar_anel', 'montar_arvore',
+    'Rede', 'calcular_malha_parcial', 'montar_anel', 'montar_arvore', 'montar_ieee13',
     'montar_estrela', 'montar_hibrida', 'montar_malha', 'omnet_para_pade',
     'pade_para_omnet', 'ponto_no_disco', 'vizinhos', 'vizinhos_anel',
 ]
@@ -174,6 +174,58 @@ def montar_arvore(fanout='3,2,4', celular='4g'):
         nivel_atual = [nid for _, nid in pares]
 
     return Rede(nos, links, {'arvore_fanout': fanout, 'celular_arvore': celular})
+
+# ══════════════════════════════════════════════════════════════
+# IEEE 13 BARRAS (OpenTES — coordenadas reais de nodes_xy.csv)
+# ══════════════════════════════════════════════════════════════
+
+IEEE13_NOS = [
+    {'id': 'agent_0',      'x':    0.00, 'y':     0.00, 'tipo': 'Central',    'camada': 'controle'},
+    {'id': 'agent_dso',    'x':    0.00, 'y':     0.00, 'tipo': 'Periferico', 'camada': 'controle'},
+    {'id': 'agent_market', 'x':    0.00, 'y':     0.00, 'tipo': 'Periferico', 'camada': 'controle'},
+    {'id': 'agent_611',    'x': -182.88, 'y': -1221.20, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_632',    'x':    0.00, 'y':  -611.60, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_633',    'x':  152.40, 'y':  -611.60, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_634',    'x':  153.40, 'y':  -611.60, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_645',    'x': -152.40, 'y':  -611.60, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_646',    'x': -243.84, 'y':  -611.60, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_650',    'x':    0.00, 'y':    -1.00, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_652',    'x':  -91.44, 'y': -1465.04, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_660',    'x':    0.00, 'y':    -2.00, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_670',    'x':    0.00, 'y':  -814.90, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_671',    'x':    0.00, 'y': -1221.20, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_675',    'x':  153.40, 'y': -1221.20, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_680',    'x':    0.00, 'y': -1526.00, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_684',    'x':  -91.44, 'y': -1221.20, 'tipo': 'Periferico', 'camada': 'periferico'},
+    {'id': 'agent_692',    'x':    1.00, 'y': -1221.20, 'tipo': 'Periferico', 'camada': 'periferico'},
+]
+
+
+def montar_ieee13(tipos_rede=None):
+    """Rede elétrica IEEE 13 barras (18 nós: Concentrador, DSO, Market e 15 barras).
+
+    DSO e Market conectam-se ao Concentrador (agent_0) por Link_Wired; as 15 barras
+    usam os canais de `tipos_rede` (padrão: Link_6TiSCH).
+    """
+    canais = list(tipos_rede) if tipos_rede else ['Link_6TiSCH']
+    nos = [dict(n) for n in IEEE13_NOS]
+    links = [
+        _link('agent_0', 'agent_dso', 'Link_Wired'),
+        _link('agent_0', 'agent_market', 'Link_Wired'),
+    ]
+    barras = [n for n in nos if n['camada'] == 'periferico']
+    for i, barra in enumerate(barras):
+        links.append(_link('agent_0', barra['id'], canais[i % len(canais)]))
+
+    return Rede(
+        nos=nos,
+        links=links,
+        config={
+            'topologia': 'ieee13',
+            'num_perifericos': len(nos) - 1,
+            'tipos_rede': canais,
+        },
+    )
 
 
 # ══════════════════════════════════════════════════════════════

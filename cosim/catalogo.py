@@ -36,6 +36,9 @@ _TECNOLOGIAS = [
     Tecnologia('Celular2G',     '2G',       '#9467bd'),
     Tecnologia('RFMesh',        'RF Mesh',  '#d62728'),
     Tecnologia('PLC',           'PLC',      '#8c564b'),
+    # LPWA / Smart Grid (IEEE 13 barras — OpenTES)
+    Tecnologia('Link_6TiSCH',   '6TiSCH',   '#e377c2'),
+    Tecnologia('Link_WiSUN',    'Wi-SUN',   '#7f7f7f'),
 ]
 TECNOLOGIAS = {t.ned: t for t in _TECNOLOGIAS}
 

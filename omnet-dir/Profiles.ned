@@ -95,3 +95,17 @@ channel PLC extends ned.DatarateChannel {
     delay = 30ms;
     per = 0.02;
 }
+
+// Rede LPWA 6TiSCH (IEEE 802.15.4g modo 1 - 915 MHz, 50 kbps)
+channel Link_6TiSCH extends ned.DatarateChannel {
+    delay = truncnormal(40ms, 10ms);
+    datarate = 50kbps;
+    per = 0.02;
+}
+
+// Rede Wi-SUN FAN (IEEE 802.15.4g SUN FSK modo 3 - 150 kbps)
+channel Link_WiSUN extends ned.DatarateChannel {
+    delay = truncnormal(15ms, 4ms);
+    datarate = 150kbps;
+    per = 0.01;
+}
