@@ -1,0 +1,74 @@
+[project]
+name = "tscc-com-opentes"
+version = "0.1.0"
+description = "Co-simulação PADE + OMNeT++ + Mosaik (GREI-UFC)"
+readme = "README.md"
+license = "MIT"
+# pade-agents 3.0 exige Python >= 3.12; as imagens Docker usam python:3.12.11.
+requires-python = "==3.12.*"
+
+# Dependências do host para usar as interfaces (menu-streamlit.py e menu.py).
+dependencies = [
+    "streamlit",
+    "plotly",
+]
+
+[dependency-groups]
+# Container PADE (pade-dir/Dockerfile).
+# Após alterar, regenere pade-dir/requirements.txt (ver README).
+pade = [
+    "mosaik-api-v3==3.0.14",
+    "twisted==24.7.0",
+    "autobahn==23.6.2",
+    "pyzmq==27.1.0",
+    "pade-agents==3.0",
+    "ipython==8.26.0",
+]
+
+# Container Mosaik (mosaik-dir/Dockerfile): orquestrador, coletor e dashboards.
+# Após alterar, regenere mosaik-dir/requirements.txt (ver README).
+mosaik = [
+    "mosaik==3.6.0",
+    "mosaik-api-v3==3.0.14",
+    "mosaik-csv==2.0.1",
+    "pyzmq==27.1.0",
+    "pandas",
+    "matplotlib",
+    "plotly",
+    "numpy",
+]
+
+# Testes: a suíte E2E executa PADE, Mosaik e os plots no host,
+# por isso inclui os dois grupos dos containers. O ziglang fornece o
+# compilador C++ (`python -m ziglang c++`) do teste de AgentNode.cc.
+# Grupo instalado por padrão no `uv sync`.
+dev = [
+    "pre-commit>=4.7.0",
+    "pytest",
+    "ruff>=0.17.5",
+    "ziglang>=0.17.1",
+    { include-group = "pade" },
+    { include-group = "mosaik" },
+]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+# O único pacote Python do projeto é o `cosim` (catálogo, perfis de canal e
+# montagem das topologias). O `uv sync` o instala em modo editável no .venv, e
+# ele fica importável pelos menus, pelos testes e pelos scripts rodados no host.
+# Nos containers, o docker-compose.yml monta a pasta cosim/ e ajusta o PYTHONPATH.
+[tool.hatch.build.targets.wheel]
+packages = ["cosim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+extend-exclude = ["examples/legacy", "artigo-overleaf"]
+
+[tool.ruff.lint]
+# Só erros reais: sintaxe (E9) e pyflakes (F: nomes indefinidos, imports e
+# variáveis sem uso...). Regras de estilo ficam a critério de cada autor.
+select = ["E9", "F"]

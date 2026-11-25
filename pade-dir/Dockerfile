@@ -17,20 +17,16 @@ RUN pip install --no-cache-dir --upgrade \
     setuptools==75.1.0 \
     wheel==0.44.0
 
-# Instalação do ecossistema Mosaik e dependências do PADE
-RUN pip install --no-cache-dir \
-    mosaik-api-v3==3.0.14 \
-    twisted==24.7.0 \
-    autobahn==23.6.2 \
-    pyzmq==27.1.0
-
-# Instalação oficial do Framework PADE
-RUN pip install --no-cache-dir pade-agents
-
-# Ferramenta para monitorização e debug
-RUN pip install --no-cache-dir ipython==8.26.0
+# Dependências Python travadas pelo uv (grupo "pade" do pyproject.toml):
+# mosaik-api-v3, twisted, autobahn, pyzmq, pade-agents e ipython, com todas
+# as transitivas em versão exata. Não edite requirements.txt à mão; veja o
+# README (seção "Gerenciamento de dependências") para regenerá-lo.
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Porta padrão para comunicação entre agentes/Mosaik
 EXPOSE 5678
 
-CMD ["python3", "pade_sim.py"]
+# Padrão quando o container sobe sem o docker-compose (o compose escolhe o
+# script conforme TOPOLOGY).
+CMD ["python3", "pade_star.py"]

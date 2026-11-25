@@ -1,0 +1,62 @@
+name: testes
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificacoes:
+    name: Lint, dependências e consistência
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+
+      - name: uv.lock em dia com o pyproject.toml
+        run: uv lock --check
+
+      - name: requirements.txt dos containers em dia com o uv.lock
+        run: |
+          uv export --frozen --only-group pade --no-hashes -o pade-dir/requirements.txt
+          uv export --frozen --only-group mosaik --no-hashes -o mosaik-dir/requirements.txt
+          git diff --exit-code -- pade-dir/requirements.txt mosaik-dir/requirements.txt
+
+      - name: Ambiente (Python 3.12 e dependências do uv.lock)
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        run: uv run --frozen ruff check .
+
+      - name: docker-compose.yml válido
+        run: docker compose config -q
+
+      - name: Testes de consistência
+        run: uv run --frozen pytest -v tests/test_consistencia.py
+
+  e2e:
+    name: Física C++ e co-simulação E2E (5 topologias)
+    needs: verificacoes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+
+      - name: Ambiente (Python 3.12 e dependências do uv.lock)
+        run: uv sync --frozen
+
+      # Sem Docker: o emulador tests/omnet_zmq_emulator.py faz o papel do OMNeT++
+      - name: Testes E2E
+        run: uv run --frozen pytest -v tests/test_validation_suite.py

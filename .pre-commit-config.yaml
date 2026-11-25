@@ -1,0 +1,42 @@
+# Verificações automáticas antes de cada commit.
+# Ative uma vez no seu clone:   uv run pre-commit install
+# Rode em todos os arquivos:    uv run pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1024']   # figuras e .zip de artigos não vão para o repositório
+
+  # Hooks locais: usam o ruff e o uv travados no uv.lock (mesmas versões do CI).
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (sintaxe e pyflakes)
+        entry: uv run --no-sync ruff check --force-exclude
+        language: system
+        types: [python]
+
+      - id: uv-lock
+        name: uv.lock em dia com o pyproject.toml
+        entry: uv lock --check
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+
+      - id: uv-export-pade
+        name: pade-dir/requirements.txt em dia com o uv.lock
+        entry: uv export --frozen --only-group pade --no-hashes -o pade-dir/requirements.txt
+        language: system
+        files: ^(pyproject\.toml|uv\.lock|pade-dir/requirements\.txt)$
+        pass_filenames: false
+
+      - id: uv-export-mosaik
+        name: mosaik-dir/requirements.txt em dia com o uv.lock
+        entry: uv export --frozen --only-group mosaik --no-hashes -o mosaik-dir/requirements.txt
+        language: system
+        files: ^(pyproject\.toml|uv\.lock|mosaik-dir/requirements\.txt)$
+        pass_filenames: false

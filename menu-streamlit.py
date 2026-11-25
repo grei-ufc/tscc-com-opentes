@@ -10,42 +10,29 @@ Topologias suportadas:
   - hibrida  : hierarquia CCO → fibra → celular → RF mesh
 """
 
-import base64, json, math, os, re, subprocess, tempfile, threading, time
+import base64, math, os, re, subprocess, tempfile, threading, time
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
-TOPOLOGIAS = {
-    "estrela": {"label": "Estrela",  "desc": "1 agente central conectado a N periféricos."},
-    "anel":    {"label": "Anel",     "desc": "Cada agente conectado apenas ao próximo, em ciclo fechado."},
-    "arvore":  {"label": "Árvore",   "desc": "Árvore radial IEC 61850: raiz → subestações → concentradores → medidores."},
-    "hibrida": {"label": "Híbrida",  "desc": "Backbone fibra (anel) + estrela celular + malha RF mesh por cluster."},
-}
-REDES = {
-    "Link_Wired":    ("Cabeada",  "1 Gbps · delay 1ms · 0% perda"),
-    "Link_5G":       ("5G",       "500 Mbps · ~5ms · 0.001% perda"),
-    "Link_Wireless": ("Wireless", "100 Mbps · ~15ms · 3% perda"),
-    "Link_4G":       ("4G",       "50 Mbps · ~35ms · 0.5% perda"),
-    "Link_2G":       ("2G",       "250 kbps · ~200ms · 15% perda"),
-}
-CORES_REDE = {
-    "Link_Wired": "#1f77b4", "Link_5G": "#2ca02c",
-    "Link_Wireless": "#17becf", "Link_4G": "#ff7f0e", "Link_2G": "#9467bd",
-}
-# Canais novos (árvore / híbrida)
-CORES_CANAL = {
-    "Fibra": "#1f77b4", "Celular5G": "#2ca02c", "Celular4G": "#17becf",
-    "Celular3G": "#ff7f0e", "Celular2G": "#9467bd",
-    "PLC": "#8c564b", "RFMesh": "#bcbd22",
-}
-NOMES_CANAL = {
-    "Fibra": "Fibra (1 Gbps)", "Celular5G": "5G (200 Mbps)",
-    "Celular4G": "4G (50 Mbps)", "Celular3G": "3G (2 Mbps)",
-    "Celular2G": "2G (100 kbps)", "PLC": "PLC (100 kbps)",
-    "RFMesh": "RF Mesh (150 kbps)",
-}
-CELULAR_OPTIONS = ["2g", "3g", "4g", "5g"]
-CELULAR_MAP     = {"2g": "Celular2G", "3g": "Celular3G", "4g": "Celular4G", "5g": "Celular5G"}
+from cosim.canais import descrever, ler_perfis, taxa_legivel
+from cosim.catalogo import CELULAR, TECNOLOGIAS, TIPOS_REDE_PADRAO
+from cosim.catalogo import TOPOLOGIAS as CATALOGO_TOPOLOGIAS
+
+# Topologias, tecnologias e cores vêm do catálogo compartilhado (cosim) e os
+# parâmetros de cada canal, do Profiles.ned: a interface descreve exatamente o
+# que o OMNeT++ simula.
+_PERFIS = ler_perfis()
+TOPOLOGIAS = {k: {"label": CATALOGO_TOPOLOGIAS[k].rotulo, "desc": CATALOGO_TOPOLOGIAS[k].descricao}
+              for k in ("estrela", "anel", "arvore", "hibrida")}
+# Tecnologias escolhidas pelo usuário (estrela / anel): {ned: (rótulo, descrição)}
+REDES = {ned: (TECNOLOGIAS[ned].rotulo, descrever(_PERFIS[ned])) for ned in TIPOS_REDE_PADRAO}
+CORES_REDE = {ned: TECNOLOGIAS[ned].cor for ned in TIPOS_REDE_PADRAO}
+# Canais definidos pelas topologias árvore / híbrida
+_CANAIS = [ned for ned in TECNOLOGIAS if ned not in TIPOS_REDE_PADRAO]
+CORES_CANAL = {ned: TECNOLOGIAS[ned].cor for ned in _CANAIS}
+NOMES_CANAL = {ned: f"{TECNOLOGIAS[ned].rotulo} ({taxa_legivel(_PERFIS[ned])})" for ned in _CANAIS}
+CELULAR_OPTIONS = list(CELULAR)
+CELULAR_MAP     = CELULAR
 CORES_CAMADA    = {
     "controle":     "#007024",
     "subestacao":   "#1f77b4",
@@ -54,8 +41,8 @@ CORES_CAMADA    = {
 }
 
 RAIZ_PROJETO  = os.path.dirname(os.path.abspath(__file__))
-IMAGES_DIR    = os.path.join(RAIZ_PROJETO, "images")   # LOGO.png e ícones SVG ficam aqui
-CAMINHO_LOGO  = os.path.join(IMAGES_DIR, "LOGO.png")
+ASSETS_DIR    = os.path.join(RAIZ_PROJETO, "assets")
+CAMINHO_LOGO  = os.path.join(ASSETS_DIR, "LOGO.png")
 MOSAIK_DIR    = os.path.join(RAIZ_PROJETO, "mosaik-dir")
 VERDE_ESCURO  = "#2F5D4B"
 VERDE_VIVO    = "#007024"
@@ -73,7 +60,7 @@ def _svg_img(svg, size=52):
 def _load_svg_colored(filename, color=VERDE_ESCURO):
     if not filename:
         return None
-    path = os.path.join(IMAGES_DIR, filename)
+    path = os.path.join(ASSETS_DIR, filename)
     try:
         with open(path, 'r', encoding='utf-8') as f:
             svg = f.read()

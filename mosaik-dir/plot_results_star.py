@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
-import numpy as np
 import pandas as pd
-from matplotlib.transforms import Bbox
+
+from plot_comum import NED_PARA_LABEL, caminho_omnet, exportar_paineis_separados
 
 # ── Saída vetorial (SVG) ───────────────────────────────────────────────────────
 # 'none' mantém o texto editável (Inkscape / Illustrator / Canva). Use 'path' para
@@ -22,64 +22,19 @@ _TOPO_ROTULO = 'Topologia em Estrela'      # aparece no título de cada gráfico
 _TOPO_ARQ = 'Estrela'                  # sufixo do nome do arquivo (evita colisão entre topologias)
 
 
-def _exportar_paineis_separados(fig, paineis, prefixo='grafico_trafego_Geral', pad_px=12):
-    """Salva cada painel do dashboard como um SVG próprio (título, legenda e colorbar
-    inclusos). O título ganha uma linha com o nome da topologia, para o gráfico fazer
-    sentido isolado. `paineis` = lista de (sufixo, [axes que compõem o painel])."""
-    inv = fig.dpi_scale_trans.inverted()
-    for sufixo, axs in paineis:
-        ax0 = axs[0]
-        titulo_orig = ax0.get_title()
-        ax0.set_title(f'{_TOPO_ROTULO}\n{titulo_orig}', fontweight='bold',
-                      fontsize=ax0.title.get_fontsize())
-        fig.canvas.draw()
-        renderer = fig.canvas.get_renderer()
-        bb = Bbox.union([a.get_tightbbox(renderer) for a in axs])
-        bb = Bbox.from_extents(bb.x0 - pad_px, bb.y0 - pad_px, bb.x1 + pad_px, bb.y1 + pad_px)
-        nome = f'{prefixo}_{sufixo}_{_TOPO_ARQ}.svg'
-        fig.savefig(nome, format='svg', bbox_inches=bb.transformed(inv))
-        ax0.set_title(titulo_orig, fontweight='bold', fontsize=ax0.title.get_fontsize())
-        print(f'Salvo: {nome}')
-
-
 # =================================================================
 # TIPOS DE REDE — lidos dinamicamente de config.json e links.json
 # =================================================================
-NED_PARA_LABEL = {
-    'Link_Wired':    'Cabeada',
-    'Link_5G':       '5G',
-    'Link_4G':       '4G',
-    'Link_2G':       '2G',
-    'Link_Wireless': 'Wireless',
-}
-
-
-def _path(nome):
-    omnet_env = os.environ.get('OMNET_DIR')
-    candidatos = []
-    if omnet_env:
-        candidatos.append(os.path.join(omnet_env, nome))
-    candidatos.extend([
-        f'/omnet-dir/{nome}',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'omnet-dir', nome),
-        nome,
-    ])
-    for c in candidatos:
-        if os.path.exists(c):
-            return c
-    return nome
-
-
 def _carregar_config_e_links():
     config = {}
     links = []
     try:
-        with open(_path('config.json'), 'r', encoding='utf-8') as f:
+        with open(caminho_omnet('config.json'), 'r', encoding='utf-8') as f:
             config = json.load(f)
     except Exception:
         pass
     try:
-        with open(_path('links.json'), 'r', encoding='utf-8') as f:
+        with open(caminho_omnet('links.json'), 'r', encoding='utf-8') as f:
             links = json.load(f)
     except Exception:
         pass
@@ -394,7 +349,7 @@ def gerar_graficos():
             ax_tab.set_title('5. Tabela Comparativa de Desempenho', fontweight='bold', fontsize=14)
 
         # --- PAINEL 6: Mapa Espacial ---
-        caminho_posicoes = _path('posicoes.json')
+        caminho_posicoes = caminho_omnet('posicoes.json')
         if os.path.exists(caminho_posicoes):
             with open(caminho_posicoes, 'r', encoding='utf-8') as f:
                 posicoes = json.load(f)
@@ -447,12 +402,12 @@ def gerar_graficos():
         print(f"Salvo: {nome_arquivo}")
         if rede_foco == 'Geral':
             _extra = [a for a in fig.axes if a not in (ax_kpi, ax_lat, ax_pay, ax_jit, ax_int, ax_tab, ax_map)]
-            _exportar_paineis_separados(fig, [
+            exportar_paineis_separados(fig, [
                 ('heatmap',  [ax_map] + _extra),
                 ('latencia', [ax_lat]),
                 ('pdr',      [ax_int]),
                 ('jitter',   [ax_jit]),
-            ])
+            ], _TOPO_ROTULO, _TOPO_ARQ)
             _payload_por_tecnologia_svg(df_expandido, TIPOS_REDE_ATIVOS, cores,
                                         f'grafico_trafego_Geral_payload_{_TOPO_ARQ}.svg')
         plt.close(fig)

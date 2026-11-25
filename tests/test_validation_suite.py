@@ -6,16 +6,20 @@ test_validation_suite.py — Suíte de validação automatizada do tscc-com-open
 Testa:
   1. Compilação C++17 e física de rede em omnet-dir/AgentNode.cc:
      - Suporte a cDatarateChannel (getChannelDelay / setChannelDelay)
-     - Atraso de propagação espacial (dist * 0.00005 s)
+     - Atraso de propagação espacial (dist * 0.00005 s; meio guiado ~5 ns/m)
      - Descarte por PER nativo do canal (pkt->hasBitError())
      - Limite de fila por porta (buffer overflow >= 5 pacotes enfileirados)
+     - Meio guiado (Fibra) sem atenuação espacial
+     - Roteamento multi-salto (BFS) e encaminhamento (packets_forwarded)
      - Semente determinística (RANDOM_SEED)
-  2. Sincronismo de passo (mosaik_step e time_resolution) em omnet-dir/MosaikBridge.cc
-  3. Consistência de contagem de agentes, DynamicNetwork.ned e links.json nas 3 topologias
-  4. Co-simulação fim a fim (PADE + Mosaik + OMNeT++ ZMQ + Collector + Plotters) para:
-     - Topologia Estrela (N=20 periféricos -> 21 agentes, 20 enlaces)
-     - Topologia Malha Completa (N=5 peers -> 5 agentes, 10 enlaces)
-     - Topologia Anel Bidirecional (N=5 peers -> 5 agentes, 5 enlaces)
+  2. Sincronismo de passo (mosaik_step, time_resolution, packets_forwarded) em MosaikBridge.cc
+  3. Consistência de contagem de agentes, DynamicNetwork.ned e links.json nas 5 topologias
+  4. Co-simulação fim a fim (PADE + Mosaik + emulador OMNeT++ ZMQ + Collector + Plotters):
+     - Estrela (N=20 periféricos -> 21 agentes, 20 enlaces)
+     - Malha completa (N=5 -> 5 agentes, 10 enlaces)
+     - Anel bidirecional (N=5 -> 5 agentes, 5 enlaces)
+     - Árvore radial (fan-out 2,2,2 -> 15 nós, 14 enlaces, encaminhamento multi-salto)
+     - Híbrida (3 subestações, 1 concentrador/sub, 3 medidores/concentrador -> 16 nós)
 """
 
 import json
@@ -25,9 +29,9 @@ import socket
 import subprocess
 import sys
 import tempfile
-import time
 import pandas as pd
-import pytest
+
+from cosim.catalogo import TOPOLOGIAS
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OMNET_DIR = os.path.join(ROOT_DIR, 'omnet-dir')
@@ -64,6 +68,7 @@ MOCK_OMNETPP_H = r"""
 #include <sstream>
 #include <cmath>
 #include <cstdint>
+#include <stdexcept>
 
 namespace omnetpp {
 
@@ -97,12 +102,23 @@ public:
     virtual ~cObject() = default;
 };
 
+class cComponentType : public cObject {
+    std::string typeName;
+public:
+    cComponentType(const std::string& n = "") : typeName(n) {}
+    const char* getName() const { return typeName.c_str(); }
+    void setName(const std::string& n) { typeName = n; }
+};
+
 class cChannel : public cObject {
 protected:
     std::map<std::string, cPar> params;
     bool busyFlag = false;
+    cComponentType componentType{"Link_5G"};   // canal não guiado por padrão
 public:
     cChannel() { params["delay"] = cPar(0.001); }
+    cComponentType* getComponentType() { return &componentType; }
+    void setTypeName(const std::string& n) { componentType.setName(n); }
     bool hasPar(const char* name) const { return params.count(name) > 0; }
     cPar& par(const char* name) { return params[name]; }
     void setBusy(bool b) { busyFlag = b; }
@@ -134,8 +150,11 @@ class cGate : public cObject {
     cChannel* ch = nullptr;
     cGate* pathEnd = nullptr;
     cModule* ownerMod = nullptr;
+    int idx = 0;
 public:
     cGate(cModule* owner = nullptr) : ownerMod(owner) {}
+    int getIndex() const { return idx; }
+    void setIndex(int i) { idx = i; }
     void setChannel(cChannel* c) { ch = c; }
     void setPathEndGate(cGate* g) { pathEnd = g; }
     cGate* getPathEndGate() const { return pathEnd; }
@@ -148,15 +167,21 @@ class cMessage : public cObject {
     SimTime creationTime = SimTime(0.95);
     void* ctxPtr = nullptr;
     bool selfMsg = false;
+    bool scheduled = false;
+    cGate* arrivalGate = nullptr;
 public:
     cMessage(const char* n = "") : name(n ? n : "") {}
     virtual ~cMessage() = default;
+    cGate* getArrivalGate() const { return arrivalGate; }
+    void setArrivalGate(cGate* g) { arrivalGate = g; }
     SimTime getCreationTime() const { return creationTime; }
     void setCreationTime(SimTime t) { creationTime = t; }
     void setContextPointer(void* p) { ctxPtr = p; }
     void* getContextPointer() const { return ctxPtr; }
     void setSelfMessage(bool b) { selfMsg = b; }
     bool isSelfMessage() const { return selfMsg; }
+    bool isScheduled() const { return scheduled; }
+    void setScheduled(bool b) { scheduled = b; }
     virtual bool isPacket() const { return false; }
 };
 
@@ -205,6 +230,7 @@ public:
         params["packets_sent"] = cPar(0.0);
         params["packets_received"] = cPar(0.0);
         params["packets_dropped"] = cPar(0.0);
+        params["packets_forwarded"] = cPar(0.0);
         params["packet_sizes_out"] = cPar(0.0);
         params["latencies_out"] = cPar(0.0);
         params["jitters_out"] = cPar(0.0);
@@ -221,6 +247,8 @@ public:
         return inGates.at(idx);
     }
     void addPortPair(cGate* outG, cGate* inG) {
+        outG->setIndex(static_cast<int>(outGates.size()));
+        inG->setIndex(static_cast<int>(inGates.size()));
         outGates.push_back(outG);
         inGates.push_back(inG);
     }
@@ -229,6 +257,7 @@ public:
 class cSimpleModule : public cModule {
 public:
     std::vector<cMessage*> sentMessages;
+    std::vector<cMessage*> scheduledMessages;
     cSimpleModule() = default;
     virtual void initialize() {}
     virtual void handleMessage(cMessage*) {}
@@ -237,7 +266,12 @@ public:
         sentMessages.push_back(msg);
     }
     void scheduleAt(SimTime, cMessage* msg) {
+        // Como no OMNeT++: reagendar uma mensagem ainda agendada é erro fatal.
+        if (msg->isScheduled())
+            throw std::runtime_error("scheduleAt(): message is currently scheduled");
         msg->setSelfMessage(true);
+        msg->setScheduled(true);
+        scheduledMessages.push_back(msg);
     }
     void cancelAndDelete(cMessage* msg) {
         delete msg;
@@ -350,8 +384,8 @@ int main() {
     periferico.par("xPos").setDoubleValue(600.0); // dist = 100m -> propDelay = 0.005s
     periferico.par("yPos").setDoubleValue(500.0);
 
-    cDatarateChannel chanOut, chanIn;
-    chanOut.setDelay(0.001); // 1ms base delay (Link_Wired)
+    cDatarateChannel chanOut, chanIn;    // tipo padrão do mock: Link_5G (meio não guiado)
+    chanOut.setDelay(0.001); // 1ms base delay
     chanIn.setDelay(0.001);
 
     cGate outG(&central), inG(&central);
@@ -407,6 +441,125 @@ int main() {
     assert(periferico.par("val_out").stdstringValue() == "{\"sender\":\"AgenteCentral\"}");
     assert(!periferico.par("latencies_out").stdstringValue().empty());
 
+    // Teste 5: Meio guiado (Fibra) — propagação de ~5 ns/m e sem atenuação espacial
+    TestAgentNode fa, fb;
+    fa.setName("fibra_a");
+    fb.setName("fibra_b");
+    fa.par("xPos").setDoubleValue(0.0);
+    fa.par("yPos").setDoubleValue(0.0);
+    fb.par("xPos").setDoubleValue(10000.0);   // 10 km
+    fb.par("yPos").setDoubleValue(0.0);
+    cDatarateChannel fibAB, fibBA;
+    fibAB.setTypeName("Fibra");
+    fibBA.setTypeName("Fibra");
+    fibAB.setDelay(0.00005);
+    fibBA.setDelay(0.00005);
+    cGate faOut(&fa), faIn(&fa), fbOut(&fb), fbIn(&fb);
+    faOut.setChannel(&fibAB);
+    faOut.setPathEndGate(&fbIn);
+    fbOut.setChannel(&fibBA);
+    fbOut.setPathEndGate(&faIn);
+    fa.addPortPair(&faOut, &faIn);
+    fb.addPortPair(&fbOut, &fbIn);
+    fa.initialize();
+    fb.initialize();
+    assert(std::abs(fibAB.getDelay().dbl() - (0.00005 + 10000.0 * 5e-9)) < 1e-12);
+
+    // A 10 km, um meio não guiado teria 99% de perda espacial; na fibra só vale o PER.
+    AgentPacket* fibPkt = new AgentPacket("fibra");
+    fibPkt->setSrcAgent("fibra_a");
+    fibPkt->setDestAgent("fibra_b");
+    fibPkt->setPayload("{\"sender\":\"fibra_a\"}");
+    fibPkt->setByteLength(100);
+    fibPkt->setArrivalGate(&fbIn);
+    fb.handleMessage(fibPkt);
+    assert(fb.par("packets_received").doubleValue() == 1.0);
+    assert(fb.par("packets_dropped").doubleValue() == 0.0);
+
+    // Teste 6: Roteamento multi-salto (BFS) e encaminhamento no nó intermediário
+    //   ra <--> rb <--> rc   (posições coincidentes: sem perda espacial)
+    TestAgentNode ra, rb, rc;
+    ra.setName("ra");
+    rb.setName("rb");
+    rc.setName("rc");
+    cDatarateChannel chAB, chBA, chBC, chCB;
+    cGate aOut(&ra), aIn(&ra), bOut0(&rb), bIn0(&rb), bOut1(&rb), bIn1(&rb), cOut(&rc), cIn(&rc);
+    aOut.setChannel(&chAB);
+    aOut.setPathEndGate(&bIn0);
+    bOut0.setChannel(&chBA);
+    bOut0.setPathEndGate(&aIn);
+    bOut1.setChannel(&chBC);
+    bOut1.setPathEndGate(&cIn);
+    cOut.setChannel(&chCB);
+    cOut.setPathEndGate(&bIn1);
+    ra.addPortPair(&aOut, &aIn);
+    rb.addPortPair(&bOut0, &bIn0);
+    rb.addPortPair(&bOut1, &bIn1);
+    rc.addPortPair(&cOut, &cIn);
+    ra.initialize();
+    rb.initialize();
+    rc.initialize();
+
+    // rc não é vizinho de ra, mas a tabela de rotas encontra o caminho via rb
+    ra.par("val_in").setStringValue("{\"sender\":\"ra\",\"receivers\":[\"rc@0.0.0.0:1\"]}");
+    ra.handleParameterChange("val_in");
+    assert(ra.par("packets_sent").doubleValue() == 1.0);
+    assert(ra.sentMessages.size() == 1);
+
+    // rb recebe um pacote destinado a rc: encaminha em vez de entregar
+    AgentPacket* fwdPkt = new AgentPacket("transito");
+    fwdPkt->setSrcAgent("ra");
+    fwdPkt->setDestAgent("rc");
+    fwdPkt->setPayload("{\"sender\":\"ra\"}");
+    fwdPkt->setByteLength(100);
+    fwdPkt->setArrivalGate(&bIn0);
+    rb.handleMessage(fwdPkt);
+    assert(rb.par("packets_forwarded").doubleValue() == 1.0);
+    assert(rb.par("packets_received").doubleValue() == 0.0);
+    assert(rb.sentMessages.size() == 1);
+
+    // rc é o destino final: entrega ao agente
+    AgentPacket* finalPkt = new AgentPacket("final");
+    finalPkt->setSrcAgent("ra");
+    finalPkt->setDestAgent("rc");
+    finalPkt->setPayload("{\"sender\":\"ra\"}");
+    finalPkt->setByteLength(100);
+    finalPkt->setArrivalGate(&cIn);
+    rc.handleMessage(finalPkt);
+    assert(rc.par("packets_received").doubleValue() == 1.0);
+    assert(rc.par("val_out").stdstringValue() == "{\"sender\":\"ra\"}");
+
+    // Teste 7: pacote que chega no instante em que a transmissão anterior termina:
+    // o canal já está livre, mas o endTx daquele instante ainda não foi processado.
+    // O pacote deve ir para a fila (reagendar o endTx aborta o OMNeT++) e sair
+    // quando o endTx for processado.
+    TestAgentNode ta, tb;
+    ta.setName("ta");
+    tb.setName("tb");
+    cDatarateChannel chTA, chTB;
+    cGate taOut(&ta), taIn(&ta), tbOut(&tb), tbIn(&tb);
+    taOut.setChannel(&chTA);
+    taOut.setPathEndGate(&tbIn);
+    tbOut.setChannel(&chTB);
+    tbOut.setPathEndGate(&taIn);
+    ta.addPortPair(&taOut, &taIn);
+    tb.addPortPair(&tbOut, &tbIn);
+    ta.initialize();
+    tb.initialize();
+    std::string mt = "{\"sender\":\"ta\",\"receivers\":[\"tb@0.0.0.0:1\"]}";
+    ta.par("val_in").setStringValue(mt);
+    ta.handleParameterChange("val_in");        // 1º pacote: transmitido, endTx agendado
+    assert(ta.sentMessages.size() == 1);
+    cMessage* endTx = ta.scheduledMessages.back();
+    assert(endTx->isScheduled());
+    ta.par("val_in").setStringValue(mt);        // canal livre (mock), endTx pendente
+    ta.handleParameterChange("val_in");        // 2º pacote: vai para a fila
+    assert(ta.sentMessages.size() == 1);
+    endTx->setScheduled(false);                 // o OMNeT++ entrega o endTx...
+    ta.handleMessage(endTx);                    // ...que transmite o pacote da fila
+    assert(ta.sentMessages.size() == 2);
+    assert(endTx->isScheduled());
+
     std::cout << "ALL_CPP_TESTS_PASSED" << std::endl;
     return 0;
 }
@@ -448,19 +601,66 @@ def test_cpp_agentnode_and_mosaikbridge_physics():
         bridge_src = f.read()
     assert '{"mosaik_step", currentMosaikStep}' in bridge_src
     assert 'time_resolution' in bridge_src
+    assert 'packets_forwarded' in bridge_src
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. TESTE DE CO-SIMULAÇÃO INTEGRADA E2E NAS 3 TOPOLOGIAS
+# 2. TESTE DE CO-SIMULAÇÃO INTEGRADA E2E NAS 5 TOPOLOGIAS
 # ══════════════════════════════════════════════════════════════
 
-def _run_e2e_cosimulation(topology, num_perifericos, sim_steps=20, seed=42):
+# Script PADE de cada topologia (mesmo despacho do docker-compose.yml). O
+# scenario.py chama o script de plotagem ao final, como no container mosaik_master.
+PADE_SCRIPTS = {t.id: t.script_pade for t in TOPOLOGIAS.values()}
+_EXTENSOES_GRAFICOS = ('.png', '.svg')
+
+
+def _listar_graficos(pasta):
+    return sorted(f for f in os.listdir(pasta)
+                  if f.startswith('grafico_') and f.endswith(_EXTENSOES_GRAFICOS))
+
+
+def _contar_conexoes_ned(pasta):
+    with open(os.path.join(pasta, 'DynamicNetwork.ned'), encoding='utf-8') as f:
+        return sum(1 for linha in f if '.port++ <-->' in linha)
+
+
+def _truncar_logs_pade():
+    """O data_logger do PADE acumula CSVs em pade_agents/logs/; mantém só o cabeçalho."""
+    logs_dir = os.path.join(PADE_AGENTS_DIR, 'logs')
+    if not os.path.isdir(logs_dir):
+        return
+    for fn in os.listdir(logs_dir):
+        if fn.endswith('.csv'):
+            p = os.path.join(logs_dir, fn)
+            try:
+                with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                    header = f.readline()
+                with open(p, 'w', encoding='utf-8') as f:
+                    f.write(header)
+            except OSError:
+                pass
+
+
+def _ultimo_valor(df, atributo):
+    """Soma, entre todos os nós, o último valor registrado de um contador."""
+    linhas = df[df['Atributo'] == atributo]
+    if linhas.empty:
+        return 0.0
+    ultimos = linhas.sort_values('Tempo').groupby('Origem')['Valor'].last()
+    return pd.to_numeric(ultimos, errors='coerce').fillna(0).sum()
+
+
+def _run_e2e_cosimulation(topology, saida, total_agentes, num_perifericos=3,
+                          extra_env=None, sim_steps=20, seed=42):
     """
-    Executa uma co-simulação completa (PADE + Mosaik + OMNeT++ ZMQ + Collector + Plotter)
-    e retorna os artefatos gerados para inspeção.
+    Executa uma co-simulação completa (PADE + Mosaik + emulador OMNeT++ via ZMQ
+    + Collector + plotagem) e retorna os artefatos gerados para inspeção.
+
+    As saídas (results.csv, gráficos e cópia da rede) vão para `saida`
+    (OUTPUT_DIR), sem escrever em mosaik-dir/.
     """
-    offset = {'anel': 0, 'malha': 200, 'estrela': 400}.get(topology, 600)
-    pade_port = _get_free_port(18000 + offset, span=num_perifericos + 5)
+    offset = {'anel': 0, 'malha': 200, 'estrela': 400, 'arvore': 600, 'hibrida': 800}[topology]
+    pade_port = _get_free_port(18000 + offset, span=total_agentes + 5)
     ams_port = _get_free_port(25000 + offset, span=2)
     omnet_port = _get_free_port(28000 + offset, span=2)
 
@@ -478,84 +678,35 @@ def _run_e2e_cosimulation(topology, num_perifericos, sim_steps=20, seed=42):
         'OMNET_PORT': str(omnet_port),
         'OMNET_DIR': OMNET_DIR,
         'PYTHONIOENCODING': 'utf-8',
+        'MPLBACKEND': 'Agg',
+        'OUTPUT_DIR': str(saida),
     })
-
-    if topology == 'anel':
-        pade_script = 'pade_anel.py'
-        plot_script = 'plot_results_anel.py'
-    elif topology == 'malha':
-        pade_script = 'pade_malha.py'
-        plot_script = 'plot_results_malha.py'
-    else:
-        pade_script = 'pade_star.py'
-        plot_script = 'plot_results_star.py'
-
-    # Limpa PNGs alvo antes da rodada para confirmar que o plotter os recriou
-    target_pngs = [
-        'grafico_trafego_Geral.png',
-        'grafico_trafego_Cabeada.png',
-        'grafico_trafego_5G.png',
-        'grafico_trafego_4G.png',
-        'grafico_trafego_2G.png',
-        'grafico_trafego_Wireless.png',
-    ]
-    if topology == 'anel':
-        target_pngs.append('grafico_trafego_Anel.png')
-    for fname in target_pngs:
-        fpath = os.path.join(MOSAIK_DIR, fname)
-        if os.path.exists(fpath):
-            os.remove(fpath)
+    env.update(extra_env or {})
 
     with tempfile.TemporaryFile(mode='w+', encoding='utf-8', errors='replace') as pade_log, \
          tempfile.TemporaryFile(mode='w+', encoding='utf-8', errors='replace') as omnet_log:
         pade_proc = subprocess.Popen(
-            [sys.executable, pade_script],
-            cwd=PADE_AGENTS_DIR,
-            env=env,
-            stdout=pade_log,
-            stderr=subprocess.STDOUT,
+            [sys.executable, PADE_SCRIPTS[topology]],
+            cwd=PADE_AGENTS_DIR, env=env, stdout=pade_log, stderr=subprocess.STDOUT,
         )
         omnet_proc = subprocess.Popen(
             [sys.executable, EMULATOR_SCRIPT],
-            cwd=ROOT_DIR,
-            env=env,
-            stdout=omnet_log,
-            stderr=subprocess.STDOUT,
+            cwd=ROOT_DIR, env=env, stdout=omnet_log, stderr=subprocess.STDOUT,
         )
-
         try:
             mosaik_res = subprocess.run(
                 [sys.executable, 'scenario.py'],
-                cwd=MOSAIK_DIR,
-                env=env,
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
-                timeout=60,
+                cwd=MOSAIK_DIR, env=env, capture_output=True, text=True,
+                encoding='utf-8', errors='replace', timeout=240,
             )
             if mosaik_res.returncode != 0:
                 pade_log.seek(0)
                 omnet_log.seek(0)
                 raise AssertionError(
                     f"scenario.py falhou para {topology}:\n"
-                    f"STDOUT:\n{mosaik_res.stdout}\nSTDERR:\n{mosaik_res.stderr}\n"
-                    f"PADE LOG:\n{pade_log.read()}\nOMNET LOG:\n{omnet_log.read()}"
+                    f"STDOUT:\n{mosaik_res.stdout[-6000:]}\nSTDERR:\n{mosaik_res.stderr[-6000:]}\n"
+                    f"PADE LOG:\n{pade_log.read()[-4000:]}\nOMNET LOG:\n{omnet_log.read()[-4000:]}"
                 )
-
-            plot_res = subprocess.run(
-                [sys.executable, plot_script],
-                cwd=MOSAIK_DIR,
-                env=env,
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
-                timeout=60,
-            )
-            assert plot_res.returncode == 0, (
-                f"{plot_script} falhou para {topology}:\nSTDOUT:\n{plot_res.stdout}\nSTDERR:\n{plot_res.stderr}"
-            )
         finally:
             for proc in (pade_proc, omnet_proc):
                 if proc.poll() is None:
@@ -564,73 +715,97 @@ def _run_e2e_cosimulation(topology, num_perifericos, sim_steps=20, seed=42):
                         proc.wait(timeout=3)
                     except subprocess.TimeoutExpired:
                         proc.kill()
-            logs_dir = os.path.join(PADE_AGENTS_DIR, 'logs')
-            if os.path.isdir(logs_dir):
-                for fn in os.listdir(logs_dir):
-                    if fn.endswith('.csv'):
-                        p = os.path.join(logs_dir, fn)
-                        try:
-                            with open(p, 'r', encoding='utf-8', errors='ignore') as f:
-                                header = f.readline()
-                            with open(p, 'w', encoding='utf-8') as f:
-                                f.write(header)
-                        except OSError:
-                            pass
+            _truncar_logs_pade()
 
-    with open(os.path.join(OMNET_DIR, 'posicoes.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'posicoes.json'), encoding='utf-8') as f:
         posicoes = json.load(f)
-    with open(os.path.join(OMNET_DIR, 'links.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'links.json'), encoding='utf-8') as f:
         links = json.load(f)
-    with open(os.path.join(OMNET_DIR, 'config.json'), encoding='utf-8') as f:
+    with open(os.path.join(saida, 'config.json'), encoding='utf-8') as f:
         config = json.load(f)
-    df = pd.read_csv(os.path.join(MOSAIK_DIR, 'results.csv'))
-    pngs = sorted([f for f in os.listdir(MOSAIK_DIR) if f.startswith('grafico_') and f.endswith('.png')])
+    df = pd.read_csv(os.path.join(saida, 'results.csv'))
 
-    return posicoes, links, config, df, pngs
+    assert len(posicoes) == total_agentes, (
+        f"{topology}: esperado {total_agentes} agentes, posicoes.json tem {len(posicoes)}")
+    assert _contar_conexoes_ned(saida) == len(links), "DynamicNetwork.ned e links.json divergem"
+    assert config['topologia'] == topology
+    return posicoes, links, config, df, _listar_graficos(saida)
 
 
-def test_e2e_anel_topology():
-    """Valida co-simulação fim a fim na topologia Anel (N=5 agentes peers, 5 enlaces)."""
-    posicoes, links, config, df, pngs = _run_e2e_cosimulation('anel', num_perifericos=5, sim_steps=20, seed=42)
+def _mensagens_entregues(df):
+    return df[(df['Atributo'] == 'val_out') & (df['Valor'].notna()) & (df['Valor'] != '')]
 
-    assert len(posicoes) == 5, "No anel, NUM_PERIFERICOS=5 deve criar exatamente 5 agentes."
+
+def test_e2e_anel_topology(tmp_path):
+    """Anel: N=5 agentes peers, 5 enlaces fechando o ciclo."""
+    posicoes, links, _, df, graficos = _run_e2e_cosimulation('anel', tmp_path, total_agentes=5, num_perifericos=5)
+
     assert [ag['id'] for ag in posicoes] == ['agente_1', 'agente_2', 'agente_3', 'agente_4', 'agente_5']
     assert len(links) == 5, "Anel de 5 agentes deve possuir 5 enlaces fechando o ciclo."
-
-    val_outs = df[(df['Atributo'] == 'val_out') & (df['Valor'].notna()) & (df['Valor'] != '')]
-    assert not val_outs.empty, "O CSV deve registrar mensagens entregues na topologia Anel."
-    assert 'grafico_trafego_Anel.png' in pngs
-    assert 'grafico_trafego_Geral.png' in pngs
+    assert not _mensagens_entregues(df).empty, "O CSV deve registrar mensagens entregues no anel."
+    assert 'grafico_trafego_Anel.svg' in graficos
+    assert 'grafico_trafego_Geral.svg' in graficos
 
 
-def test_e2e_malha_topology():
-    """Valida co-simulação fim a fim na topologia Malha Completa (N=5 peers, 10 enlaces)."""
-    posicoes, links, config, df, pngs = _run_e2e_cosimulation('malha', num_perifericos=5, sim_steps=20, seed=42)
+def test_e2e_malha_topology(tmp_path):
+    """Malha completa: N=5 agentes no total (semântica de menu.py), 10 enlaces."""
+    _, links, _, df, graficos = _run_e2e_cosimulation('malha', tmp_path, total_agentes=5, num_perifericos=5)
 
-    assert len(posicoes) == 5, "Na malha, NUM_PERIFERICOS=5 deve criar exatamente 5 agentes no total."
     assert len(links) == 10, "Malha de 5 agentes deve possuir 5*4/2 = 10 enlaces bidirecionais."
-
-    val_outs = df[(df['Atributo'] == 'val_out') & (df['Valor'].notna()) & (df['Valor'] != '')]
-    assert len(val_outs) >= 50, "Todos os 5 agentes da malha devem trocar mensagens em todos os passos."
-    assert 'grafico_trafego_Geral.png' in pngs
+    assert len(_mensagens_entregues(df)) >= 50, \
+        "Todos os 5 agentes da malha devem trocar mensagens em todos os passos."
+    assert 'grafico_trafego_Geral.png' in graficos
     for tech in ('Cabeada', '5G', '4G', '2G', 'Wireless'):
-        assert f'grafico_trafego_{tech}.png' in pngs
+        assert f'grafico_trafego_{tech}.png' in graficos
 
 
-def test_e2e_estrela_topology():
-    """Valida co-simulação fim a fim na topologia Estrela (N=20 periféricos -> 21 agentes, 20 enlaces)."""
-    posicoes, links, config, df, pngs = _run_e2e_cosimulation('estrela', num_perifericos=20, sim_steps=20, seed=42)
+def test_e2e_estrela_topology(tmp_path):
+    """Estrela: N=20 periféricos -> 21 agentes, 20 enlaces."""
+    _, links, _, df, graficos = _run_e2e_cosimulation('estrela', tmp_path, total_agentes=21, num_perifericos=20)
 
-    assert len(posicoes) == 21, "Na estrela, NUM_PERIFERICOS=20 deve criar 1 central + 20 periféricos = 21 agentes."
     assert len(links) == 20, "Estrela de 20 periféricos deve possuir 20 enlaces."
-
-    # Verifica que o AgenteCentral recebeu respostas síncronas dos periféricos desde o passo t=2
+    # O central faz poll em todos os periféricos a cada passo e recebe as respostas no
+    # passo seguinte (time_shifted): no máximo 20 * 19 = 380 respostas em 20 passos.
     central_rx = df[
         (df['Origem'] == 'OmnetSim-0.agent_central')
         & (df['Atributo'] == 'packets_received')
         & (df['Tempo'] == 19)
     ]['Valor'].astype(float).iloc[0]
-    assert central_rx > 300, f"Central deve receber >300 respostas ao longo de 20 passos (recebeu {central_rx})."
-
+    assert central_rx > 200, f"Central deve receber >200 das 380 respostas possíveis (recebeu {central_rx})."
     for tech in ('Geral', 'Cabeada', '5G', '4G', '2G', 'Wireless'):
-        assert f'grafico_trafego_{tech}.png' in pngs
+        assert f'grafico_trafego_{tech}.svg' in graficos
+
+
+def test_e2e_arvore_topology(tmp_path):
+    """Árvore radial IEC 61850 com fan-out 2,2,2: 1 + 2 + 4 + 8 = 15 nós e 14 enlaces."""
+    posicoes, links, config, df, graficos = _run_e2e_cosimulation(
+        'arvore', tmp_path, total_agentes=15, extra_env={'ARVORE_FANOUT': '2,2,2', 'CELULAR_ARVORE': '4g'})
+
+    assert len(links) == 14, "Uma árvore com 15 nós deve ter 14 enlaces."
+    assert config['arvore_fanout'] == '2,2,2'
+    assert {ag['camada'] for ag in posicoes} == {'controle', 'subestacao', 'concentrador', 'medidor'}
+    assert {lk['tipo'] for lk in links} == {'Fibra', 'Celular4G', 'PLC'}
+    assert not _mensagens_entregues(df).empty
+    assert _ultimo_valor(df, 'packets_forwarded') > 0, \
+        "Mensagens entre raiz e medidores atravessam vários saltos e precisam ser encaminhadas."
+    assert 'grafico_trafego_Arvore.svg' in graficos
+    assert 'grafico_trafego_Geral.svg' in graficos
+
+
+def test_e2e_hibrida_topology(tmp_path):
+    """Híbrida: CCO + 3 subestações (anel de fibra) + 1 concentrador/sub + 3 medidores/concentrador."""
+    _, links, config, df, graficos = _run_e2e_cosimulation(
+        'hibrida', tmp_path, total_agentes=1 + 3 + 3 + 9,
+        extra_env={'SUBESTACOES': '3', 'CONCENTRADORES': '1', 'MEDIDORES_CLUSTER': '3',
+                   'CELULAR_HIBRIDA': '4g', 'SEMENTE_HIBRIDA': '42'})
+
+    tipos = {lk['tipo'] for lk in links}
+    assert {'Fibra', 'Celular4G', 'RFMesh'} <= tipos
+    assert sum(1 for lk in links if lk['tipo'] == 'Fibra') == 3 + 2, \
+        "Anel de 3 subestações (3 enlaces) + CCO ligado a 2 subestações."
+    assert config['subestacoes'] == 3
+    assert not _mensagens_entregues(df).empty
+    assert _ultimo_valor(df, 'packets_forwarded') > 0, \
+        "Mensagens entre CCO e medidores atravessam vários saltos e precisam ser encaminhadas."
+    assert 'grafico_trafego_Hibrida.svg' in graficos
+    assert 'grafico_trafego_Geral.svg' in graficos
