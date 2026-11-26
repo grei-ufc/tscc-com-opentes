@@ -16,6 +16,17 @@
 #include <nlohmann/json.hpp>
 #include "AgentPacket_m.h"
 
+// Extensões do OpenTES (canais da tese, roteamento por ETX, consulta por
+// mensagem): só entram quando o arquivo existe. O teste de física C++ do
+// repositório copia apenas este arquivo e compila o modelo original.
+#if __has_include("ExtensaoOpenTES.h")
+#include "ExtensaoOpenTES.h"
+#define TSCC_OPENTES 1
+#define AVISAR_PERDA(p) avisarConsulta((p), true)
+#else
+#define AVISAR_PERDA(p)
+#endif
+
 using namespace omnetpp;
 using json = nlohmann::json;
 
@@ -38,6 +49,20 @@ class AgentNode : public cSimpleModule
     // Gerador de aleatoriedade (hardware ou semente determinística via RANDOM_SEED)
     std::mt19937 rng;
     std::uniform_real_distribution<double> dist_prob;
+
+    // Atraso de propagação dos meios não guiados, em s/m. Com as extensões do
+    // OpenTES vem do parâmetro `propagacao_radio_s_m` (padrão: este mesmo valor).
+    double propagacaoRadio = 0.00005;
+#ifdef TSCC_OPENTES
+    std::map<int, opentes::EnlaceTese> enlacesTese;   // porta -> enlace do modelo da tese
+    std::string roteamento = "saltos";
+    std::map<std::string, std::string> nomesPade;      // nome PADE -> nó (arquivo_nomes)
+    ServidorConsulta *servidor = nullptr;
+    int proximaPorta(const std::string& destino, long bytes);
+    void avisarConsulta(cPacket *pkt, bool perdido);
+    void transmitirTese(AgentPacket *pkt, int portIndex);
+    void injetarConsulta(AgentPacket *pkt);
+#endif
 
     static double getChannelDelay(cChannel *channel) {
         if (auto *dr = dynamic_cast<cDatarateChannel*>(channel)) return dr->getDelay().dbl();
@@ -91,6 +116,13 @@ void AgentNode::initialize()
     }
     dist_prob = std::uniform_real_distribution<double>(0.0, 1.0);
 
+#ifdef TSCC_OPENTES
+    roteamento = par("roteamento").stdstringValue();
+    propagacaoRadio = par("propagacao_radio_s_m").doubleValue();
+    nomesPade = opentes::lerNomes(par("arquivo_nomes").stdstringValue());
+    servidor = dynamic_cast<ServidorConsulta*>(getParentModule()->getSubmodule("servidorConsulta"));
+#endif
+
     double myX = par("xPos").doubleValue();
     double myY = par("yPos").doubleValue();
 
@@ -115,11 +147,22 @@ void AgentNode::initialize()
                 double dist = std::sqrt(std::pow(nX - myX, 2) + std::pow(nY - myY, 2));
 
                 cChannel *txChannel = outGate->getTransmissionChannel();
+#ifdef TSCC_OPENTES
+                opentes::EnlaceTese et;
+                if (opentes::lerEnlaceTese(txChannel, et)) {
+                    // Canal da tese: o MAC decide o atraso e a perda no envio
+                    // (transmitirTese), sem propagação nem atenuação espacial.
+                    enlacesTese[i] = et;
+                    baseChannelDelays[i] = 0.0;
+                    inDropChances[neighborId] = 0.0;
+                    continue;
+                }
+#endif
                 bool guided = isGuidedMedium(txChannel);
                 if (txChannel) {
                     double currentDelay = getChannelDelay(txChannel);
                     // Guiado: ~5 ns/m (velocidade de propagação ~2e8 m/s). Demais: modelo original.
-                    double propagationDelay = dist * (guided ? 5e-9 : 0.00005);
+                    double propagationDelay = dist * (guided ? 5e-9 : propagacaoRadio);
                     baseChannelDelays[i] = currentDelay + propagationDelay;
                     setChannelDelay(txChannel, baseChannelDelays[i]);
                 } else {
@@ -182,10 +225,22 @@ void AgentNode::handleParameterChange(const char *parname) {
 std::string AgentNode::mapPadeToOmnet(const std::string& padeId) {
     if (padeId == "AgenteCentral") return "agent_central";
     if (padeId.find("AgenteP_") == 0) return "agent_p_" + padeId.substr(8);
+#ifdef TSCC_OPENTES
+    // Nomes de outros cenários (por exemplo, os agentes do mercado do OpenTES):
+    // a tabela de `arquivo_nomes`, o próprio nome do nó, ou agent_<nome>.
+    auto nome = nomesPade.find(padeId);
+    if (nome != nomesPade.end()) return nome->second;
+    if (routingTable.count(padeId)) return padeId;
+    std::string alternativo = "agent_" + opentes::minusculas(padeId);
+    if (routingTable.count(alternativo)) return alternativo;
+#endif
     return padeId;
 }
 
 void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
+#ifdef TSCC_OPENTES
+    if (enlacesTese.count(portIndex)) { transmitirTese(pkt, portIndex); return; }
+#endif
     cChannel *channel = gate("port$o", portIndex)->getTransmissionChannel();
     // Porta livre = canal sem transmissão, fila vazia E nenhum endTx pendente. No
     // instante exato em que uma transmissão termina, o canal já está livre, mas o
@@ -206,6 +261,7 @@ void AgentNode::transmitPacket(AgentPacket *pkt, int portIndex) {
         // FILA FINITA (BUFFER OVERFLOW): máximo de 5 pacotes enfileirados por porta
         if (txQueues[portIndex]->getLength() >= 5) {
             par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+            AVISAR_PERDA(pkt);
             delete pkt;
         } else {
             txQueues[portIndex]->insert(pkt);
@@ -229,14 +285,24 @@ void AgentNode::processInjectedData() {
 
                     if (destId.empty() || destId == myAgentId) continue;
 
-                    if (routingTable.find(destId) != routingTable.end()) {
+                    int porta = -1;
+#ifdef TSCC_OPENTES
+                    porta = proximaPorta(destId, (long)msg_str.length());
+#else
+                    if (routingTable.find(destId) != routingTable.end()) porta = routingTable[destId];
+#endif
+                    if (porta >= 0) {
                         AgentPacket *pkt = new AgentPacket(msg_str.c_str());
                         pkt->setSrcAgent(myAgentId.c_str());
                         pkt->setDestAgent(destId.c_str());
                         pkt->setPayload(msg_str.c_str());
                         pkt->setByteLength(msg_str.length());
-                        transmitPacket(pkt, routingTable[destId]);
+                        transmitPacket(pkt, porta);
                         par("packets_sent") = par("packets_sent").doubleValue() + 1;
+                    } else {
+                        // Destino sem rota (ou nome sem nó): a mensagem não sai, e o
+                        // descarte é contado em vez de sumir sem registro.
+                        par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
                     }
                 }
             }
@@ -245,6 +311,21 @@ void AgentNode::processInjectedData() {
 }
 
 void AgentNode::handleMessage(cMessage *msg) {
+#ifdef TSCC_OPENTES
+    if (msg->getArrivalGate() && msg->getArrivalGate()->isName("consulta")) {
+        injetarConsulta(check_and_cast<AgentPacket *>(msg));
+        return;
+    }
+    if (msg->isSelfMessage() && msg->getKind() == KIND_PERDA_TESE) {
+        // Mensagem que o MAC da tese perdeu neste salto, ao fim do tempo gasto nas tentativas.
+        auto *perdidoPkt = static_cast<cPacket *>(msg->getContextPointer());
+        par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+        avisarConsulta(perdidoPkt, true);
+        delete perdidoPkt;
+        delete msg;
+        return;
+    }
+#endif
     if (msg->isSelfMessage()) {
         int portIndex = (int)(intptr_t)msg->getContextPointer();
         if (!txQueues[portIndex]->isEmpty()) {
@@ -283,23 +364,44 @@ void AgentNode::handleMessage(cMessage *msg) {
 
         if (pkt->hasBitError() || dist_prob(rng) < finalDropChance) {
             par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+            AVISAR_PERDA(pkt);
             delete pkt;
             return;
         }
 
         // Pacote de passagem: encaminha ao próximo salto (ou descarta se não há rota).
         if (destId != myAgentId) {
+            int porta = -1;
+#ifdef TSCC_OPENTES
+            porta = proximaPorta(destId, (long)packetSize);
+#else
             auto route = routingTable.find(destId);
-            if (route == routingTable.end()) {
+            if (route != routingTable.end()) porta = route->second;
+#endif
+            if (porta < 0) {
                 par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+                AVISAR_PERDA(pkt);
                 delete pkt;
                 return;
             }
             par("packets_forwarded") = par("packets_forwarded").doubleValue() + 1;
-            transmitPacket(pkt, route->second);
+#ifdef TSCC_OPENTES
+            if (servidor && pkt->getKind() == KIND_CONSULTA) servidor->contarSalto();
+#endif
+            transmitPacket(pkt, porta);
             return;
         }
 
+#ifdef TSCC_OPENTES
+        if (pkt->getKind() == KIND_CONSULTA) {
+            // Consulta entregue: a resposta vai ao servidor, e nada entra nas
+            // saídas do Mosaik, que neste modo ninguém lê.
+            par("packets_received") = par("packets_received").doubleValue() + 1;
+            avisarConsulta(pkt, false);
+            delete pkt;
+            return;
+        }
+#endif
         {
             double latency = (simTime() - pkt->getCreationTime()).dbl();
             double previous_latency = lastLatencies[srcId];
@@ -339,3 +441,47 @@ std::vector<std::string> AgentNode::splitString(const std::string& s, const std:
     res.push_back(s.substr(pos_start));
     return res;
 }
+#ifdef TSCC_OPENTES
+// ---------------------------------------------------------------------------
+// Extensões do OpenTES (ver ExtensaoOpenTES.h)
+// ---------------------------------------------------------------------------
+
+int AgentNode::proximaPorta(const std::string& destino, long bytes) {
+    if (roteamento == "etx") return opentes::primeiraPortaEtx(this, destino, bytes);
+    auto rota = routingTable.find(destino);
+    return rota == routingTable.end() ? -1 : rota->second;
+}
+
+void AgentNode::avisarConsulta(cPacket *pkt, bool perdido) {
+    if (servidor && pkt && pkt->getKind() == KIND_CONSULTA) servidor->concluir(perdido);
+}
+
+void AgentNode::transmitirTese(AgentPacket *pkt, int portIndex) {
+    // Sem fila nem disputa entre mensagens, como no modelo da tese: o atraso do
+    // salto vem do MAC e a perda é decidida no envio, depois das retentativas.
+    bool perdido = false;
+    double atraso = opentes::atrasoTese(this, enlacesTese[portIndex], pkt->getByteLength(), perdido);
+    if (perdido) {
+        auto *perda = new cMessage("perda_tese", KIND_PERDA_TESE);
+        perda->setContextPointer(pkt);
+        scheduleAt(simTime() + atraso, perda);
+        return;
+    }
+    setChannelDelay(gate("port$o", portIndex)->getTransmissionChannel(), atraso);
+    send(pkt, SendOptions().duration(0), "port$o", portIndex);
+}
+
+void AgentNode::injetarConsulta(AgentPacket *pkt) {
+    // Pacote do ServidorConsulta: sai deste nó como uma mensagem do agente.
+    std::string destino = pkt->getDestAgent();
+    int porta = proximaPorta(destino, pkt->getByteLength());
+    if (porta < 0) {
+        par("packets_dropped") = par("packets_dropped").doubleValue() + 1;
+        avisarConsulta(pkt, true);
+        delete pkt;
+        return;
+    }
+    par("packets_sent") = par("packets_sent").doubleValue() + 1;
+    transmitPacket(pkt, porta);
+}
+#endif

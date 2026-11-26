@@ -12,12 +12,14 @@ import re
 
 import pytest
 
-from cosim import canais
+from cosim import canais, radio
 from cosim.catalogo import (COR_POR_ROTULO, TECNOLOGIAS, TIPOS_REDE_PADRAO, TOPOLOGIAS,
                             canal_celular)
 from cosim.topologias import (montar_anel, montar_arvore, montar_estrela, montar_hibrida, montar_ieee13,
                               montar_malha, omnet_para_pade, pade_para_omnet, vizinhos,
                               vizinhos_anel)
+from cosim.ned import escrever_ned
+from cosim.topologias import IEEE13_NOS
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -187,3 +189,62 @@ def test_ieee13():
 
     # Demais 15 barras ciclam entre Link_6TiSCH e Link_WiSUN de forma determinística
     assert rede == montar_ieee13(['Link_6TiSCH', 'Link_WiSUN'])
+
+# ══════════════════════════════════════════════════════════════
+# IEEE 13 NO MERCADO DO OPENTES (modelo de rádio da tese e consulta por mensagem)
+# ══════════════════════════════════════════════════════════════
+
+def _posicoes_ieee13(tmp_path):
+    """nodes_xy.csv com as coordenadas embutidas, nos nomes do caso do OpenTES."""
+    nomes = {'agent_0': '0', 'agent_dso': 'DSO', 'agent_market': 'Market'}
+    linhas = ['node,x_m,y_m'] + [
+        f"{nomes.get(n['id'], n['id'][6:])},{n['x']},{n['y']}" for n in IEEE13_NOS]
+    caminho = tmp_path / 'nodes_xy.csv'
+    caminho.write_text('\n'.join(linhas) + '\n', encoding='utf-8')
+    return str(caminho)
+
+
+def test_modelo_de_radio_da_tese():
+    assert radio.per_do_rssi(-106.37, -106.37) == 1.0      # na sensibilidade: ainda perde tudo
+    assert radio.per_do_rssi(-105.0, -106.37) == 0.8       # 1 dB acima: segundo passo da tabela
+    assert radio.per_do_rssi(-110.0, -106.37) == 1.0       # abaixo da sensibilidade
+    assert radio.per_do_rssi(-90.0, -106.37) == 0.0        # 7 dB ou mais acima
+    assert radio.Radio(taxa_bps=150000).sensibilidade > radio.Radio().sensibilidade
+
+
+def test_ieee13_do_arquivo_de_posicoes(tmp_path):
+    rede = montar_ieee13(['Link_6TiSCH', 'Link_WiSUN'], posicoes=_posicoes_ieee13(tmp_path))
+    assert [(n['id'], n['x'], n['y']) for n in rede.nos] == \
+           [(n['id'], n['x'], n['y']) for n in IEEE13_NOS]
+    assert rede.links == montar_ieee13(['Link_6TiSCH', 'Link_WiSUN']).links
+
+
+def test_ieee13_canais_da_tese_e_opcoes(tmp_path):
+    pos = _posicoes_ieee13(tmp_path)
+    estrela = montar_ieee13(['Link_6TiSCH_TSCH'], posicoes=pos, subestacao='radio')
+    assert len(estrela.links) == 17
+    assert all(lk['tipo'] == 'Link_6TiSCH_TSCH' for lk in estrela.links)
+    # Enlace imposto pela estrela nunca nasce morto: o PER é condicionado ao limiar.
+    assert all(float(lk['params']['per_enlace']) < 0.5 for lk in estrela.links)
+
+    malha = montar_ieee13(['Link_6TiSCH_TSCH'], posicoes=pos, topologia='malha', subestacao='cabo')
+    cabo = [lk for lk in malha.links if lk['tipo'] == 'Link_Wired']
+    assert len(cabo) == 3, "Concentrador, DSO e Market interligados por cabo"
+    assert len(malha.links) > 17, "Na malha os enlaces saem do limiar de PER, com rotas multissalto"
+    assert malha == montar_ieee13(['Link_6TiSCH_TSCH'], posicoes=pos, topologia='malha', subestacao='cabo')
+
+    wisun = montar_ieee13(['Link_WiSUN_FAN'], posicoes=pos, topologia='malha',
+                          radio=radio.Radio(taxa_bps=300000))
+    assert all(lk['params']['taxa_bps'] == '300000' for lk in wisun.links if 'params' in lk)
+    assert len(wisun.links) < len(malha.links), "Taxa maior, sensibilidade pior, menos enlaces"
+
+
+def test_ned_com_parametros_e_ponte(tmp_path):
+    rede = montar_ieee13(['Link_6TiSCH_TSCH'], posicoes=_posicoes_ieee13(tmp_path), cells=4)
+    ned = tmp_path / 'DynamicNetwork.ned'
+    escrever_ned(rede.nos, rede.links, str(ned), ponte='ServidorConsulta')
+    texto = ned.read_text(encoding='utf-8')
+    assert 'servidorConsulta: ServidorConsulta;' in texto and 'mosaikBridge' not in texto
+    assert texto.count('<--> Link_6TiSCH_TSCH { per_enlace = ') == 15
+    assert 'cells = 4;' in texto
+    assert texto.count('.port++ <-->') == len(rede.links)

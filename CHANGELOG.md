@@ -4,6 +4,21 @@ Mudanças relevantes do projeto, da mais recente para a mais antiga.
 
 ## [Não lançado]
 
+### Adicionado (integração com o mercado do OpenTES, 26/11/2026)
+- **Modo de consulta por mensagem** (`ServidorConsulta.cc`, `consulta.ini`): cada envio de um agente vira uma consulta ZeroMQ e atravessa os AgentNodes da topologia. Mesmo contrato do servidor de rotas do `co-simulation-opentes`. O modo Mosaik não muda.
+- **Canais do modelo da tese** `Link_6TiSCH_TSCH` (TSCH: slotframe, cells, fragmentação, retentativas) e `Link_WiSUN_FAN` (CSMA/CA), com o PER de cada enlace calculado por `cosim/radio.py` (Friis, Pister-Hack, tabela de PER, limiar). Os canais existentes continuam como estavam.
+- `montar_ieee13`: posições lidas do `nodes_xy.csv`, topologia em malha, subestação por cabo ou por rádio, repetição de um `tisch_links.csv` e cells/taxa por enlace. Sem as opções, é a rede de antes.
+- `cosim/ned.py` (escrita única do `DynamicNetwork.ned`, usada pelo `scenario.py`) e `cosim/ieee13.py` (rede do modo de consulta).
+- AgentNode (`ExtensaoOpenTES.h`, incluído só quando presente): roteamento por ETX (`roteamento`), propagação nos meios não guiados configurável (`propagacao_radio_s_m`, padrão inalterado) e nomes de agentes por arquivo (`arquivo_nomes`).
+- Testes de consistência do modelo de rádio, das opções da IEEE 13 e do NED gerado, e teste E2E da topologia `ieee13`.
+
+### Restaurado
+- O menu do terminal da `main` (`40d0ed8`): árvore e híbrida no terminal, dimensionamento, fan-out, rede celular, semente, tecnologia por agente e limpeza de resíduos, agora com a malha e as descrições lidas do `Profiles.ned`.
+- A topologia `ieee13` executável da `iee13-barras`: `pade_ieee13.py`, `ieee13_plot.py`, despacho no compose e entrada no catálogo.
+
+### Corrigido (integração com o OpenTES)
+- Mensagem para destino sem rota, no modo Mosaik, passa a ser contada em `packets_dropped` em vez de sumir sem registro.
+
 ### Adicionado
 - **Fonte única de verdade (fase 3):** pacote `cosim/`, instalado no `.venv` pelo `uv sync` e montado nos containers `pade` e `mosaik_master` (`/opt/cosim` + `PYTHONPATH`).
   - `cosim.topologias` monta cada rede uma única vez. O `scenario.py` gera o `DynamicNetwork.ned` a partir dela, e os agentes PADE tiram seus vizinhos dos mesmos enlaces. Acaba a cópia da geometria da híbrida no PADE, que precisava ser "idêntica ao scenario.py" à mão e calculava a malha RF com posições não arredondadas.

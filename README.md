@@ -20,6 +20,7 @@ Plataforma de co-simulação que integra três ferramentas de diferentes domíni
 - [Dashboards gerados](#dashboards-gerados)
 - [Validação e testes automatizados](#validação-e-testes-automatizados)
 - [Gerenciamento de dependências (uv)](#gerenciamento-de-dependências-uv)
+- [Integração com o OpenTES](#integração-com-o-opentes)
 - [Histórico de mudanças](#histórico-de-mudanças)
 
 ---
@@ -88,6 +89,7 @@ O padrão **REQ/REP bloqueante** do ZeroMQ garante que Mosaik e OMNeT++ nunca av
 | `anel` | `pade_anel.py` | `plot_results_anel.py` | N agentes peers | Cada agente envia para os dois vizinhos adjacentes |
 | `arvore` | `pade_arvore.py` | `plot_results_arvore.py` | raiz → subestações → concentradores → medidores | Medidores enviam telemetria à raiz por vários saltos; a raiz faz poll a cada 5 passos; nós intermediários trocam heartbeat |
 | `hibrida` | `pade_hibrida.py` | `plot_results_hibrida.py` | CCO → subestações → concentradores → medidores | Igual à árvore, com o CCO no lugar da raiz |
+| `ieee13` | `pade_ieee13.py` | `ieee13_plot.py` | Concentrador, DSO, Market e 15 barras do alimentador IEEE 13 (OpenTES) | O concentrador publica o preço sombra (CFP) às 15 barras, ao DSO e ao Market; as barras respondem com a programação e o DSO e o Market com a atualização. É o tráfego do mercado, sem a otimização |
 
 O `mosaik-dir/scenario.py` monta todas as topologias e, ao final da co-simulação, chama o script de plotagem correspondente.
 
@@ -96,6 +98,7 @@ O `mosaik-dir/scenario.py` monta todas as topologias e, ao final da co-simulaç�
 - `malha` e `anel`: `NUM_PERIFERICOS` define o **total** de agentes (`N` peers)
 - `arvore`: `ARVORE_FANOUT` define os filhos por nível; com `3,2,4`, total = 1 + 3 + 6 + 24 = 34
 - `hibrida`: 1 CCO + `SUBESTACOES` + `SUBESTACOES × CONCENTRADORES` + `SUBESTACOES × CONCENTRADORES × MEDIDORES_CLUSTER`
+- `ieee13`: 18 agentes fixos (as 15 barras ciclam os canais de `TIPOS_REDE`; DSO e Market ficam no cabo)
 
 **Enlaces no OMNeT++:**
 - Estrela: $N$ enlaces
@@ -124,6 +127,12 @@ Definidas em `omnet-dir/Profiles.ned`, a fonte única dos parâmetros: os menus 
 | Celular 5G | `Celular5G` | 200 Mbps | 10 ms | 0,1% | árvore, híbrida |
 | RF Mesh | `RFMesh` | 150 kbps | 20 ms | 3% | híbrida |
 | PLC | `PLC` | 100 kbps | 30 ms | 2% | árvore |
+| 6TiSCH | `Link_6TiSCH` | 50 kbps | truncnormal(40ms, 10ms) | 2% | IEEE 13 |
+| Wi-SUN | `Link_WiSUN` | 150 kbps | truncnormal(15ms, 4ms) | 1% | IEEE 13 |
+| 6TiSCH (TSCH, tese) | `Link_6TiSCH_TSCH` | 50 kbps | MAC TSCH (slotframe de 4,04 s) | por enlace | IEEE 13, modo de consulta |
+| Wi-SUN FAN (tese) | `Link_WiSUN_FAN` | 50 a 300 kbps | MAC CSMA/CA | por enlace | IEEE 13, modo de consulta |
+
+Nos dois canais da tese, o atraso e a perda de cada salto vêm do MAC do rádio e o PER de cada enlace sai do modelo de propagação de `cosim/radio.py` (ver [docs/INTEGRACAO_OPENTES.md](docs/INTEGRACAO_OPENTES.md)).
 
 Em estrela, malha e anel, os tipos de enlace são atribuídos ciclicamente aos enlaces gerados (ou individualmente por agente no menu web) e persistidos em `omnet-dir/links.json`.
 
@@ -133,7 +142,8 @@ Em estrela, malha e anel, os tipos de enlace são atribuídos ciclicamente aos e
 - **Buffer overflow**: fila limitada a 5 pacotes por porta; excedente é descartado e contabilizado em `packets_dropped`
 - **PER nativo do canal (`pkt->hasBitError()`)**: taxa de erro de pacote parametrizada em `Profiles.ned`, avaliada em cada salto
 - **BER espacial e escalonado por payload**: chance base de 1,5% a cada 100 m, `finalDropChance = min(0.99, base × max(1.0, tamanho/15000))`; não se aplica a meio guiado (Fibra/Cabeada)
-- **Atraso por distância e jitter dinâmico**: propagação de `dist × 0.00005` s (meio guiado: ~5 ns/m) somada ao delay base do canal, com jitter estocástico por pacote
+- **Atraso por distância e jitter dinâmico**: propagação de `dist × 0.00005` s (meio guiado: ~5 ns/m; parâmetro `propagacao_radio_s_m`, 3,336 ns/m no modo de consulta) somada ao delay base do canal, com jitter estocástico por pacote
+- **Extensões do OpenTES** (`ExtensaoOpenTES.h`): MAC dos canais da tese, roteamento por ETX da mensagem (`roteamento = "etx"`) e nomes de agentes lidos de arquivo (`arquivo_nomes`)
 - **RNG configurável**: `std::mt19937` inicializado via `RANDOM_SEED` (reprodutibilidade científica) ou `std::random_device` (entropia de hardware)
 
 ---
@@ -154,7 +164,10 @@ tscc-com-opentes/
 ├── cosim/                         # Fonte única: topologias, catálogo e perfis de canal
 │   ├── topologias.py              # Montagem das redes (Mosaik e PADE usam a mesma)
 │   ├── catalogo.py                # Topologias e tecnologias (rótulos, cores, scripts)
-│   └── canais.py                  # Leitura do omnet-dir/Profiles.ned
+│   ├── canais.py                  # Leitura do omnet-dir/Profiles.ned
+│   ├── radio.py                   # Modelo de rádio da tese (Friis, Pister-Hack, PER)
+│   ├── ned.py                     # Escrita do DynamicNetwork.ned (fonte única)
+│   └── ieee13.py                  # Rede IEEE 13 do modo de consulta (python -m cosim.ieee13)
 │
 ├── pade-dir/                      # Container PADE (o framework vem do PyPI)
 │   ├── Dockerfile
@@ -167,6 +180,7 @@ tscc-com-opentes/
 │       ├── pade_anel.py           # Agentes da topologia anel
 │       ├── pade_arvore.py         # Agentes da árvore radial IEC 61850
 │       ├── pade_hibrida.py        # Agentes da topologia híbrida
+│       ├── pade_ieee13.py         # Agentes da IEEE 13 barras (OpenTES)
 │       └── logs/                  # CSVs do data_logger do PADE (gerado)
 │
 ├── omnet-dir/
@@ -175,8 +189,11 @@ tscc-com-opentes/
 │   ├── AgentNode.ned              # Definição NED do nó
 │   ├── MosaikBridge.cc            # Ponte ZeroMQ entre OMNeT++ e Mosaik
 │   ├── MosaikBridge.ned           # Declaração NED da ponte
+│   ├── ServidorConsulta.cc/.h/.ned # Modo de consulta por mensagem (OpenTES)
+│   ├── ExtensaoOpenTES.h          # Canais da tese, ETX e nomes de agentes
+│   ├── consulta.ini               # Configuração do modo de consulta
 │   ├── AgentPacket.msg            # Pacote trocado entre os nós
-│   ├── Profiles.ned               # Perfis de canal (12 tecnologias)
+│   ├── Profiles.ned               # Perfis de canal (14 do repositório e 2 da tese)
 │   ├── omnetpp.ini                # Configuração da simulação
 │   ├── DynamicNetwork.ned         # Gerado pelo scenario.py a cada rodada (fora do git)
 │   └── posicoes.json, links.json, config.json   # Gerados a cada rodada (fora do git)
@@ -190,11 +207,12 @@ tscc-com-opentes/
 │   ├── plot_results_*.py          # Dashboards matplotlib (um ponto de entrada por topologia)
 │   ├── plot_camadas.py            # Dashboards de árvore e híbrida (implementação comum)
 │   ├── plot_comum.py              # Utilitários compartilhados pelos plots
+│   ├── ieee13_plot.py             # Painel da IEEE 13 barras
 │   └── results.csv, grafico_*     # Saídas de cada rodada (fora do git)
 │
 ├── tests/
 │   ├── test_consistencia.py       # Testes rápidos: catálogo × Profiles.ned × compose, topologias
-│   ├── test_validation_suite.py   # Física C++ + co-simulação E2E nas 5 topologias
+│   ├── test_validation_suite.py   # Física C++ + co-simulação E2E nas 6 topologias
 │   └── omnet_zmq_emulator.py      # Substituto do OMNeT++ para rodar os testes sem Docker
 │
 ├── examples/legacy/               # Scripts antigos, só como referência (não mantidos)
@@ -240,7 +258,7 @@ uv run streamlit run menu-streamlit.py
 
 > `uv run` usa o `.venv/` do projeto sem precisar ativá-lo. Com o ambiente ativado (`source .venv/bin/activate` no Linux/macOS, `.venv\Scripts\activate` no Windows), os comandos antigos continuam valendo: `streamlit run menu-streamlit.py`, `python3 menu.py` e `pytest`.
 
-Acesse `http://localhost:8501`, configure a topologia (estrela, anel, árvore ou híbrida), o número de agentes e os tipos de enlace, e clique em **Iniciar simulação**. Os gráficos aparecem na aba **Resultados** ao término.
+Acesse `http://localhost:8501`, configure a topologia (estrela, anel, árvore ou híbrida; malha e IEEE 13 pelo terminal), o número de agentes e os tipos de enlace, e clique em **Iniciar simulação**. Os gráficos aparecem na aba **Resultados** ao término.
 
 ### Via terminal (CLI)
 
@@ -248,7 +266,7 @@ Acesse `http://localhost:8501`, configure a topologia (estrela, anel, árvore ou
 uv run python menu.py
 ```
 
-O menu interativo em terminal permite escolher a topologia (`1=Estrela`, `2=Malha`, `3=Anel`), a quantidade de agentes e as tecnologias de enlace (`1..5`), exibindo o resumo antes de disparar `docker compose up --build`. Para encerrar os containers:
+O menu interativo em terminal permite escolher a topologia (`1=Estrela`, `2=Malha`, `3=Anel`, `4=Árvore`, `5=Híbrida`, `6=IEEE 13`), o dimensionamento (agentes, fan-out, subestações, rede celular e semente) e as tecnologias de enlace (`1..7`, com atribuição opcional por agente em estrela, anel e IEEE 13), exibindo o resumo antes de disparar `docker compose up --build`. Para encerrar os containers:
 
 ```bash
 uv run python menu.py --parar
@@ -270,7 +288,7 @@ Injetadas via `docker-compose.yml` a partir das escolhas feitas no menu:
 
 | Variável | Valores válidos | Padrão | Descrição |
 |---|---|---|---|
-| `TOPOLOGY` | `estrela`, `malha`, `anel`, `arvore`, `hibrida` | `estrela` | Topologia da rede |
+| `TOPOLOGY` | `estrela`, `malha`, `anel`, `arvore`, `hibrida`, `ieee13` | `estrela` | Topologia da rede |
 | `NUM_PERIFERICOS` | 1 – 500 | `3` | Periféricos (estrela) ou total de agentes (malha/anel) |
 | `TIPOS_REDE` | Lista separada por vírgula | `Link_Wired,Link_5G,Link_Wireless,Link_4G,Link_2G` | Tecnologias de enlace de estrela, malha e anel |
 | `RANDOM_SEED` | Inteiro opcional | vazio (hardware RNG) | Semente determinística para reprodutibilidade em Python e C++ |
@@ -306,7 +324,7 @@ Os scripts de plotagem usam `links.json`, `posicoes.json` e `config.json` e salv
 Duas suítes:
 
 - `tests/test_consistencia.py` (menos de 1 s): confere que o catálogo cobre exatamente os canais do `Profiles.ned`, que o compose usa as mesmas tecnologias padrão e despacha os scripts do catálogo, e que cada topologia tem as contagens de nós e enlaces esperadas, é conexa, reprodutível e que a vizinhança do PADE coincide com os enlaces.
-- `tests/test_validation_suite.py` (~5 min): compila e testa a física C++ (`AgentNode.cc`, incluindo roteamento multi-salto e meio guiado), confere o sincronismo do `MosaikBridge.cc` e roda a co-simulação fim a fim nas 5 topologias, validando contagens, entrega de mensagens, encaminhamento e geração dos dashboards.
+- `tests/test_validation_suite.py` (~5 min): compila e testa a física C++ (`AgentNode.cc`, incluindo roteamento multi-salto e meio guiado), confere o sincronismo do `MosaikBridge.cc` e roda a co-simulação fim a fim nas 6 topologias, validando contagens, entrega de mensagens, encaminhamento e geração dos dashboards.
 
 ```bash
 uv sync                                   # instala PADE, Mosaik, pytest e ziglang (compilador C++ do teste)
@@ -346,6 +364,20 @@ uv export --frozen --only-group mosaik --no-hashes -o mosaik-dir/requirements.tx
 ```
 
 Faça commit de `pyproject.toml`, `uv.lock` e dos dois `requirements.txt` juntos. A pasta `.venv/` não vai para o git.
+
+---
+
+## Integração com o OpenTES
+
+Na co-simulação do mercado transativo do OpenTES (`co-simulation-opentes`), a negociação inteira acontece dentro de um passo do Mosaik. Para isso há o **modo de consulta por mensagem**: cada envio de um agente vira uma consulta ZeroMQ e atravessa os AgentNodes da topologia IEEE 13.
+
+```bash
+python -m cosim.ieee13 --posicoes nodes_xy.csv --canal Link_6TiSCH_TSCH \
+    --topologia malha --subestacao radio --ned omnet-dir/DynamicNetwork.ned
+cd omnet-dir && ./sim_exec -u Cmdenv -f consulta.ini
+```
+
+Todos os canais do `Profiles.ned` servem. Os da tese (`Link_6TiSCH_TSCH`, `Link_WiSUN_FAN`) reproduzem a rede 6TiSCH e Wi-SUN FAN de referência. O contrato, as opções e a conferência com o servidor da tese estão em [docs/INTEGRACAO_OPENTES.md](docs/INTEGRACAO_OPENTES.md).
 
 ---
 

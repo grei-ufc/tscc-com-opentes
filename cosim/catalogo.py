@@ -9,7 +9,7 @@ cor de cada canal e os metadados de cada topologia.
 from dataclasses import dataclass
 
 __all__ = [
-    'CELULAR', 'COR_POR_ROTULO', 'NED_PARA_ROTULO', 'TECNOLOGIAS', 'TIPOS_REDE_PADRAO',
+    'CANAIS_TESE', 'CELULAR', 'COR_POR_ROTULO', 'NED_PARA_ROTULO', 'TECNOLOGIAS', 'TIPOS_REDE_PADRAO',
     'TOPOLOGIAS', 'Tecnologia', 'Topologia', 'canal_celular', 'rotulo',
 ]
 
@@ -39,7 +39,13 @@ _TECNOLOGIAS = [
     # LPWA / Smart Grid (IEEE 13 barras — OpenTES)
     Tecnologia('Link_6TiSCH',   '6TiSCH',   '#e377c2'),
     Tecnologia('Link_WiSUN',    'Wi-SUN',   '#7f7f7f'),
+    # Modelo da tese (Melo, 2022): MAC do rádio e PER pelo modelo de propagação
+    Tecnologia('Link_6TiSCH_TSCH', '6TiSCH (TSCH, tese)',    '#a6127a'),
+    Tecnologia('Link_WiSUN_FAN',   'Wi-SUN FAN (tese)',      '#4d4d4d'),
 ]
+
+# Canais cujo atraso e perda por salto vêm do MAC do rádio (ExtensaoOpenTES.h)
+CANAIS_TESE = ('Link_6TiSCH_TSCH', 'Link_WiSUN_FAN')
 TECNOLOGIAS = {t.ned: t for t in _TECNOLOGIAS}
 
 # Tecnologias de estrela/malha/anel, na ordem padrão de TIPOS_REDE
@@ -87,5 +93,8 @@ _TOPOLOGIAS = [
     Topologia('hibrida', 'Híbrida',
               'Backbone fibra (anel) + estrela celular + malha RF mesh por cluster.',
               'pade_hibrida.py', 'plot_results_hibrida.py'),
+    Topologia('ieee13', 'IEEE 13 barras',
+              'Alimentador IEEE 13 (OpenTES): Concentrador, DSO, Market e 15 barras, coordenadas reais.',
+              'pade_ieee13.py', 'ieee13_plot.py', 18),
 ]
 TOPOLOGIAS = {t.id: t for t in _TOPOLOGIAS}

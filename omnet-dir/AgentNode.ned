@@ -31,9 +31,23 @@ simple AgentNode // (Substitui o NetworkNode)
         string jitters_out @mutable = default("");
         
 
+        // ==========================================================
+        // EXTENSÕES DO OPENTES (ExtensaoOpenTES.h)
+        // ==========================================================
+        // Roteamento: "saltos" (BFS, menor número de saltos, o original) ou "etx"
+        // (menor número esperado de transmissões da mensagem, pelo tamanho dela,
+        // como na rede 6TiSCH da tese).
+        string roteamento = default("saltos");
+        // Atraso de propagação dos meios não guiados, em s/m. O padrão é o valor
+        // original do repositório; a propagação da luz é 3.336e-9 s/m.
+        double propagacao_radio_s_m = default(0.00005);
+        // Tabela opcional "nome do agente PADE,nó" (por exemplo prosumer611,agent_611).
+        string arquivo_nomes = default("");
+
         // Ícone visual para a interface gráfica (opcional)
         @display("i=device/pc;is=s");
 
     gates:
         inout port[];
+        input consulta @directIn;   // pacotes do modo de consulta (ServidorConsulta)
 }

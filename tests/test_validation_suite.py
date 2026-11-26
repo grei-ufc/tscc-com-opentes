@@ -659,7 +659,8 @@ def _run_e2e_cosimulation(topology, saida, total_agentes, num_perifericos=3,
     As saídas (results.csv, gráficos e cópia da rede) vão para `saida`
     (OUTPUT_DIR), sem escrever em mosaik-dir/.
     """
-    offset = {'anel': 0, 'malha': 200, 'estrela': 400, 'arvore': 600, 'hibrida': 800}[topology]
+    offset = {'anel': 0, 'malha': 200, 'estrela': 400, 'arvore': 600, 'hibrida': 800,
+              'ieee13': 1000}[topology]
     pade_port = _get_free_port(18000 + offset, span=total_agentes + 5)
     ams_port = _get_free_port(25000 + offset, span=2)
     omnet_port = _get_free_port(28000 + offset, span=2)
@@ -809,3 +810,15 @@ def test_e2e_hibrida_topology(tmp_path):
         "Mensagens entre CCO e medidores atravessam vários saltos e precisam ser encaminhadas."
     assert 'grafico_trafego_Hibrida.svg' in graficos
     assert 'grafico_trafego_Geral.svg' in graficos
+
+
+def test_e2e_ieee13_topology(tmp_path):
+    """IEEE 13 barras (OpenTES): Concentrador, DSO, Market e 15 barras; 17 enlaces em estrela."""
+    posicoes, links, config, df, graficos = _run_e2e_cosimulation(
+        'ieee13', tmp_path, total_agentes=18, extra_env={'TIPOS_REDE': 'Link_6TiSCH,Link_WiSUN'})
+
+    assert {ag['id'] for ag in posicoes} >= {'agent_0', 'agent_dso', 'agent_market', 'agent_611'}
+    assert len(links) == 17, "Estrela do concentrador: DSO, Market e 15 barras."
+    assert {lk['tipo'] for lk in links} == {'Link_Wired', 'Link_6TiSCH', 'Link_WiSUN'}
+    assert not _mensagens_entregues(df).empty, "O CSV deve registrar mensagens entregues na IEEE 13."
+    assert any(g.startswith('grafico_trafego_') for g in graficos)

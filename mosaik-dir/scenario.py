@@ -11,6 +11,7 @@ Suporta cinco topologias, selecionadas via TOPOLOGY:
     arvore   — árvore radial IEC 61850 com fan-out      (pade_arvore.py)
     hibrida  — hierarquia CCO→subs(fibra)→cons(celular)→meds(RF mesh)
                                                         (pade_hibrida.py)
+    ieee13   — 18 agentes do alimentador IEEE 13 (OpenTES) (pade_ieee13.py)
 
 A rede de cada topologia (nós, posições, enlaces) é montada por
 cosim.topologias — a mesma definição que os agentes PADE usam para achar
@@ -20,7 +21,7 @@ artefatos da rodada e a chamada do script de plotagem.
 Variáveis de ambiente
 ---------------------
 Comuns:
-    TOPOLOGY          estrela | malha | anel | arvore | hibrida
+    TOPOLOGY          estrela | malha | anel | arvore | hibrida | ieee13
     NUM_PERIFERICOS   estrela: nº de periféricos (total = N + 1)
                       malha/anel: nº TOTAL de agentes (N)
     TIPOS_REDE        lista separada por vírgula de nomes de canal
@@ -58,6 +59,7 @@ import mosaik
 
 from cosim import topologias
 from cosim.catalogo import TIPOS_REDE_PADRAO, TOPOLOGIAS
+from cosim.ned import escrever_ned
 
 # ══════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO VIA VARIÁVEIS DE AMBIENTE
@@ -168,6 +170,9 @@ def montar_rede():
     if TOPOLOGY == 'malha':
         # Posições aleatórias do módulo random, semeado por RANDOM_SEED.
         return topologias.montar_malha(NUM_PERIFERICOS, TIPOS_REDE, random)
+    if TOPOLOGY == 'ieee13':
+        # Concentrador, DSO e Market na subestação e as 15 barras ciclando TIPOS_REDE.
+        return topologias.montar_ieee13(TIPOS_REDE)
     # 'estrela' ou qualquer outro valor
     return topologias.montar_estrela(NUM_PERIFERICOS, TIPOS_REDE, random)
 
@@ -181,34 +186,13 @@ def gerar_topologia_ned(agentes_info, links, arquivo_saida=None):
     Escreve DynamicNetwork.ned a partir de listas genéricas.
 
     agentes_info : list[dict]  — cada item tem 'id', 'x', 'y', 'tipo'.
-    links        : list[dict]  — cada item tem 'origem', 'destino', 'tipo'.
+    links        : list[dict]  — cada item tem 'origem', 'destino', 'tipo' (e,
+                   nos canais da tese, 'params').
 
-    A escrita é atômica (arquivo .tmp + os.replace): o OMNeT++ espera o
-    arquivo aparecer e não pode ler uma versão pela metade.
+    A escrita é atômica e fica em cosim.ned, a fonte única da geração do NED.
     """
-    arquivo_saida = arquivo_saida or _caminho_omnet('DynamicNetwork.ned')
-    os.makedirs(os.path.dirname(os.path.abspath(arquivo_saida)), exist_ok=True)
-    arquivo_tmp = arquivo_saida + '.tmp'
-    with open(arquivo_tmp, 'w', encoding='utf-8') as f:
-        f.write("network DynamicNetwork\n{\n")
-        f.write("    submodules:\n")
-        f.write("        mosaikBridge: MosaikBridge;\n\n")
-
-        for ag in agentes_info:
-            f.write(f"        {ag['id']}: AgentNode {{\n")
-            f.write(f"            xPos = {ag['x']};\n")
-            f.write(f"            yPos = {ag['y']};\n")
-            f.write("        }\n")
-
-        f.write("\n    connections:\n")
-        for link in links:
-            f.write(
-                f"        {link['origem']}.port++ <--> "
-                f"{link['tipo']} <--> "
-                f"{link['destino']}.port++;\n"
-            )
-        f.write("}\n")
-    os.replace(arquivo_tmp, arquivo_saida)
+    escrever_ned(agentes_info, links, arquivo_saida or _caminho_omnet('DynamicNetwork.ned'),
+                 ponte='MosaikBridge')
 
 
 # ══════════════════════════════════════════════════════════════

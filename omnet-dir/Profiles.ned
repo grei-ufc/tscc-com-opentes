@@ -109,3 +109,45 @@ channel Link_WiSUN extends ned.DatarateChannel {
     datarate = 150kbps;
     per = 0.01;
 }
+
+// ============================================================================
+// CANAIS DO MODELO DA TESE (Melo, 2022, seção 6.1.5): OpenTES, IEEE 13 barras
+// ============================================================================
+// Nestes dois canais o atraso e a perda de cada salto vêm do MAC do rádio,
+// calculados no AgentNode (ExtensaoOpenTES.h), e não da taxa e do atraso fixos:
+// o envio é feito com duração zero e o atraso do salto. O PER de
+// cada enlace (per_enlace) sai da montagem da topologia (cosim/radio.py:
+// Friis em 915 MHz, Pister-Hack e a tabela de PER de Prando et al.). A taxa
+// declarada abaixo é a da camada física e entra no cálculo do Wi-SUN.
+
+// 6TiSCH: TSCH com um quadro de 127 B por cell, `cells` cells por slotframe de 4,04 s.
+channel Link_6TiSCH_TSCH extends ned.DatarateChannel {
+    datarate = 50kbps;
+    delay = 0s;
+    per = 0;
+    string mac = "tsch";
+    double per_enlace = default(0);
+    double slotframe @unit(s) = default(4.04s);
+    int cells = default(2);
+    int quadro_bytes = default(127);
+    int max_retries = default(3);
+}
+
+// Wi-SUN FAN: CSMA/CA com salto de canal assíncrono, quadro de até 1280 B.
+// A taxa da camada física é 50 kbps; `taxa_bps` a troca por enlace (150 ou 300 kbps).
+channel Link_WiSUN_FAN extends ned.DatarateChannel {
+    datarate = 50kbps;
+    delay = 0s;
+    per = 0;
+    string mac = "wisun";
+    double per_enlace = default(0);
+    double taxa_bps = default(0);   // 0: a datarate acima
+    int quadro_bytes = default(1280);
+    int max_retries = default(3);
+    int min_be = default(3);
+    int max_be = default(5);
+    double unit_backoff @unit(s) = default(1.16ms);
+    double turnaround @unit(s) = default(1ms);
+    int shr_phr_bytes = default(12);
+    int ack_bytes = default(30);
+}

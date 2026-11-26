@@ -38,6 +38,7 @@ services:
     #   malha   → pade_malha.py   (todos enviam para todos)
     #   arvore  → pade_arvore.py  (árvore fan-out IEC 61850)
     #   hibrida → pade_hibrida.py (CCO + fibra + celular + RF mesh)
+    #   ieee13  → pade_ieee13.py  (alimentador IEEE 13 do OpenTES)
     #   demais  → pade_star.py    (central + periféricos)
     command: >
       sh -c '
@@ -50,6 +51,9 @@ services:
       elif [ "$$TOPOLOGY" = "arvore" ]; then
         echo "Topologia ARVORE -> pade_arvore.py";
         python3 pade_arvore.py;
+      elif [ "$$TOPOLOGY" = "ieee13" ]; then
+        echo "Topologia IEEE 13 (OpenTES) -> pade_ieee13.py";
+        python3 pade_ieee13.py;
       elif [ "$$TOPOLOGY" = "hibrida" ]; then
         echo "Topologia HIBRIDA -> pade_hibrida.py";
         python3 pade_hibrida.py;

@@ -10,15 +10,17 @@ Reprodutibilidade: com o mesmo `rng`/semente, as funções devolvem exatamente
 a mesma rede (listas em ordem determinística; nunca se itera um set).
 """
 
+import csv
 import itertools
 import math
 import random
 from dataclasses import dataclass, field
 
-from cosim.catalogo import canal_celular
+from cosim import radio as _radio
+from cosim.catalogo import CANAIS_TESE, canal_celular
 
 __all__ = [
-    'Rede', 'calcular_malha_parcial', 'montar_anel', 'montar_arvore', 'montar_ieee13',
+    'Rede', 'calcular_malha_parcial', 'ler_posicoes', 'montar_anel', 'montar_arvore', 'montar_ieee13',
     'montar_estrela', 'montar_hibrida', 'montar_malha', 'omnet_para_pade',
     'pade_para_omnet', 'ponto_no_disco', 'vizinhos', 'vizinhos_anel',
 ]
@@ -29,6 +31,9 @@ class Rede:
     nos: list                                   # [{'id', 'x', 'y', 'tipo', 'camada'}]
     links: list                                 # [{'origem', 'destino', 'tipo'}]
     config: dict = field(default_factory=dict)  # metadados extras para o config.json
+    # Levantamento de rádio dos pares de nós (formato tisch_links.csv), quando a
+    # topologia usa o modelo da tese; não entra na comparação nem no config.json.
+    levantamento: list = field(default_factory=list, compare=False, repr=False)
 
 
 def _link(origem, destino, tipo):
@@ -201,31 +206,117 @@ IEEE13_NOS = [
 ]
 
 
-def montar_ieee13(tipos_rede=None):
+def ler_posicoes(caminho, central='0'):
+    """Nós a partir do `nodes_xy.csv` do caso (colunas node, x_m, y_m).
+
+    O nó se chama agent_<nome em minúsculas>: "611" -> agent_611, "DSO" ->
+    agent_dso. O `central` (o concentrador da subestação), o DSO e o Market
+    formam a camada de controle.
+    """
+    nos = []
+    with open(caminho, newline='', encoding='utf-8') as f:
+        for r in csv.DictReader(f):
+            nome = r['node'].strip()
+            controle = nome == central or nome.lower() in ('dso', 'market')
+            nos.append({'id': 'agent_' + nome.lower(), 'x': float(r['x_m']), 'y': float(r['y_m']),
+                        'tipo': 'Central' if nome == central else 'Periferico',
+                        'camada': 'controle' if controle else 'periferico', 'nome': nome})
+    return nos
+
+
+def _nome_no(no):
+    if no.get('nome'):
+        return no['nome']
+    return no['id'][len('agent_'):] if no['id'].startswith('agent_') else no['id']
+
+
+def _params_canal(tipo, per, radio, cells):
+    """Parâmetros NED do enlace nos canais da tese (o PER sai do modelo de rádio)."""
+    if tipo not in CANAIS_TESE:
+        return None
+    params = {'per_enlace': f'{per:g}'}
+    if tipo == 'Link_6TiSCH_TSCH' and cells:
+        params['cells'] = str(int(cells))
+    if tipo == 'Link_WiSUN_FAN':
+        params['taxa_bps'] = f'{radio.taxa_bps:g}'
+    return params
+
+
+def montar_ieee13(tipos_rede=None, posicoes=None, topologia='estrela', subestacao='cabo',
+                  enlaces=None, radio=None, semente=0, cells=None, central='0'):
     """Rede elétrica IEEE 13 barras (18 nós: Concentrador, DSO, Market e 15 barras).
 
-    DSO e Market conectam-se ao Concentrador (agent_0) por Link_Wired; as 15 barras
-    usam os canais de `tipos_rede` (padrão: Link_6TiSCH).
-    """
-    canais = list(tipos_rede) if tipos_rede else ['Link_6TiSCH']
-    nos = [dict(n) for n in IEEE13_NOS]
-    links = [
-        _link('agent_0', 'agent_dso', 'Link_Wired'),
-        _link('agent_0', 'agent_market', 'Link_Wired'),
-    ]
-    barras = [n for n in nos if n['camada'] == 'periferico']
-    for i, barra in enumerate(barras):
-        links.append(_link('agent_0', barra['id'], canais[i % len(canais)]))
+    Sem argumentos além de `tipos_rede`, é a rede original deste repositório:
+    estrela centrada no Concentrador (agent_0), DSO e Market ligados a ele por
+    Link_Wired e as 15 barras pelos canais de `tipos_rede` (padrão: Link_6TiSCH).
 
-    return Rede(
-        nos=nos,
-        links=links,
-        config={
-            'topologia': 'ieee13',
-            'num_perifericos': len(nos) - 1,
-            'tipos_rede': canais,
-        },
-    )
+    Opções para o mercado do OpenTES (todas mantêm os canais do repositório
+    disponíveis, inclusive misturados):
+      posicoes   : `nodes_xy.csv` do caso, no lugar das coordenadas embutidas.
+      topologia  : 'estrela' (padrão) ou 'malha', em que os enlaces são os pares
+                   com PER abaixo do limiar no modelo de rádio da tese
+                   (cosim/radio.py), com roteamento multissalto.
+      subestacao : 'cabo' (padrão; Concentrador, DSO e Market por Link_Wired) ou
+                   'radio' (eles também usam o rádio, como na tese).
+      enlaces    : `tisch_links.csv` de uma execução da tese, para repetir a
+                   mesma topologia de rádio e os mesmos PER; sem ele, o
+                   levantamento é sorteado com a `semente`.
+      radio      : cosim.radio.Radio (frequência, potência, taxa do Wi-SUN...).
+      cells      : cells por slotframe do Link_6TiSCH_TSCH.
+    """
+    if topologia not in ('estrela', 'malha'):
+        raise ValueError(f"topologia IEEE 13 desconhecida: {topologia!r} (estrela ou malha)")
+    if subestacao not in ('cabo', 'radio'):
+        raise ValueError(f"subestacao desconhecida: {subestacao!r} (cabo ou radio)")
+    canais = list(tipos_rede) if tipos_rede else ['Link_6TiSCH']
+    radio = radio or _radio.Radio()
+    nos = ler_posicoes(posicoes, central) if posicoes else [dict(n) for n in IEEE13_NOS]
+    hub = 'agent_' + central.lower()
+    controle = {n['id'] for n in nos if n['camada'] == 'controle'}
+    barras = [n for n in nos if n['camada'] == 'periferico']
+
+    # Estrela: os pares são impostos pela topologia. Malha: saem do rádio.
+    estrela = [(hub, c) for c in sorted(controle - {hub}, key=[n['id'] for n in nos].index)]
+    estrela += [(hub, b['id']) for b in barras]
+    usa_radio = topologia == 'malha' or any(c in CANAIS_TESE for c in canais)
+    per = {}
+    pares = estrela
+    levantamento = []
+    if usa_radio:
+        if enlaces:
+            levantamento = _radio.ler_enlaces(enlaces, [{**n, 'nome': _nome_no(n)} for n in nos])
+        else:
+            levantamento = _radio.levantar_enlaces(
+                [{**n, 'nome': _nome_no(n)} for n in nos], radio, random.Random(semente),
+                impostos=estrela if topologia == 'estrela' else None)
+        per = {frozenset((r['id_i'], r['id_j'])): r['per'] for r in levantamento}
+        if topologia == 'malha':
+            pares = [(r['id_i'], r['id_j']) for r in levantamento if r['adjacent']]
+
+    links, k = [], 0
+    for a, b in pares:
+        if subestacao == 'cabo' and a in controle and b in controle:
+            links.append(_link(a, b, 'Link_Wired'))
+            continue
+        if topologia == 'estrela' and b in controle:
+            tipo = canais[0]          # subestação por rádio, na estrela
+        else:
+            tipo = canais[k % len(canais)]
+            k += 1
+        link = _link(a, b, tipo)
+        params = _params_canal(tipo, per.get(frozenset((a, b)), 0.0), radio, cells)
+        if params:
+            link['params'] = params
+        links.append(link)
+
+    config = {
+        'topologia': 'ieee13',
+        'num_perifericos': len(nos) - 1,
+        'tipos_rede': canais,
+    }
+    if (posicoes, topologia, subestacao, enlaces) != (None, 'estrela', 'cabo', None):
+        config.update({'estrutura_ieee13': topologia, 'subestacao': subestacao})
+    return Rede(nos=nos, links=links, config=config, levantamento=levantamento)
 
 
 # ══════════════════════════════════════════════════════════════
