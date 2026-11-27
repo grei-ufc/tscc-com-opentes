@@ -248,29 +248,72 @@ def gerar_graficos():
     # =================================================================
     # CÁLCULO DE MÉTRICAS GLOBAIS E POR REDE (BENCHMARKING)
     # =================================================================
-    p_enviados = time_data.groupby('Origem')['packets_sent'].max().sum()
-    p_recebidos = time_data.groupby('Origem')['packets_received'].max().sum()
-    p_descartados = time_data.groupby('Origem')['packets_dropped'].max().sum()
+    p_enviados = float(time_data.groupby('Origem')['packets_sent'].max().sum())
+    p_recebidos = float(time_data.groupby('Origem')['packets_received'].max().sum())
+    p_descartados = float(time_data.groupby('Origem')['packets_dropped'].max().sum())
 
-    pdr_global = (p_recebidos / p_enviados * 100) if p_enviados > 0 else 0
-    drop_rate_global = (p_descartados / p_enviados * 100) if p_enviados > 0 else 0
+    # Normaliza pela base real caso descartes pré-transmissão (fila cheia / sem rota)
+    # façam recebidos + descartados exceder packets_sent.
+    p_em_transito = max(0.0, p_enviados - p_recebidos - p_descartados)
+    p_base_global = p_recebidos + p_descartados + p_em_transito
 
-    lat_media = df_expandido['Latencia'].mean() * 1000  # em ms
-    lat_p95 = df_expandido['Latencia'].quantile(0.95) * 1000
-    jit_media = df_expandido['Jitter'].mean() * 1000000  # em us
+    pdr_global = (p_recebidos / p_base_global * 100.0) if p_base_global > 0 else 0.0
+    drop_rate_global = (p_descartados / p_base_global * 100.0) if p_base_global > 0 else 0.0
+    transito_rate_global = (p_em_transito / p_base_global * 100.0) if p_base_global > 0 else 0.0
+
+    lat_media = df_expandido['Latencia'].mean() * 1000.0
+    lat_p95 = df_expandido['Latencia'].quantile(0.95) * 1000.0
+    jit_media = df_expandido['Jitter'].mean() * 1000000.0
+
+    # Estimativa de envios do concentrador por nó periférico (para refletir fila/trânsito por tecnologia)
+    mask_conc = time_data['TipoRedeOrigem'] == 'Central'
+    td_conc = time_data[mask_conc]
+    td_perif = time_data[~mask_conc]
+    n_perif_total = int(td_perif['Origem'].nunique())
+    tx_conc_total = float(td_conc.groupby('Origem')['packets_sent'].max().sum()) if not td_conc.empty else 0.0
 
     tabela_resumo = []
+    metricas_por_rede = {}
     for tipo in TIPOS_REDE_ATIVOS:
         df_tipo = df_expandido[df_expandido['RedeLink'] == tipo]
+        sub_td = td_perif[td_perif['TipoRedeOrigem'] == tipo]
+        n_nos_tipo = int(sub_td['Origem'].nunique())
+
+        amostras_rede = len(df_tipo)
+        drops_nos = float(sub_td.groupby('Origem')['packets_dropped'].max().sum()) if not sub_td.empty else 0.0
+        tx_up = float(sub_td.groupby('Origem')['packets_sent'].max().sum()) if not sub_td.empty else 0.0
+        tx_down_est = (tx_conc_total * n_nos_tipo / n_perif_total) if n_perif_total > 0 else 0.0
+
+        base_rede = max(float(amostras_rede) + drops_nos, tx_down_est + tx_up)
+
+        pdr_rede = (amostras_rede / base_rede * 100.0) if base_rede > 0 else 0.0
+        drop_rede = (drops_nos / base_rede * 100.0) if base_rede > 0 else 0.0
+        transito_rede = max(0.0, 100.0 - pdr_rede - drop_rede)
+
+        l_mean = (df_tipo['Latencia'].mean() * 1000.0) if not df_tipo.empty else 0.0
+        l_p95 = (df_tipo['Latencia'].quantile(0.95) * 1000.0) if not df_tipo.empty else 0.0
+        j_mean = (df_tipo['Jitter'].mean() * 1000000.0) if not df_tipo.empty else 0.0
+
+        metricas_por_rede[tipo] = {
+            'total_msgs': int(round(base_rede)),
+            'entregues_pct': pdr_rede,
+            'drops_pct': drop_rede,
+            'transito_pct': transito_rede,
+            'lat_media': l_mean,
+            'lat_p95': l_p95,
+            'jit_media': j_mean,
+            'amostras': amostras_rede,
+        }
+
         if not df_tipo.empty:
-            l_mean = df_tipo['Latencia'].mean() * 1000
-            j_mean = df_tipo['Jitter'].mean() * 1000000
-            amostras_rede = len(df_tipo)
-            sub_td = time_data[time_data['TipoRedeOrigem'] == tipo]
-            drops_rede = sub_td.groupby('Origem')['packets_dropped'].max().sum() if not sub_td.empty else 0.0
-            total_tentativas = amostras_rede + drops_rede
-            pdr = (amostras_rede / total_tentativas * 100) if total_tentativas > 0 else 100.0
-            tabela_resumo.append([tipo, f"{l_mean:.1f} ms", f"{j_mean:.1f} μs", f"{pdr:.1f} %", amostras_rede])
+            tabela_resumo.append([
+                tipo,
+                f"{l_mean:.1f} ms",
+                f"{j_mean:.1f} μs",
+                f"{pdr_rede:.1f} %",
+                f"{transito_rede:.1f} %",
+                amostras_rede,
+            ])
 
     # =================================================================
     # PLOTAGEM DO PAINEL EXECUTIVO IEEE 13
@@ -289,18 +332,39 @@ def gerar_graficos():
 
         gs = gridspec.GridSpec(4, 3, figure=fig, height_ratios=[0.3, 2, 1.5, 1], width_ratios=[1, 1, 1.5])
 
-        # --- LINHA 0: KPIs (Header) ---
+        # --- LINHA 0: KPIs (Header filtrado por visão) ---
         ax_kpi = fig.add_subplot(gs[0, :])
         ax_kpi.axis('off')
+        if rede_foco == 'Geral':
+            kpi_total = int(round(p_base_global))
+            kpi_pdr = pdr_global
+            kpi_drop = drop_rate_global
+            kpi_trans = transito_rate_global
+            kpi_lat = lat_media
+            kpi_p95 = lat_p95
+            kpi_jit = jit_media
+            rotulo_trans = "Em Trânsito"
+        else:
+            m = metricas_por_rede[rede_foco]
+            kpi_total = m['total_msgs']
+            kpi_pdr = m['entregues_pct']
+            kpi_drop = m['drops_pct']
+            kpi_trans = m['transito_pct']
+            kpi_lat = m['lat_media']
+            kpi_p95 = m['lat_p95']
+            kpi_jit = m['jit_media']
+            rotulo_trans = "Drop Conc./Trânsito"
+
         kpi_text = (
-            f"  |  Total Mensagens: {int(p_enviados)}  |  "
-            f"Delivery Ratio (PDR): {pdr_global:.1f}%  |  "
-            f"Drop Rate: {drop_rate_global:.1f}%  |  "
-            f"Latência Média: {lat_media:.2f} ms  |  "
-            f"Latência P95: {lat_p95:.2f} ms  |  "
-            f"Jitter Médio: {jit_media:.2f} μs  |"
+            f"  |  Total Mensagens: {kpi_total}  |  "
+            f"PDR: {kpi_pdr:.1f}%  |  "
+            f"Dropados: {kpi_drop:.1f}%  |  "
+            f"{rotulo_trans}: {kpi_trans:.1f}%  |  "
+            f"Latência Média: {kpi_lat:.2f} ms  |  "
+            f"P95: {kpi_p95:.2f} ms  |  "
+            f"Jitter Médio: {kpi_jit:.2f} μs  |"
         )
-        ax_kpi.text(0.5, 0.5, kpi_text, ha='center', va='center', fontsize=16, fontweight='bold',
+        ax_kpi.text(0.5, 0.5, kpi_text, ha='center', va='center', fontsize=15, fontweight='bold',
                     bbox=dict(boxstyle='round,pad=0.5', facecolor='#f0f0f0', edgecolor='black'))
 
         ax_lat = fig.add_subplot(gs[1, 0])
@@ -325,23 +389,27 @@ def gerar_graficos():
 
         # --- PAINEL 2: Tamanho do Envelope (CFP Preço Sombra vs PROPOSE Prosumidores) ---
         if rede_foco == 'Geral':
-            broad_mean = df_expandido[df_expandido['IsBroadcast'] == True]['Tamanho'].mean()
-            resp_mean = df_expandido[df_expandido['IsBroadcast'] == False]['Tamanho'].mean()
+            broad_mean = df_expandido[df_expandido['IsBroadcast']]['Tamanho'].mean()
+            resp_mean = df_expandido[~df_expandido['IsBroadcast']]['Tamanho'].mean()
             broad_mean = broad_mean if not pd.isna(broad_mean) else 0
             resp_mean = resp_mean if not pd.isna(resp_mean) else 0
             ax_pay.bar(['CFP Preço Sombra\n(Concentrador)', 'PROPOSE / INFORM\n(Barras + DSO/MKT)'],
                        [broad_mean, resp_mean], color=['#d62728', '#2ca02c'])
             ax_pay.text(0, broad_mean + 5, f"{broad_mean:.0f} B", ha='center', fontweight='bold')
             ax_pay.text(1, resp_mean + 5, f"{resp_mean:.0f} B", ha='center', fontweight='bold')
+            ax_pay.set_ylim(0, max(broad_mean, resp_mean, 1.0) * 1.15)
         else:
             df_sub = df_expandido[df_expandido['RedeLink'] == rede_foco]
             if not df_sub.empty:
-                b_mean = df_sub[df_sub['IsBroadcast'] == True]['Tamanho'].mean()
-                r_mean = df_sub[df_sub['IsBroadcast'] == False]['Tamanho'].mean()
+                b_mean = df_sub[df_sub['IsBroadcast']]['Tamanho'].mean()
+                r_mean = df_sub[~df_sub['IsBroadcast']]['Tamanho'].mean()
                 b_mean = b_mean if not pd.isna(b_mean) else 0
                 r_mean = r_mean if not pd.isna(r_mean) else 0
                 ax_pay.bar(['CFP Preço', f'Respostas ({rede_foco})'], [b_mean, r_mean],
                            color=[cores[rede_foco], cores[rede_foco]], alpha=0.8)
+                ax_pay.text(0, b_mean + 5, f"{b_mean:.0f} B", ha='center', fontweight='bold')
+                ax_pay.text(1, r_mean + 5, f"{r_mean:.0f} B", ha='center', fontweight='bold')
+                ax_pay.set_ylim(0, max(b_mean, r_mean, 1.0) * 1.15)
 
         ax_pay.set_title('2. Payload Médio FIPA-ACL (Bytes)', fontweight='bold', fontsize=14)
         ax_pay.set_ylabel('Bytes'); ax_pay.grid(axis='y', ls='--', alpha=0.5)
@@ -366,42 +434,40 @@ def gerar_graficos():
         ax_jit.set_title('3. Distribuição de Jitter (Outliers)', fontweight='bold', fontsize=14)
         ax_jit.set_xlabel('Jitter (μs)'); ax_jit.grid(axis='x', ls='--', alpha=0.5)
 
-        # --- PAINEL 4: Integridade (Barra Horizontal Stacked) ---
-        if rede_foco == 'Geral':
-            entregues_pct = pdr_global
-            drops_pct = drop_rate_global
-            transito_pct = max(0, 100 - entregues_pct - drops_pct)
-            titulo_int = '4. Taxa de Entrega de Pacotes (PDR Global)'
-        else:
-            df_sub_rede = df_expandido[df_expandido['RedeLink'] == rede_foco]
-            amostras = len(df_sub_rede)
-            sub_td = time_data[time_data['TipoRedeOrigem'] == rede_foco]
-            drops_locais = sub_td.groupby('Origem')['packets_dropped'].max().sum() if not sub_td.empty else 0.0
+        # --- PAINEL 4: Integridade (Barra Horizontal Stacked somando 100%) ---
+        entregues_pct = kpi_pdr
+        drops_pct = kpi_drop
+        transito_pct = kpi_trans
+        titulo_int = (
+            '4. Taxa de Entrega de Pacotes (PDR Global)'
+            if rede_foco == 'Geral'
+            else f'4. Taxa de Entrega de Pacotes ({rede_foco})'
+        )
+        label_trans = 'Em Trânsito' if rede_foco == 'Geral' else 'Drop Conc. / Trânsito'
 
-            total_tentativas = amostras + drops_locais
-            entregues_pct = (amostras / total_tentativas * 100) if total_tentativas > 0 else 0
-            drops_pct = (drops_locais / total_tentativas * 100) if total_tentativas > 0 else 0
-            transito_pct = max(0, 100 - entregues_pct - drops_pct)
-            titulo_int = f'4. Taxa de Entrega de Pacotes ({rede_foco})'
+        eixo_y = ['Global' if rede_foco == 'Geral' else rede_foco]
+        ax_int.barh(eixo_y, [entregues_pct], color='#2ca02c', edgecolor='black', label='Entregues')
+        ax_int.barh(eixo_y, [drops_pct], left=[entregues_pct], color='#d62728', edgecolor='black', label='Dropados')
+        ax_int.barh(eixo_y, [transito_pct], left=[entregues_pct + drops_pct], color='#7f7f7f', edgecolor='black', label=label_trans)
 
-        ax_int.barh(['Global' if rede_foco == 'Geral' else rede_foco], [entregues_pct], color='#2ca02c', edgecolor='black', label='Entregues')
-        ax_int.barh(['Global' if rede_foco == 'Geral' else rede_foco], [drops_pct], left=[entregues_pct], color='#d62728', edgecolor='black', label='Dropados')
-        ax_int.barh(['Global' if rede_foco == 'Geral' else rede_foco], [transito_pct], left=[entregues_pct + drops_pct], color='#7f7f7f', edgecolor='black')
-
-        ax_int.text(entregues_pct / 2, 0, f"{entregues_pct:.1f}%", va='center', ha='center', color='white', fontweight='bold', fontsize=14)
-        if drops_pct >= 1.0:
+        if entregues_pct >= 3.0:
+            ax_int.text(entregues_pct / 2, 0, f"{entregues_pct:.1f}%", va='center', ha='center', color='white', fontweight='bold', fontsize=14)
+        if drops_pct >= 3.0:
             ax_int.text(entregues_pct + drops_pct / 2, 0, f"{drops_pct:.1f}%", va='center', ha='center', color='white', fontweight='bold', fontsize=12)
+        if transito_pct >= 3.0:
+            ax_int.text(entregues_pct + drops_pct + transito_pct / 2, 0, f"{transito_pct:.1f}%", va='center', ha='center', color='white', fontweight='bold', fontsize=12)
 
         ax_int.set_title(titulo_int, fontweight='bold', fontsize=14)
         ax_int.set_xlim(0, 100); ax_int.set_xticks([0, 25, 50, 75, 100]); ax_int.set_xticklabels(['0%', '25%', '50%', '75%', '100%'])
-        ax_int.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=2)
+        ax_int.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=3)
 
         # --- PAINEL 5: Tabela ---
         ax_tab.axis('tight'); ax_tab.axis('off')
         if tabela_resumo:
-            tabela = ax_tab.table(cellText=tabela_resumo, colLabels=['Rede', 'Latência (Média)', 'Jitter (Média)', 'PDR', 'Amostras'],
-                                  cellLoc='center', loc='center', colColours=['#f0f0f0'] * 5)
-            tabela.auto_set_font_size(False); tabela.set_fontsize(12); tabela.scale(1, 1.5)
+            col_labels = ['Rede', 'Latência (Média)', 'Jitter (Média)', 'PDR', 'Fila/Trânsito', 'Amostras']
+            tabela = ax_tab.table(cellText=tabela_resumo, colLabels=col_labels,
+                                  cellLoc='center', loc='center', colColours=['#f0f0f0'] * len(col_labels))
+            tabela.auto_set_font_size(False); tabela.set_fontsize(11); tabela.scale(1, 1.5)
             ax_tab.set_title('5. Tabela Comparativa de Desempenho', fontweight='bold', fontsize=14)
 
         # --- PAINEL 6: Mapa Espacial do Alimentador IEEE 13 Barras ---
