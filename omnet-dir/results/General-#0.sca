@@ -1,0 +1,3383 @@
+version 3
+run General-0-20261127-13:48:43-1
+attr configname General
+attr datetime 20261127-13:48:43
+attr datetimef 20261127-134843
+attr experiment General
+attr inifile consulta.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network DynamicNetwork
+attr processid 1
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network DynamicNetwork
+config scheduler-class omnetpp::cSequentialScheduler
+config simtime-resolution ns
+config sim-time-limit 1000000000s
+config seed-set 0
+config **.agent_id "\"\""
+config **.roteamento "\"etx\""
+config **.propagacao_radio_s_m 3.336e-9
+
+par DynamicNetwork.agent_0.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_0.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[0].channel cells 2
+par DynamicNetwork.agent_0.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_dso.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[0].channel cells 2
+par DynamicNetwork.agent_dso.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_0.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_0.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[1].channel cells 2
+par DynamicNetwork.agent_0.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[0].channel cells 2
+par DynamicNetwork.agent_market.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_0.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_0.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[2].channel cells 2
+par DynamicNetwork.agent_0.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_634.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_634.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_634.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_634.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_634.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_634.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_634.port$o[0].channel cells 2
+par DynamicNetwork.agent_634.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_634.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_0.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[3].channel per_enlace 0.4
+par DynamicNetwork.agent_0.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[3].channel cells 2
+par DynamicNetwork.agent_0.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[0].channel per_enlace 0.4
+par DynamicNetwork.agent_646.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[0].channel cells 2
+par DynamicNetwork.agent_646.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_0.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_0.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[4].channel cells 2
+par DynamicNetwork.agent_0.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[0].channel cells 2
+par DynamicNetwork.agent_650.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_0.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_0.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[5].channel delay 15.7228s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_0.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_0.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_0.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_0.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_0.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_0.port$o[5].channel cells 2
+par DynamicNetwork.agent_0.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_0.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[0].channel delay 13.5229s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[0].channel cells 2
+par DynamicNetwork.agent_660.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[1].channel delay 4.392s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_dso.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[1].channel cells 2
+par DynamicNetwork.agent_dso.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[1].channel cells 2
+par DynamicNetwork.agent_market.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[2].channel per_enlace 0.4
+par DynamicNetwork.agent_dso.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[2].channel cells 2
+par DynamicNetwork.agent_dso.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[0].channel per_enlace 0.4
+par DynamicNetwork.agent_611.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[0].channel cells 2
+par DynamicNetwork.agent_611.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[3].channel per_enlace 0.006
+par DynamicNetwork.agent_dso.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[3].channel cells 2
+par DynamicNetwork.agent_dso.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[1].channel per_enlace 0.006
+par DynamicNetwork.agent_646.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[1].channel cells 2
+par DynamicNetwork.agent_646.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_dso.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[4].channel cells 2
+par DynamicNetwork.agent_dso.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[1].channel cells 2
+par DynamicNetwork.agent_650.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_dso.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[5].channel cells 2
+par DynamicNetwork.agent_dso.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[1].channel cells 2
+par DynamicNetwork.agent_660.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_dso.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_dso.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_dso.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_dso.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_dso.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_dso.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_dso.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_dso.port$o[6].channel cells 2
+par DynamicNetwork.agent_dso.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_dso.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[0].channel cells 2
+par DynamicNetwork.agent_671.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[2].channel cells 2
+par DynamicNetwork.agent_market.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_633.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[0].channel cells 2
+par DynamicNetwork.agent_633.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[3].channel cells 2
+par DynamicNetwork.agent_market.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[2].channel cells 2
+par DynamicNetwork.agent_646.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[4].channel cells 2
+par DynamicNetwork.agent_market.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[2].channel cells 2
+par DynamicNetwork.agent_650.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[5].channel cells 2
+par DynamicNetwork.agent_market.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[2].channel cells 2
+par DynamicNetwork.agent_660.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_market.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[6].channel cells 2
+par DynamicNetwork.agent_market.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[1].channel cells 2
+par DynamicNetwork.agent_671.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_market.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_market.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_market.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_market.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_market.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_market.port$o[7].channel per_enlace 0.15
+par DynamicNetwork.agent_market.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_market.port$o[7].channel cells 2
+par DynamicNetwork.agent_market.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_market.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[0].channel per_enlace 0.15
+par DynamicNetwork.agent_684.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[0].channel cells 2
+par DynamicNetwork.agent_684.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[1].channel cells 2
+par DynamicNetwork.agent_611.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_633.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[1].channel cells 2
+par DynamicNetwork.agent_633.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[2].channel cells 2
+par DynamicNetwork.agent_611.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_645.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[0].channel cells 2
+par DynamicNetwork.agent_645.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[3].channel cells 2
+par DynamicNetwork.agent_611.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[0].channel cells 2
+par DynamicNetwork.agent_652.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[4].channel delay 12.3172s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[4].channel cells 2
+par DynamicNetwork.agent_611.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[3].channel cells 2
+par DynamicNetwork.agent_660.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[5].channel cells 2
+par DynamicNetwork.agent_611.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[0].channel cells 2
+par DynamicNetwork.agent_670.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[6].channel cells 2
+par DynamicNetwork.agent_611.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[2].channel cells 2
+par DynamicNetwork.agent_671.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[7].channel cells 2
+par DynamicNetwork.agent_611.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_680.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[0].channel cells 2
+par DynamicNetwork.agent_680.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_611.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_611.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_611.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_611.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_611.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_611.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_611.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_611.port$o[8].channel cells 2
+par DynamicNetwork.agent_611.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_611.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[1].channel cells 2
+par DynamicNetwork.agent_684.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_632.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[0].channel cells 2
+par DynamicNetwork.agent_632.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_633.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[2].channel cells 2
+par DynamicNetwork.agent_633.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_632.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[1].channel cells 2
+par DynamicNetwork.agent_632.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_645.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[1].channel cells 2
+par DynamicNetwork.agent_645.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[2].channel per_enlace 0.03
+par DynamicNetwork.agent_632.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[2].channel cells 2
+par DynamicNetwork.agent_632.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[1].channel per_enlace 0.03
+par DynamicNetwork.agent_670.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[1].channel cells 2
+par DynamicNetwork.agent_670.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[3].channel per_enlace 0.15
+par DynamicNetwork.agent_632.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[3].channel cells 2
+par DynamicNetwork.agent_632.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[3].channel per_enlace 0.15
+par DynamicNetwork.agent_671.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[3].channel cells 2
+par DynamicNetwork.agent_671.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[4].channel per_enlace 0.15
+par DynamicNetwork.agent_632.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[4].channel cells 2
+par DynamicNetwork.agent_632.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[1].channel per_enlace 0.15
+par DynamicNetwork.agent_680.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[1].channel cells 2
+par DynamicNetwork.agent_680.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_632.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[5].channel cells 2
+par DynamicNetwork.agent_632.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[2].channel cells 2
+par DynamicNetwork.agent_684.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_632.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_632.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_632.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_632.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_632.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_632.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_632.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_632.port$o[6].channel cells 2
+par DynamicNetwork.agent_632.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_632.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[0].channel cells 2
+par DynamicNetwork.agent_692.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_633.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[3].channel cells 2
+par DynamicNetwork.agent_633.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_634.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_634.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_634.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_634.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_634.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_634.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_634.port$o[1].channel cells 2
+par DynamicNetwork.agent_634.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_634.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[4].channel per_enlace 0.15
+par DynamicNetwork.agent_633.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[4].channel cells 2
+par DynamicNetwork.agent_633.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[3].channel per_enlace 0.15
+par DynamicNetwork.agent_646.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[3].channel cells 2
+par DynamicNetwork.agent_646.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_633.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[5].channel cells 2
+par DynamicNetwork.agent_633.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[3].channel cells 2
+par DynamicNetwork.agent_650.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_633.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_633.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_633.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_633.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_633.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_633.port$o[6].channel per_enlace 0.15
+par DynamicNetwork.agent_633.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_633.port$o[6].channel cells 2
+par DynamicNetwork.agent_633.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_633.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[1].channel per_enlace 0.15
+par DynamicNetwork.agent_692.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[1].channel cells 2
+par DynamicNetwork.agent_692.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_634.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_634.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_634.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_634.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_634.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_634.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_634.port$o[2].channel cells 2
+par DynamicNetwork.agent_634.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_634.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[4].channel cells 2
+par DynamicNetwork.agent_646.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_634.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_634.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_634.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_634.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_634.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_634.port$o[3].channel per_enlace 0.4
+par DynamicNetwork.agent_634.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_634.port$o[3].channel cells 2
+par DynamicNetwork.agent_634.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_634.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[2].channel per_enlace 0.4
+par DynamicNetwork.agent_670.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[2].channel cells 2
+par DynamicNetwork.agent_670.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_645.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[2].channel cells 2
+par DynamicNetwork.agent_645.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[1].channel cells 2
+par DynamicNetwork.agent_652.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_645.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[3].channel cells 2
+par DynamicNetwork.agent_645.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[3].channel cells 2
+par DynamicNetwork.agent_670.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[4].channel per_enlace 0.006
+par DynamicNetwork.agent_645.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[4].channel cells 2
+par DynamicNetwork.agent_645.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[2].channel per_enlace 0.006
+par DynamicNetwork.agent_680.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[2].channel cells 2
+par DynamicNetwork.agent_680.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_645.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_645.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_645.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_645.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_645.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_645.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_645.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_645.port$o[5].channel cells 2
+par DynamicNetwork.agent_645.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_645.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[2].channel cells 2
+par DynamicNetwork.agent_692.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[5].channel cells 2
+par DynamicNetwork.agent_646.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[4].channel cells 2
+par DynamicNetwork.agent_650.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[6].channel per_enlace 0.006
+par DynamicNetwork.agent_646.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[6].channel cells 2
+par DynamicNetwork.agent_646.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[4].channel per_enlace 0.006
+par DynamicNetwork.agent_660.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[4].channel cells 2
+par DynamicNetwork.agent_660.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[7].channel cells 2
+par DynamicNetwork.agent_646.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[4].channel cells 2
+par DynamicNetwork.agent_671.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[8].channel cells 2
+par DynamicNetwork.agent_646.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[0].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[0].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[0].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[0].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[0].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[0].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[0].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[0].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[0].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[0].channel cells 2
+par DynamicNetwork.agent_675.port$o[0].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[0].channel max_retries 3
+par DynamicNetwork.agent_646.port$o[9].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_646.port$o[9].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[9].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_646.port$o[9].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_646.port$o[9].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[9].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_646.port$o[9].channel mac "\"tsch\""
+par DynamicNetwork.agent_646.port$o[9].channel per_enlace 0
+par DynamicNetwork.agent_646.port$o[9].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_646.port$o[9].channel cells 2
+par DynamicNetwork.agent_646.port$o[9].channel quadro_bytes 127
+par DynamicNetwork.agent_646.port$o[9].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[3].channel cells 2
+par DynamicNetwork.agent_684.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[5].channel cells 2
+par DynamicNetwork.agent_650.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[5].channel cells 2
+par DynamicNetwork.agent_660.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_650.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_650.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_650.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_650.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_650.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_650.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_650.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_650.port$o[6].channel cells 2
+par DynamicNetwork.agent_650.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_650.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[5].channel cells 2
+par DynamicNetwork.agent_671.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[2].channel cells 2
+par DynamicNetwork.agent_652.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[6].channel cells 2
+par DynamicNetwork.agent_671.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[3].channel cells 2
+par DynamicNetwork.agent_652.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[1].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[1].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[1].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[1].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[1].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[1].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[1].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[1].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[1].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[1].channel cells 2
+par DynamicNetwork.agent_675.port$o[1].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[1].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[4].channel cells 2
+par DynamicNetwork.agent_652.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[4].channel cells 2
+par DynamicNetwork.agent_684.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_652.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_652.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_652.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_652.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_652.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_652.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_652.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_652.port$o[5].channel cells 2
+par DynamicNetwork.agent_652.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_652.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[3].channel cells 2
+par DynamicNetwork.agent_692.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[6].channel cells 2
+par DynamicNetwork.agent_660.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[4].channel cells 2
+par DynamicNetwork.agent_670.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[7].channel delay 14.2567s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[7].channel cells 2
+par DynamicNetwork.agent_660.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_680.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[3].channel cells 2
+par DynamicNetwork.agent_680.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_660.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_660.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_660.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_660.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_660.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_660.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_660.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_660.port$o[8].channel cells 2
+par DynamicNetwork.agent_660.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_660.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[4].channel cells 2
+par DynamicNetwork.agent_692.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[5].channel cells 2
+par DynamicNetwork.agent_670.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[7].channel cells 2
+par DynamicNetwork.agent_671.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[6].channel cells 2
+par DynamicNetwork.agent_670.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[2].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[2].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[2].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[2].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[2].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[2].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[2].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[2].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[2].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[2].channel cells 2
+par DynamicNetwork.agent_675.port$o[2].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[2].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[7].channel cells 2
+par DynamicNetwork.agent_670.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[5].channel cells 2
+par DynamicNetwork.agent_684.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_670.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_670.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_670.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_670.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_670.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_670.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_670.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_670.port$o[8].channel cells 2
+par DynamicNetwork.agent_670.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_670.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[5].channel cells 2
+par DynamicNetwork.agent_692.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[8].channel cells 2
+par DynamicNetwork.agent_671.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[3].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[3].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[3].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[3].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[3].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[3].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[3].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[3].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[3].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[3].channel cells 2
+par DynamicNetwork.agent_675.port$o[3].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[3].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[9].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[9].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[9].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[9].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[9].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[9].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[9].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[9].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[9].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[9].channel cells 2
+par DynamicNetwork.agent_671.port$o[9].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[9].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_680.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[4].channel cells 2
+par DynamicNetwork.agent_680.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[10].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[10].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[10].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[10].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[10].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[10].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[10].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[10].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[10].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[10].channel cells 2
+par DynamicNetwork.agent_671.port$o[10].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[10].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[6].channel cells 2
+par DynamicNetwork.agent_684.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_671.port$o[11].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_671.port$o[11].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[11].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_671.port$o[11].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_671.port$o[11].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[11].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_671.port$o[11].channel mac "\"tsch\""
+par DynamicNetwork.agent_671.port$o[11].channel per_enlace 0
+par DynamicNetwork.agent_671.port$o[11].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_671.port$o[11].channel cells 2
+par DynamicNetwork.agent_671.port$o[11].channel quadro_bytes 127
+par DynamicNetwork.agent_671.port$o[11].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[6].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[6].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[6].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[6].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[6].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[6].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[6].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[6].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[6].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[6].channel cells 2
+par DynamicNetwork.agent_692.port$o[6].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[6].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[4].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[4].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[4].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[4].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[4].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[4].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[4].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[4].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[4].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[4].channel cells 2
+par DynamicNetwork.agent_675.port$o[4].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[4].channel max_retries 3
+par DynamicNetwork.agent_680.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_680.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_680.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_680.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_680.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_680.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_680.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_680.port$o[5].channel cells 2
+par DynamicNetwork.agent_680.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_680.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_675.port$o[5].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_675.port$o[5].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[5].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_675.port$o[5].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_675.port$o[5].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[5].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_675.port$o[5].channel mac "\"tsch\""
+par DynamicNetwork.agent_675.port$o[5].channel per_enlace 0
+par DynamicNetwork.agent_675.port$o[5].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_675.port$o[5].channel cells 2
+par DynamicNetwork.agent_675.port$o[5].channel quadro_bytes 127
+par DynamicNetwork.agent_675.port$o[5].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[7].channel cells 2
+par DynamicNetwork.agent_684.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[7].channel max_retries 3
+par DynamicNetwork.agent_684.port$o[8].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_684.port$o[8].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[8].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_684.port$o[8].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_684.port$o[8].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[8].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_684.port$o[8].channel mac "\"tsch\""
+par DynamicNetwork.agent_684.port$o[8].channel per_enlace 0
+par DynamicNetwork.agent_684.port$o[8].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_684.port$o[8].channel cells 2
+par DynamicNetwork.agent_684.port$o[8].channel quadro_bytes 127
+par DynamicNetwork.agent_684.port$o[8].channel max_retries 3
+par DynamicNetwork.agent_692.port$o[7].channel typename "\"Link_6TiSCH_TSCH\""
+par DynamicNetwork.agent_692.port$o[7].channel disabled false
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[7].channel delay 0s
+attr mutable ""
+attr unit s
+par DynamicNetwork.agent_692.port$o[7].channel datarate 50000bps
+attr mutable ""
+attr unit bps
+par DynamicNetwork.agent_692.port$o[7].channel ber 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[7].channel per 0
+attr mutable ""
+par DynamicNetwork.agent_692.port$o[7].channel mac "\"tsch\""
+par DynamicNetwork.agent_692.port$o[7].channel per_enlace 0
+par DynamicNetwork.agent_692.port$o[7].channel slotframe 4.04s
+attr unit s
+par DynamicNetwork.agent_692.port$o[7].channel cells 2
+par DynamicNetwork.agent_692.port$o[7].channel quadro_bytes 127
+par DynamicNetwork.agent_692.port$o[7].channel max_retries 3
+par DynamicNetwork.servidorConsulta typename "\"ServidorConsulta\""
+par DynamicNetwork.servidorConsulta porta 5556
+par DynamicNetwork.servidorConsulta guarda_s 100000s
+attr unit s
+par DynamicNetwork.agent_0 typename "\"AgentNode\""
+par DynamicNetwork.agent_0 agent_id "\"\""
+par DynamicNetwork.agent_0 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_0 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_0 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_0 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_0 xPos 0
+par DynamicNetwork.agent_0 yPos 0
+par DynamicNetwork.agent_0 packets_sent 1
+attr mutable ""
+par DynamicNetwork.agent_0 packets_received 1
+attr mutable ""
+par DynamicNetwork.agent_0 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_0 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_0 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_0 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_0 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_0 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_0 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_0 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_0 roteamento "\"etx\""
+par DynamicNetwork.agent_0 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_0 arquivo_nomes "\"\""
+par DynamicNetwork.agent_dso typename "\"AgentNode\""
+par DynamicNetwork.agent_dso agent_id "\"\""
+par DynamicNetwork.agent_dso status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_dso data_out 0
+attr mutable ""
+par DynamicNetwork.agent_dso val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_dso val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_dso xPos 0
+par DynamicNetwork.agent_dso yPos 0
+par DynamicNetwork.agent_dso packets_sent 1
+attr mutable ""
+par DynamicNetwork.agent_dso packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_dso packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_dso packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_dso last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_dso last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_dso current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_dso latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_dso packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_dso jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_dso roteamento "\"etx\""
+par DynamicNetwork.agent_dso propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_dso arquivo_nomes "\"\""
+par DynamicNetwork.agent_market typename "\"AgentNode\""
+par DynamicNetwork.agent_market agent_id "\"\""
+par DynamicNetwork.agent_market status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_market data_out 0
+attr mutable ""
+par DynamicNetwork.agent_market val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_market val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_market xPos 0
+par DynamicNetwork.agent_market yPos 0
+par DynamicNetwork.agent_market packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_market packets_received 1
+attr mutable ""
+par DynamicNetwork.agent_market packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_market packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_market last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_market last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_market current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_market latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_market packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_market jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_market roteamento "\"etx\""
+par DynamicNetwork.agent_market propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_market arquivo_nomes "\"\""
+par DynamicNetwork.agent_611 typename "\"AgentNode\""
+par DynamicNetwork.agent_611 agent_id "\"\""
+par DynamicNetwork.agent_611 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_611 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_611 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_611 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_611 xPos -182.88
+par DynamicNetwork.agent_611 yPos -1221.2
+par DynamicNetwork.agent_611 packets_sent 1
+attr mutable ""
+par DynamicNetwork.agent_611 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_611 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_611 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_611 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_611 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_611 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_611 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_611 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_611 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_611 roteamento "\"etx\""
+par DynamicNetwork.agent_611 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_611 arquivo_nomes "\"\""
+par DynamicNetwork.agent_632 typename "\"AgentNode\""
+par DynamicNetwork.agent_632 agent_id "\"\""
+par DynamicNetwork.agent_632 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_632 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_632 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_632 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_632 xPos 0
+par DynamicNetwork.agent_632 yPos -611.6
+par DynamicNetwork.agent_632 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_632 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_632 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_632 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_632 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_632 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_632 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_632 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_632 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_632 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_632 roteamento "\"etx\""
+par DynamicNetwork.agent_632 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_632 arquivo_nomes "\"\""
+par DynamicNetwork.agent_633 typename "\"AgentNode\""
+par DynamicNetwork.agent_633 agent_id "\"\""
+par DynamicNetwork.agent_633 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_633 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_633 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_633 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_633 xPos 152.4
+par DynamicNetwork.agent_633 yPos -611.6
+par DynamicNetwork.agent_633 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_633 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_633 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_633 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_633 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_633 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_633 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_633 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_633 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_633 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_633 roteamento "\"etx\""
+par DynamicNetwork.agent_633 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_633 arquivo_nomes "\"\""
+par DynamicNetwork.agent_634 typename "\"AgentNode\""
+par DynamicNetwork.agent_634 agent_id "\"\""
+par DynamicNetwork.agent_634 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_634 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_634 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_634 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_634 xPos 153.4
+par DynamicNetwork.agent_634 yPos -611.6
+par DynamicNetwork.agent_634 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_634 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_634 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_634 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_634 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_634 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_634 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_634 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_634 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_634 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_634 roteamento "\"etx\""
+par DynamicNetwork.agent_634 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_634 arquivo_nomes "\"\""
+par DynamicNetwork.agent_645 typename "\"AgentNode\""
+par DynamicNetwork.agent_645 agent_id "\"\""
+par DynamicNetwork.agent_645 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_645 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_645 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_645 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_645 xPos -152.4
+par DynamicNetwork.agent_645 yPos -611.6
+par DynamicNetwork.agent_645 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_645 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_645 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_645 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_645 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_645 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_645 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_645 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_645 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_645 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_645 roteamento "\"etx\""
+par DynamicNetwork.agent_645 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_645 arquivo_nomes "\"\""
+par DynamicNetwork.agent_646 typename "\"AgentNode\""
+par DynamicNetwork.agent_646 agent_id "\"\""
+par DynamicNetwork.agent_646 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_646 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_646 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_646 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_646 xPos -243.84
+par DynamicNetwork.agent_646 yPos -611.6
+par DynamicNetwork.agent_646 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_646 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_646 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_646 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_646 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_646 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_646 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_646 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_646 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_646 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_646 roteamento "\"etx\""
+par DynamicNetwork.agent_646 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_646 arquivo_nomes "\"\""
+par DynamicNetwork.agent_650 typename "\"AgentNode\""
+par DynamicNetwork.agent_650 agent_id "\"\""
+par DynamicNetwork.agent_650 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_650 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_650 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_650 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_650 xPos 0
+par DynamicNetwork.agent_650 yPos -1
+par DynamicNetwork.agent_650 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_650 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_650 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_650 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_650 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_650 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_650 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_650 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_650 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_650 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_650 roteamento "\"etx\""
+par DynamicNetwork.agent_650 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_650 arquivo_nomes "\"\""
+par DynamicNetwork.agent_652 typename "\"AgentNode\""
+par DynamicNetwork.agent_652 agent_id "\"\""
+par DynamicNetwork.agent_652 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_652 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_652 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_652 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_652 xPos -91.44
+par DynamicNetwork.agent_652 yPos -1465.04
+par DynamicNetwork.agent_652 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_652 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_652 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_652 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_652 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_652 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_652 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_652 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_652 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_652 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_652 roteamento "\"etx\""
+par DynamicNetwork.agent_652 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_652 arquivo_nomes "\"\""
+par DynamicNetwork.agent_660 typename "\"AgentNode\""
+par DynamicNetwork.agent_660 agent_id "\"\""
+par DynamicNetwork.agent_660 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_660 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_660 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_660 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_660 xPos 0
+par DynamicNetwork.agent_660 yPos -2
+par DynamicNetwork.agent_660 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_660 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_660 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_660 packets_forwarded 2
+attr mutable ""
+par DynamicNetwork.agent_660 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_660 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_660 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_660 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_660 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_660 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_660 roteamento "\"etx\""
+par DynamicNetwork.agent_660 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_660 arquivo_nomes "\"\""
+par DynamicNetwork.agent_670 typename "\"AgentNode\""
+par DynamicNetwork.agent_670 agent_id "\"\""
+par DynamicNetwork.agent_670 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_670 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_670 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_670 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_670 xPos 0
+par DynamicNetwork.agent_670 yPos -814.9
+par DynamicNetwork.agent_670 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_670 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_670 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_670 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_670 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_670 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_670 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_670 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_670 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_670 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_670 roteamento "\"etx\""
+par DynamicNetwork.agent_670 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_670 arquivo_nomes "\"\""
+par DynamicNetwork.agent_671 typename "\"AgentNode\""
+par DynamicNetwork.agent_671 agent_id "\"\""
+par DynamicNetwork.agent_671 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_671 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_671 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_671 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_671 xPos 0
+par DynamicNetwork.agent_671 yPos -1221.2
+par DynamicNetwork.agent_671 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_671 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_671 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_671 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_671 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_671 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_671 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_671 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_671 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_671 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_671 roteamento "\"etx\""
+par DynamicNetwork.agent_671 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_671 arquivo_nomes "\"\""
+par DynamicNetwork.agent_675 typename "\"AgentNode\""
+par DynamicNetwork.agent_675 agent_id "\"\""
+par DynamicNetwork.agent_675 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_675 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_675 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_675 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_675 xPos 153.4
+par DynamicNetwork.agent_675 yPos -1221.2
+par DynamicNetwork.agent_675 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_675 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_675 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_675 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_675 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_675 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_675 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_675 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_675 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_675 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_675 roteamento "\"etx\""
+par DynamicNetwork.agent_675 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_675 arquivo_nomes "\"\""
+par DynamicNetwork.agent_680 typename "\"AgentNode\""
+par DynamicNetwork.agent_680 agent_id "\"\""
+par DynamicNetwork.agent_680 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_680 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_680 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_680 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_680 xPos 0
+par DynamicNetwork.agent_680 yPos -1526
+par DynamicNetwork.agent_680 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_680 packets_received 1
+attr mutable ""
+par DynamicNetwork.agent_680 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_680 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_680 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_680 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_680 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_680 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_680 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_680 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_680 roteamento "\"etx\""
+par DynamicNetwork.agent_680 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_680 arquivo_nomes "\"\""
+par DynamicNetwork.agent_684 typename "\"AgentNode\""
+par DynamicNetwork.agent_684 agent_id "\"\""
+par DynamicNetwork.agent_684 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_684 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_684 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_684 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_684 xPos -91.44
+par DynamicNetwork.agent_684 yPos -1221.2
+par DynamicNetwork.agent_684 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_684 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_684 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_684 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_684 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_684 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_684 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_684 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_684 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_684 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_684 roteamento "\"etx\""
+par DynamicNetwork.agent_684 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_684 arquivo_nomes "\"\""
+par DynamicNetwork.agent_692 typename "\"AgentNode\""
+par DynamicNetwork.agent_692 agent_id "\"\""
+par DynamicNetwork.agent_692 status "\"idle\""
+attr mutable ""
+par DynamicNetwork.agent_692 data_out 0
+attr mutable ""
+par DynamicNetwork.agent_692 val_in "\"\""
+attr mutable ""
+par DynamicNetwork.agent_692 val_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_692 xPos 1
+par DynamicNetwork.agent_692 yPos -1221.2
+par DynamicNetwork.agent_692 packets_sent 0
+attr mutable ""
+par DynamicNetwork.agent_692 packets_received 0
+attr mutable ""
+par DynamicNetwork.agent_692 packets_dropped 0
+attr mutable ""
+par DynamicNetwork.agent_692 packets_forwarded 0
+attr mutable ""
+par DynamicNetwork.agent_692 last_latency 0
+attr mutable ""
+par DynamicNetwork.agent_692 last_packet_size 0
+attr mutable ""
+par DynamicNetwork.agent_692 current_jitter 0
+attr mutable ""
+par DynamicNetwork.agent_692 latencies_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_692 packet_sizes_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_692 jitters_out "\"\""
+attr mutable ""
+par DynamicNetwork.agent_692 roteamento "\"etx\""
+par DynamicNetwork.agent_692 propagacao_radio_s_m 3.336e-09
+par DynamicNetwork.agent_692 arquivo_nomes "\"\""
+par DynamicNetwork typename "\"DynamicNetwork\""
+
